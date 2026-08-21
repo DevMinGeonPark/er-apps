@@ -15,12 +15,18 @@ er-fault와 같은 3622를 기본값으로 써서 충돌한 이력 있음)
 | 3622 | `er-fault` | `er-fault/` | er-fault.dev-heptivision.com | 과실비율 산정서 |
 | 3623 | `er-enemy` | `er-enemy/` | er-enemy.dev-heptivision.com | **`PORT=3623` 환경변수 필수** (코드 기본값 3622 충돌) |
 | 3624 | — | `lumia-exchange/` | lumia.dev-heptivision.com | 증권거래소, 터널만 예약 · 미기동 |
+| 3625 | `er-credit` | `er-credit/` | (터널 미연결) | **루미아 신용정보원** — (유저 × 실험체) 신용평가 |
 | 8793 | `markov-fantasy` | `fantasy/sites/markov-fantasy/` | — | `pm2 serve <dir> 8793 --spa` |
-| 3625 | — | — | — | **다음 배정분** |
+| 3626 | — | — | — | **다음 배정분** |
 
 서버 없는 것: `er-map/` (정적 · 빌드 산출물), `martial/wuxia-forge/` ·
 `fantasy/arcane-forge/` (Python 생성기 — 산출물을 `~/move/<slug>`,
 `fantasy/sites/<slug>`로 배포)
+
+### 헤드리스 Chrome 스크린샷
+
+`--use-mock-keychain --password-store=basic` 을 붙이지 않으면 키체인 접근에서
+무한 대기한다. (er-cert 때 겪은 것과 같은 증상)
 
 ## 배포
 

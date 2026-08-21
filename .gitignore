@@ -25,3 +25,9 @@ npm-debug.log*
 # scraper caches
 .cache/
 tmp/
+
+# 런타임 데이터
+er-credit/data/inquiries.json
+
+# 자체 git repo — 독립 관리 (gitlink이라 슬래시 없이 써야 무시된다)
+lumia-exchange
