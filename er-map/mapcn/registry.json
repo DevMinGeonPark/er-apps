@@ -1,0 +1,27 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "lumia-map",
+  "homepage": "https://github.com/DevMinGeonPark/er-map",
+  "items": [
+    {
+      "name": "lumia-map",
+      "type": "registry:ui",
+      "title": "Lumia Map",
+      "description": "Eternal Return's Lumia Island for mapcn — 21 areas with hover, select, restricted zones, and a reachable-area estimate from the last sighting.",
+      "dependencies": ["maplibre-gl"],
+      "registryDependencies": ["https://www.mapcn.dev/r/map.json"],
+      "files": [
+        {
+          "path": "src/registry/lumia-map.tsx",
+          "type": "registry:ui",
+          "target": "components/ui/lumia-map.tsx"
+        },
+        {
+          "path": "src/registry/lumia-areas.json",
+          "type": "registry:file",
+          "target": "components/ui/lumia-areas.json"
+        }
+      ]
+    }
+  ]
+}

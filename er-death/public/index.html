@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>루미아섬 사망진단서 발급</title>
+<link rel="stylesheet" href="/style.css?v=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚰️</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <span class="org">루미아섬 보건의료원 <em>민원발급 시스템</em></span>
+    <span class="q">— 누가 이 유저를 죽였는가</span>
+  </div>
+</header>
+
+<section class="issue-panel" id="issuePanel">
+  <form id="issueForm" autocomplete="off">
+    <label for="nick" class="visually-hidden">닉네임</label>
+    <input id="nick" type="text" placeholder="고인(故人)의 닉네임" required>
+    <button type="submit" id="issueBtn">발급</button>
+  </form>
+  <p class="hint" id="hint">최근 전적에서 사망 기록을 찾아 진단서를 발급합니다. 데이터 출처: dak.gg</p>
+</section>
+
+<section class="picker" id="picker" hidden>
+  <div class="picker-title">발급 대상 사망 기록</div>
+  <div class="picker-list" id="pickerList"></div>
+</section>
+
+<main id="certRoot" hidden></main>
+
+<div class="actions" id="actions" hidden>
+  <button id="pngBtn">PNG로 저장</button>
+  <button id="printBtn" class="ghost">인쇄 / PDF</button>
+</div>
+
+<footer class="pagefoot">
+  본 문서는 팬메이드 유머 콘텐츠이며 법적 효력이 없습니다. 고인의 명복을 빕니다.
+</footer>
+
+<script src="/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,1009 @@
+{
+ "type": "FeatureCollection",
+ "bbox": [
+  -0.2,
+  -0.3,
+  0.2,
+  0.25
+ ],
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Alley",
+    "name": "골목길",
+    "areaId": 70,
+    "cells": 1,
+    "neighbours": [
+     "PoliceStation",
+     "GasStation"
+    ],
+    "center": [
+     0,
+     0.2
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05,
+       0.2
+      ],
+      [
+       0,
+       0.15
+      ],
+      [
+       -0.05,
+       0.2
+      ],
+      [
+       0,
+       0.25
+      ],
+      [
+       0.05,
+       0.2
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Archery",
+    "name": "양궁장",
+    "areaId": 140,
+    "cells": 1,
+    "neighbours": [
+     "School"
+    ],
+    "center": [
+     -0.15,
+     0.15
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.1,
+       0.15
+      ],
+      [
+       -0.15,
+       0.1
+      ],
+      [
+       -0.2,
+       0.15
+      ],
+      [
+       -0.15,
+       0.2
+      ],
+      [
+       -0.1,
+       0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "GasStation",
+    "name": "주유소",
+    "areaId": 80,
+    "cells": 1,
+    "neighbours": [
+     "FireStation",
+     "Alley",
+     "School"
+    ],
+    "center": [
+     -0.05,
+     0.15
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0.15
+      ],
+      [
+       -0.05,
+       0.1
+      ],
+      [
+       -0.1,
+       0.15
+      ],
+      [
+       -0.05,
+       0.2
+      ],
+      [
+       0,
+       0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "PoliceStation",
+    "name": "경찰서",
+    "areaId": 100,
+    "cells": 1,
+    "neighbours": [
+     "Temple",
+     "FireStation",
+     "Alley"
+    ],
+    "center": [
+     0.05,
+     0.15
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.1,
+       0.15
+      ],
+      [
+       0.05,
+       0.1
+      ],
+      [
+       0,
+       0.15
+      ],
+      [
+       0.05,
+       0.2
+      ],
+      [
+       0.1,
+       0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Temple",
+    "name": "절",
+    "areaId": 130,
+    "cells": 2,
+    "neighbours": [
+     "Stream",
+     "Pond",
+     "PoliceStation"
+    ],
+    "center": [
+     0.125,
+     0.125
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.2,
+       0.15
+      ],
+      [
+       0.15,
+       0.1
+      ],
+      [
+       0.1,
+       0.05
+      ],
+      [
+       0.05,
+       0.1
+      ],
+      [
+       0.1,
+       0.15
+      ],
+      [
+       0.15,
+       0.2
+      ],
+      [
+       0.2,
+       0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "School",
+    "name": "학교",
+    "areaId": 190,
+    "cells": 1,
+    "neighbours": [
+     "Laboratory",
+     "GasStation",
+     "Hotel",
+     "Archery"
+    ],
+    "center": [
+     -0.1,
+     0.1
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.05,
+       0.1
+      ],
+      [
+       -0.1,
+       0.05
+      ],
+      [
+       -0.15,
+       0.1
+      ],
+      [
+       -0.1,
+       0.15
+      ],
+      [
+       -0.05,
+       0.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "FireStation",
+    "name": "소방서",
+    "areaId": 110,
+    "cells": 1,
+    "neighbours": [
+     "Pond",
+     "PoliceStation",
+     "Laboratory",
+     "GasStation"
+    ],
+    "center": [
+     0,
+     0.1
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05,
+       0.1
+      ],
+      [
+       0,
+       0.05
+      ],
+      [
+       -0.05,
+       0.1
+      ],
+      [
+       0,
+       0.15
+      ],
+      [
+       0.05,
+       0.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Hotel",
+    "name": "호텔",
+    "areaId": 90,
+    "cells": 2,
+    "neighbours": [
+     "School",
+     "Forest",
+     "Laboratory",
+     "SandyBeach"
+    ],
+    "center": [
+     -0.125,
+     0.025
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.1,
+       0.05
+      ],
+      [
+       -0.15,
+       0.1
+      ],
+      [
+       -0.2,
+       0.05
+      ],
+      [
+       -0.15,
+       0
+      ],
+      [
+       -0.1,
+       -0.05
+      ],
+      [
+       -0.05,
+       0
+      ],
+      [
+       -0.1,
+       0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Pond",
+    "name": "연못",
+    "areaId": 30,
+    "cells": 1,
+    "neighbours": [
+     "Stream",
+     "Temple",
+     "Laboratory",
+     "FireStation"
+    ],
+    "center": [
+     0.05,
+     0.05
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.1,
+       0.05
+      ],
+      [
+       0.05,
+       0
+      ],
+      [
+       0,
+       0.05
+      ],
+      [
+       0.05,
+       0.1
+      ],
+      [
+       0.1,
+       0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Stream",
+    "name": "개울",
+    "areaId": 40,
+    "cells": 2,
+    "neighbours": [
+     "Temple",
+     "Hospital",
+     "Cemetery",
+     "Pond"
+    ],
+    "center": [
+     0.125,
+     0.025
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.2,
+       0.05
+      ],
+      [
+       0.15,
+       0
+      ],
+      [
+       0.1,
+       -0.05
+      ],
+      [
+       0.05,
+       0
+      ],
+      [
+       0.1,
+       0.05
+      ],
+      [
+       0.15,
+       0.1
+      ],
+      [
+       0.2,
+       0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Laboratory",
+    "name": "연구소",
+    "areaId": 1000,
+    "cells": 2,
+    "neighbours": [
+     "Cemetery",
+     "Pond",
+     "Forest",
+     "FireStation",
+     "Hotel",
+     "School"
+    ],
+    "center": [
+     -0.025,
+     0.025
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05,
+       0
+      ],
+      [
+       0,
+       -0.05
+      ],
+      [
+       -0.05,
+       0
+      ],
+      [
+       -0.1,
+       0.05
+      ],
+      [
+       -0.05,
+       0.1
+      ],
+      [
+       0,
+       0.05
+      ],
+      [
+       0.05,
+       0
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "SandyBeach",
+    "name": "모래사장",
+    "areaId": 50,
+    "cells": 1,
+    "neighbours": [
+     "Uptown",
+     "Hotel"
+    ],
+    "center": [
+     -0.15,
+     -0.05
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.1,
+       -0.05
+      ],
+      [
+       -0.15,
+       -0.1
+      ],
+      [
+       -0.2,
+       -0.05
+      ],
+      [
+       -0.15,
+       0
+      ],
+      [
+       -0.1,
+       -0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Forest",
+    "name": "숲",
+    "areaId": 160,
+    "cells": 1,
+    "neighbours": [
+     "Church",
+     "Laboratory",
+     "Uptown",
+     "Hotel"
+    ],
+    "center": [
+     -0.05,
+     -0.05
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       -0.05
+      ],
+      [
+       -0.05,
+       -0.1
+      ],
+      [
+       -0.1,
+       -0.05
+      ],
+      [
+       -0.05,
+       0
+      ],
+      [
+       0,
+       -0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Cemetery",
+    "name": "묘지",
+    "areaId": 150,
+    "cells": 1,
+    "neighbours": [
+     "Factory",
+     "Stream",
+     "Church",
+     "Laboratory"
+    ],
+    "center": [
+     0.05,
+     -0.05
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.1,
+       -0.05
+      ],
+      [
+       0.05,
+       -0.1
+      ],
+      [
+       0,
+       -0.05
+      ],
+      [
+       0.05,
+       0
+      ],
+      [
+       0.1,
+       -0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Hospital",
+    "name": "병원",
+    "areaId": 120,
+    "cells": 1,
+    "neighbours": [
+     "Factory",
+     "Stream"
+    ],
+    "center": [
+     0.15,
+     -0.05
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.2,
+       -0.05
+      ],
+      [
+       0.15,
+       -0.1
+      ],
+      [
+       0.1,
+       -0.05
+      ],
+      [
+       0.15,
+       0
+      ],
+      [
+       0.2,
+       -0.05
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Uptown",
+    "name": "고급 주택가",
+    "areaId": 60,
+    "cells": 1,
+    "neighbours": [
+     "Warehouse",
+     "Forest",
+     "SandyBeach"
+    ],
+    "center": [
+     -0.1,
+     -0.1
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.05,
+       -0.1
+      ],
+      [
+       -0.1,
+       -0.15
+      ],
+      [
+       -0.15,
+       -0.1
+      ],
+      [
+       -0.1,
+       -0.05
+      ],
+      [
+       -0.05,
+       -0.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Church",
+    "name": "성당",
+    "areaId": 180,
+    "cells": 1,
+    "neighbours": [
+     "Harbor",
+     "Cemetery",
+     "Warehouse",
+     "Forest"
+    ],
+    "center": [
+     0,
+     -0.1
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05,
+       -0.1
+      ],
+      [
+       0,
+       -0.15
+      ],
+      [
+       -0.05,
+       -0.1
+      ],
+      [
+       0,
+       -0.05
+      ],
+      [
+       0.05,
+       -0.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Factory",
+    "name": "공장",
+    "areaId": 170,
+    "cells": 2,
+    "neighbours": [
+     "Hospital",
+     "Harbor",
+     "Cemetery"
+    ],
+    "center": [
+     0.125,
+     -0.125
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.2,
+       -0.15
+      ],
+      [
+       0.15,
+       -0.2
+      ],
+      [
+       0.1,
+       -0.15
+      ],
+      [
+       0.05,
+       -0.1
+      ],
+      [
+       0.1,
+       -0.05
+      ],
+      [
+       0.15,
+       -0.1
+      ],
+      [
+       0.2,
+       -0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Warehouse",
+    "name": "창고",
+    "areaId": 20,
+    "cells": 1,
+    "neighbours": [
+     "Harbor",
+     "Church",
+     "Uptown"
+    ],
+    "center": [
+     -0.05,
+     -0.15
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       -0.15
+      ],
+      [
+       -0.05,
+       -0.2
+      ],
+      [
+       -0.1,
+       -0.15
+      ],
+      [
+       -0.05,
+       -0.1
+      ],
+      [
+       0,
+       -0.15
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Harbor",
+    "name": "항구",
+    "areaId": 10,
+    "cells": 2,
+    "neighbours": [
+     "Barge",
+     "Warehouse",
+     "Factory",
+     "Church"
+    ],
+    "center": [
+     0.025,
+     -0.175
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05,
+       -0.2
+      ],
+      [
+       0,
+       -0.25
+      ],
+      [
+       -0.05,
+       -0.2
+      ],
+      [
+       0,
+       -0.15
+      ],
+      [
+       0.05,
+       -0.1
+      ],
+      [
+       0.1,
+       -0.15
+      ],
+      [
+       0.05,
+       -0.2
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Barge",
+    "name": "바지선",
+    "areaId": 200,
+    "cells": 1,
+    "neighbours": [
+     "Harbor"
+    ],
+    "center": [
+     0.05,
+     -0.25
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.1,
+       -0.25
+      ],
+      [
+       0.05,
+       -0.3
+      ],
+      [
+       0,
+       -0.25
+      ],
+      [
+       0.05,
+       -0.2
+      ],
+      [
+       0.1,
+       -0.25
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

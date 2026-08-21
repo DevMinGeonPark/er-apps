@@ -1,0 +1,4163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>루미아 섬 상황판</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+  /* Single, committed look: a tactical situation board. Every colour painted explicitly. */
+  :root {
+    --ground:#080c15; --board:#101725; --surface:#162033; --hairline:#263149;
+    --ink:#dbe4f5; --muted:#78879f; --land:#1a2338; --land-lit:#263352;
+    --sight:#4c8dff; --reach:#2fbe8f; --shut:#e0525e; --sun:#e8b04b; --moon:#8f7dd8;
+    --display:"Chakra Petch","IBM Plex Sans KR",system-ui,sans-serif;
+    --body:"IBM Plex Sans KR",system-ui,-apple-system,sans-serif;
+    --num:"Chakra Petch","IBM Plex Sans KR",ui-monospace,monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+         font-family:var(--body); font-size:15px; line-height:1.6; }
+  .shell { max-width:1240px; margin:0 auto; padding:28px 22px 56px;
+           display:flex; flex-direction:column; gap:22px; }
+
+  header { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;
+           border-bottom:1px solid var(--hairline); padding-bottom:16px; }
+  h1 { font-family:var(--display); font-weight:700; font-size:clamp(26px,4vw,38px);
+       letter-spacing:.01em; margin:0; text-wrap:balance; }
+  .eyebrow { font-family:var(--num); font-size:12px; letter-spacing:.16em;
+             text-transform:uppercase; color:var(--muted); }
+  .tally { margin-left:auto; display:flex; gap:18px; font-family:var(--num); font-size:13px;
+           color:var(--muted); font-variant-numeric:tabular-nums; }
+  .tally b { color:var(--ink); font-weight:600; }
+
+  .board { display:grid; grid-template-columns:minmax(0,1fr) 328px; gap:24px; align-items:start; }
+  @media (max-width:880px) { .board { grid-template-columns:minmax(0,1fr); } }
+
+  .stage { background:var(--board); border:1px solid var(--hairline); border-radius:14px; padding:10px; }
+  svg { width:100%; height:auto; max-height:78vh; display:block; margin:0 auto; }
+
+  g.area { cursor:pointer; }
+  g.area:focus { outline:none; }
+  .cell { fill:var(--land); stroke:var(--hairline); stroke-width:.05;
+          stroke-linejoin:round; transition:fill .14s ease, stroke .14s ease; }
+  g.area:hover .cell, g.area:focus-visible .cell { fill:var(--land-lit); }
+  g.area:focus-visible .cell { stroke:var(--ink); stroke-width:.09; }
+  g.area.reach .cell { fill:color-mix(in srgb, var(--reach) var(--w,40%), var(--land)); }
+  g.area.sight .cell { fill:color-mix(in srgb, var(--sight) 62%, var(--land)); }
+  g.area.shut  .cell { fill:color-mix(in srgb, var(--shut) 42%, var(--land)); }
+  g.area.cold { opacity:.46; }
+  g.area.sight .cell, g.area.reach .cell, g.area.shut .cell { stroke:#9fb2d4; }
+  .name { fill:var(--ink); font-family:var(--body); font-weight:500; font-size:.285px;
+          text-anchor:middle; pointer-events:none;
+          paint-order:stroke; stroke:#080c15; stroke-width:.08px; }
+  .eta { fill:var(--reach); font-family:var(--num); font-weight:600; font-size:.26px;
+         text-anchor:middle; pointer-events:none;
+         paint-order:stroke; stroke:#080c15; stroke-width:.08px; }
+  g.area.sight .eta { fill:#cfe0ff; }
+
+  .rail { display:flex; flex-direction:column; gap:18px; }
+  .card { background:var(--board); border:1px solid var(--hairline); border-radius:14px;
+          padding:16px 16px 18px; }
+  .card h2 { font-family:var(--num); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+             color:var(--muted); margin:0 0 12px; font-weight:600; }
+
+  .clock { display:flex; align-items:baseline; gap:10px; }
+  .phase { font-family:var(--display); font-size:24px; font-weight:700; }
+  .phase.day  { color:var(--sun); }
+  .phase.night{ color:var(--moon); }
+  .clock time { margin-left:auto; font-family:var(--num); font-size:30px; font-weight:700;
+                font-variant-numeric:tabular-nums; }
+  .bar { height:5px; background:var(--surface); border-radius:99px; overflow:hidden; margin:11px 0 9px; }
+  .bar i { display:block; height:100%; background:var(--sight); transition:width .2s linear; }
+  .next { font-size:13px; color:var(--muted); }
+  .next b { color:var(--ink); font-family:var(--num); font-variant-numeric:tabular-nums; }
+  .keys { display:flex; gap:6px; margin-top:13px; }
+  button { flex:1; font:inherit; font-size:13px; color:var(--ink); background:var(--surface);
+           border:1px solid var(--hairline); border-radius:8px; padding:7px 4px; cursor:pointer;
+           transition:background .12s ease; }
+  button:hover { background:var(--land-lit); }
+  button:focus-visible { outline:2px solid var(--sight); outline-offset:2px; }
+  button.go { background:color-mix(in srgb,var(--sight) 26%,var(--surface));
+              border-color:color-mix(in srgb,var(--sight) 50%,var(--hairline)); }
+  button.nudge { flex:0 0 46px; font-family:var(--num); }
+
+  .dial label { display:flex; justify-content:space-between; align-items:baseline;
+                font-size:13px; color:var(--muted); margin:14px 0 6px; }
+  .dial output { font-family:var(--num); font-size:17px; font-weight:600; color:var(--ink);
+                 font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--sight); height:22px; }
+  input[type=range]:focus-visible { outline:2px solid var(--sight); outline-offset:3px; }
+
+  .stat { display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+          padding:9px 0; border-top:1px solid var(--hairline); font-size:14px; }
+  .stat:first-of-type { border-top:0; padding-top:0; }
+  .stat span { color:var(--muted); white-space:nowrap; }
+  .stat b { font-weight:600; text-align:right; }
+  .stat .big { font-family:var(--num); font-size:20px; font-variant-numeric:tabular-nums; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .chip { font-size:12.5px; border:1px solid var(--hairline); background:var(--surface);
+          border-radius:999px; padding:3px 10px; display:inline-flex; gap:6px; }
+  .chip em { font-style:normal; font-family:var(--num); color:var(--reach);
+             font-variant-numeric:tabular-nums; }
+  .chip.shut { border-color:color-mix(in srgb,var(--shut) 55%,var(--hairline)); color:var(--shut); }
+  .chip.none { color:var(--muted); border-style:dashed; }
+
+  .key { display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--muted); }
+  .key div { display:flex; align-items:center; gap:9px; }
+  .swatch { width:13px; height:13px; border-radius:3px; flex:none; border:1px solid #ffffff22; }
+  .how { font-size:13px; color:var(--muted); line-height:1.8; margin:14px 0 0; }
+  .how kbd { font-family:var(--num); font-size:11.5px; background:var(--surface);
+             border:1px solid var(--hairline); border-radius:4px; padding:1px 6px; color:var(--ink); }
+  footer { color:var(--muted); font-size:12.5px; border-top:1px solid var(--hairline); padding-top:14px; }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">Lumia Island</div>
+      <h1>루미아 섬 상황판</h1>
+    </div>
+    <div class="tally">
+      <div>지역 <b>21</b></div><div>경계 <b>42</b></div><div>최신 <b>바지선 포함</b></div>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="stage"><svg id="map" viewBox="-5.05 -5.64 9.70 12.20" role="img"
+      aria-label="루미아 섬 21개 지역 지도"></svg></div>
+
+    <div class="rail">
+      <div class="card">
+        <h2>게임 시계</h2>
+        <div class="clock">
+          <span class="phase day" id="phase">1일차 낮</span>
+          <time id="left">2:20</time>
+        </div>
+        <div class="bar"><i id="bar" style="width:0%"></i></div>
+        <div class="next">다음 <b id="nextPhase">밤</b> 전환 — 야생동물 리젠까지 <b id="left2">2:20</b></div>
+        <div class="keys">
+          <button id="go" class="go">시작</button>
+          <button id="reset">리셋</button>
+          <button class="nudge" data-nudge="-5">−5s</button>
+          <button class="nudge" data-nudge="5">+5s</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>추적</h2>
+        <div class="stat"><span>마지막 목격</span><b id="sight" class="big">—</b></div>
+        <div class="stat"><span>인접 지역</span><b id="nb">—</b></div>
+        <div class="stat"><span>지금 있을 수 있는 곳</span><b id="cnt" class="big">—</b></div>
+        <div class="chips" id="reachChips"></div>
+        <div class="dial">
+          <label for="t">목격 후 경과 <output id="tOut" for="t">0초</output></label>
+          <input type="range" id="t" min="0" max="120" step="1" value="0">
+          <label for="s">이동 속도 배율 <output id="sOut" for="s">1.00×</output></label>
+          <input type="range" id="s" min="0.6" max="1.8" step="0.05" value="1">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>금지구역</h2>
+        <div class="chips" id="shutChips"></div>
+      </div>
+
+      <div class="card">
+        <h2>범례</h2>
+        <div class="key">
+          <div><i class="swatch" style="background:#3d6bc4"></i>마지막으로 본 지역</div>
+          <div><i class="swatch" style="background:#26795f"></i>도달 가능 — 진할수록 빨리 닿음</div>
+          <div><i class="swatch" style="background:#7a3540"></i>금지구역 (통과 불가)</div>
+        </div>
+        <p class="how">
+          <kbd>클릭</kbd> 마지막 목격 지역 지정<br>
+          <kbd>Shift</kbd> + 클릭 금지구역 토글<br>
+          <kbd>Tab</kbd> / <kbd>Enter</kbd> 키보드로도 조작
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    지역 경계는 인게임 미니맵에서 워터셰드로 추출한 실제 경계입니다. 지역 간 이동은 한 칸당
+    7초(기본 이동 속도)로 잡았습니다 — 실측하면 이 값만 바꾸면 됩니다.
+    시계를 켜면 목격 후 경과 시간이 저절로 흐르고, 멈춘 상태에서는 슬라이더로 앞뒤를 볼 수 있습니다.
+  </footer>
+</div>
+
+<script>
+// Lumia Island as a diamond lattice.
+// cells are [sx, sy] with (sx + sy) even; neighbours differ by (+-1, +-1).
+// Derived by fitting the lattice to region anchors on the current in-game minimap
+// (season with 바지선). Large edge regions occupy two cells.
+var ER_AREAS = [
+  { key: "Alley",         id:  70, name: "골목길",      cells: [[ 0,-4]] },
+  { key: "Archery",       id: 140, name: "양궁장",      cells: [[-3,-3]] },
+  { key: "GasStation",    id:  80, name: "주유소",      cells: [[-1,-3]] },
+  { key: "PoliceStation", id: 100, name: "경찰서",      cells: [[ 1,-3]] },
+  { key: "Temple",        id: 130, name: "절",          cells: [[ 3,-3],[ 2,-2]] },
+  { key: "School",        id: 190, name: "학교",        cells: [[-2,-2]] },
+  { key: "FireStation",   id: 110, name: "소방서",      cells: [[ 0,-2]] },
+  { key: "Hotel",         id:  90, name: "호텔",        cells: [[-3,-1],[-2, 0]] },
+  { key: "Pond",          id:  30, name: "연못",        cells: [[ 1,-1]] },
+  { key: "Stream",        id:  40, name: "개울",        cells: [[ 3,-1],[ 2, 0]] },
+  { key: "Laboratory",    id:1000, name: "연구소",      cells: [[ 0, 0],[-1,-1]] },
+  { key: "SandyBeach",    id:  50, name: "모래사장",    cells: [[-3, 1]] },
+  { key: "Forest",        id: 160, name: "숲",          cells: [[-1, 1]] },
+  { key: "Cemetery",      id: 150, name: "묘지",        cells: [[ 1, 1]] },
+  { key: "Hospital",      id: 120, name: "병원",        cells: [[ 3, 1]] },
+  { key: "Uptown",        id:  60, name: "고급 주택가", cells: [[-2, 2]] },
+  { key: "Church",        id: 180, name: "성당",        cells: [[ 0, 2]] },
+  { key: "Factory",       id: 170, name: "공장",        cells: [[ 3, 3],[ 2, 2]] },
+  { key: "Warehouse",     id:  20, name: "창고",        cells: [[-1, 3]] },
+  { key: "Harbor",        id:  10, name: "항구",        cells: [[ 0, 4],[ 1, 3]] },
+  { key: "Barge",         id: 200, name: "바지선",      cells: [[ 1, 5]] },
+];
+
+// ponytail: uniform hop cost. Real traversal differs per border (hyperloop, water,
+// walls) — measure in game and put a per-edge table here if the estimates feel wrong.
+var HOP_SECONDS = 7;
+
+// Day/night schedule. Wildlife respawns on every phase flip, so the countdown to the
+// next flip is the whole timer. Durations in seconds, verified against jyaniee/er-wildmap.
+var GAME_CYCLE = [
+  { day: 1, type: "day", duration: 140 }, { day: 1, type: "night", duration: 110 },
+  { day: 2, type: "day", duration: 140 }, { day: 2, type: "night", duration: 130 },
+  { day: 3, type: "day", duration: 130 }, { day: 3, type: "night", duration: 110 },
+  { day: 4, type: "day", duration: 100 }, { day: 4, type: "night", duration: 110 },
+  { day: 5, type: "day", duration:  80 }, { day: 5, type: "night", duration:  80 },
+  { day: 6, type: "day", duration:  70 }, { day: 6, type: "night", duration:  50 },
+  { day: 7, type: "day", duration: 200 }, { day: 7, type: "night", duration:  60 },
+  { day: 8, type: "day", duration: 150 },
+];
+
+if (typeof module !== "undefined")
+  module.exports = { ER_AREAS, HOP_SECONDS, GAME_CYCLE };
+</script>
+<script>
+// Generated by trace-areas.py — do not edit by hand.
+var LUMIA = {
+ "type": "FeatureCollection",
+ "bbox": [
+  -0.23992,
+  -0.31564,
+  0.22016,
+  0.26955
+ ],
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Alley",
+    "name": "골목길",
+    "areaId": 70,
+    "cells": 1,
+    "neighbours": [
+     "Archery",
+     "GasStation",
+     "PoliceStation"
+    ],
+    "center": [
+     -0.02551,
+     0.22551
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.00576,
+       0.15679
+      ],
+      [
+       -0.03457,
+       0.19547
+      ],
+      [
+       -0.04486,
+       0.18848
+      ],
+      [
+       -0.04856,
+       0.18066
+      ],
+      [
+       -0.05844,
+       0.17984
+      ],
+      [
+       -0.06132,
+       0.18272
+      ],
+      [
+       -0.06173,
+       0.18889
+      ],
+      [
+       -0.06667,
+       0.18807
+      ],
+      [
+       -0.07407,
+       0.193
+      ],
+      [
+       -0.08272,
+       0.18519
+      ],
+      [
+       -0.08313,
+       0.17984
+      ],
+      [
+       -0.08889,
+       0.18066
+      ],
+      [
+       -0.08848,
+       0.18354
+      ],
+      [
+       -0.09835,
+       0.19753
+      ],
+      [
+       -0.07778,
+       0.21893
+      ],
+      [
+       -0.08436,
+       0.21975
+      ],
+      [
+       -0.08601,
+       0.23704
+      ],
+      [
+       -0.08354,
+       0.24033
+      ],
+      [
+       -0.05514,
+       0.24156
+      ],
+      [
+       -0.02716,
+       0.26955
+      ],
+      [
+       -0.01235,
+       0.2572
+      ],
+      [
+       -0.00082,
+       0.25967
+      ],
+      [
+       0.01358,
+       0.24362
+      ],
+      [
+       0.00453,
+       0.23457
+      ],
+      [
+       0.01605,
+       0.22963
+      ],
+      [
+       0.0144,
+       0.21152
+      ],
+      [
+       0.01811,
+       0.20782
+      ],
+      [
+       0.02305,
+       0.21111
+      ],
+      [
+       0.02551,
+       0.20617
+      ],
+      [
+       0.03086,
+       0.20412
+      ],
+      [
+       0.03498,
+       0.19424
+      ],
+      [
+       0.03416,
+       0.18848
+      ],
+      [
+       0.0284,
+       0.18354
+      ],
+      [
+       0.0284,
+       0.17942
+      ],
+      [
+       0.01975,
+       0.17078
+      ],
+      [
+       0.01399,
+       0.1749
+      ],
+      [
+       0.007,
+       0.17119
+      ],
+      [
+       0.00947,
+       0.16049
+      ],
+      [
+       0.00576,
+       0.15679
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Archery",
+    "name": "양궁장",
+    "areaId": 140,
+    "cells": 1,
+    "neighbours": [
+     "Alley",
+     "Hotel",
+     "School"
+    ],
+    "center": [
+     -0.14156,
+     0.13663
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.13992,
+       0.0893
+      ],
+      [
+       -0.14486,
+       0.09506
+      ],
+      [
+       -0.15062,
+       0.09177
+      ],
+      [
+       -0.15309,
+       0.09342
+      ],
+      [
+       -0.16831,
+       0.10864
+      ],
+      [
+       -0.16914,
+       0.11276
+      ],
+      [
+       -0.17407,
+       0.1144
+      ],
+      [
+       -0.17654,
+       0.12428
+      ],
+      [
+       -0.17407,
+       0.13498
+      ],
+      [
+       -0.16667,
+       0.13909
+      ],
+      [
+       -0.16667,
+       0.14403
+      ],
+      [
+       -0.17325,
+       0.15226
+      ],
+      [
+       -0.15144,
+       0.17407
+      ],
+      [
+       -0.13827,
+       0.17407
+      ],
+      [
+       -0.13169,
+       0.17984
+      ],
+      [
+       -0.12346,
+       0.17078
+      ],
+      [
+       -0.11358,
+       0.1716
+      ],
+      [
+       -0.09918,
+       0.18683
+      ],
+      [
+       -0.10247,
+       0.19012
+      ],
+      [
+       -0.09877,
+       0.19712
+      ],
+      [
+       -0.09506,
+       0.19506
+      ],
+      [
+       -0.09506,
+       0.19012
+      ],
+      [
+       -0.08848,
+       0.18272
+      ],
+      [
+       -0.09671,
+       0.17366
+      ],
+      [
+       -0.09506,
+       0.16626
+      ],
+      [
+       -0.09794,
+       0.16337
+      ],
+      [
+       -0.10123,
+       0.16502
+      ],
+      [
+       -0.11111,
+       0.15844
+      ],
+      [
+       -0.11893,
+       0.1572
+      ],
+      [
+       -0.11975,
+       0.15391
+      ],
+      [
+       -0.11235,
+       0.14897
+      ],
+      [
+       -0.11646,
+       0.13992
+      ],
+      [
+       -0.11152,
+       0.13663
+      ],
+      [
+       -0.11481,
+       0.13086
+      ],
+      [
+       -0.11399,
+       0.12099
+      ],
+      [
+       -0.12099,
+       0.11317
+      ],
+      [
+       -0.13045,
+       0.11358
+      ],
+      [
+       -0.13128,
+       0.107
+      ],
+      [
+       -0.13704,
+       0.10206
+      ],
+      [
+       -0.13621,
+       0.09465
+      ],
+      [
+       -0.13992,
+       0.0893
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "GasStation",
+    "name": "주유소",
+    "areaId": 80,
+    "cells": 1,
+    "neighbours": [
+     "Alley",
+     "FireStation",
+     "School"
+    ],
+    "center": [
+     -0.04115,
+     0.15309
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.03045,
+       0.06955
+      ],
+      [
+       -0.03539,
+       0.06955
+      ],
+      [
+       -0.0358,
+       0.07325
+      ],
+      [
+       -0.04198,
+       0.07613
+      ],
+      [
+       -0.04774,
+       0.07202
+      ],
+      [
+       -0.05761,
+       0.08601
+      ],
+      [
+       -0.06173,
+       0.08189
+      ],
+      [
+       -0.06502,
+       0.08436
+      ],
+      [
+       -0.07737,
+       0.08354
+      ],
+      [
+       -0.07531,
+       0.09218
+      ],
+      [
+       -0.07778,
+       0.09465
+      ],
+      [
+       -0.07942,
+       0.11111
+      ],
+      [
+       -0.07202,
+       0.1177
+      ],
+      [
+       -0.0749,
+       0.12058
+      ],
+      [
+       -0.0823,
+       0.11811
+      ],
+      [
+       -0.09588,
+       0.13333
+      ],
+      [
+       -0.0679,
+       0.16296
+      ],
+      [
+       -0.08148,
+       0.17737
+      ],
+      [
+       -0.08848,
+       0.18025
+      ],
+      [
+       -0.08313,
+       0.17984
+      ],
+      [
+       -0.08272,
+       0.18519
+      ],
+      [
+       -0.07407,
+       0.193
+      ],
+      [
+       -0.0716,
+       0.18971
+      ],
+      [
+       -0.06173,
+       0.18889
+      ],
+      [
+       -0.06132,
+       0.18272
+      ],
+      [
+       -0.05761,
+       0.17984
+      ],
+      [
+       -0.04856,
+       0.18066
+      ],
+      [
+       -0.04486,
+       0.18848
+      ],
+      [
+       -0.03457,
+       0.19547
+      ],
+      [
+       0.00453,
+       0.1572
+      ],
+      [
+       -0.02757,
+       0.1251
+      ],
+      [
+       -0.0177,
+       0.11358
+      ],
+      [
+       -0.02099,
+       0.10782
+      ],
+      [
+       -0.01934,
+       0.10453
+      ],
+      [
+       -0.02346,
+       0.10041
+      ],
+      [
+       -0.02016,
+       0.08971
+      ],
+      [
+       -0.01193,
+       0.08642
+      ],
+      [
+       -0.01605,
+       0.08313
+      ],
+      [
+       -0.01646,
+       0.07531
+      ],
+      [
+       -0.02058,
+       0.07366
+      ],
+      [
+       -0.02305,
+       0.07613
+      ],
+      [
+       -0.03045,
+       0.06955
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "PoliceStation",
+    "name": "경찰서",
+    "areaId": 100,
+    "cells": 1,
+    "neighbours": [
+     "Alley",
+     "FireStation",
+     "Temple"
+    ],
+    "center": [
+     0.04444,
+     0.1572
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.06502,
+       0.10905
+      ],
+      [
+       0.05267,
+       0.11152
+      ],
+      [
+       0.00617,
+       0.1572
+      ],
+      [
+       0.00947,
+       0.16049
+      ],
+      [
+       0.007,
+       0.17119
+      ],
+      [
+       0.01399,
+       0.1749
+      ],
+      [
+       0.01975,
+       0.17078
+      ],
+      [
+       0.0284,
+       0.17942
+      ],
+      [
+       0.0284,
+       0.18354
+      ],
+      [
+       0.03416,
+       0.18848
+      ],
+      [
+       0.03498,
+       0.19424
+      ],
+      [
+       0.03086,
+       0.20412
+      ],
+      [
+       0.02551,
+       0.20617
+      ],
+      [
+       0.02305,
+       0.21111
+      ],
+      [
+       0.01811,
+       0.20782
+      ],
+      [
+       0.0144,
+       0.21152
+      ],
+      [
+       0.01605,
+       0.22963
+      ],
+      [
+       0.00453,
+       0.23457
+      ],
+      [
+       0.01358,
+       0.24362
+      ],
+      [
+       -0.00288,
+       0.26008
+      ],
+      [
+       0.00247,
+       0.26626
+      ],
+      [
+       0.00823,
+       0.26626
+      ],
+      [
+       0.02263,
+       0.25267
+      ],
+      [
+       0.0251,
+       0.24691
+      ],
+      [
+       0.02181,
+       0.2428
+      ],
+      [
+       0.03045,
+       0.23251
+      ],
+      [
+       0.03292,
+       0.23663
+      ],
+      [
+       0.03786,
+       0.23333
+      ],
+      [
+       0.04856,
+       0.23498
+      ],
+      [
+       0.05185,
+       0.23086
+      ],
+      [
+       0.05844,
+       0.23498
+      ],
+      [
+       0.0893,
+       0.20412
+      ],
+      [
+       0.0893,
+       0.20082
+      ],
+      [
+       0.06461,
+       0.17531
+      ],
+      [
+       0.08971,
+       0.15021
+      ],
+      [
+       0.09383,
+       0.15185
+      ],
+      [
+       0.10988,
+       0.13498
+      ],
+      [
+       0.09465,
+       0.11893
+      ],
+      [
+       0.0823,
+       0.11235
+      ],
+      [
+       0.07407,
+       0.11811
+      ],
+      [
+       0.06502,
+       0.10905
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Temple",
+    "name": "절",
+    "areaId": 130,
+    "cells": 2,
+    "neighbours": [
+     "FireStation",
+     "PoliceStation",
+     "Pond",
+     "Stream"
+    ],
+    "center": [
+     0.14568,
+     0.13169
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.16543,
+       0.0251
+      ],
+      [
+       0.15926,
+       0.02716
+      ],
+      [
+       0.15926,
+       0.03621
+      ],
+      [
+       0.16255,
+       0.04774
+      ],
+      [
+       0.16831,
+       0.05185
+      ],
+      [
+       0.17325,
+       0.06584
+      ],
+      [
+       0.17078,
+       0.0749
+      ],
+      [
+       0.16749,
+       0.07737
+      ],
+      [
+       0.16667,
+       0.08477
+      ],
+      [
+       0.16049,
+       0.0893
+      ],
+      [
+       0.15391,
+       0.08683
+      ],
+      [
+       0.15062,
+       0.08025
+      ],
+      [
+       0.13333,
+       0.09753
+      ],
+      [
+       0.12593,
+       0.09012
+      ],
+      [
+       0.11852,
+       0.09506
+      ],
+      [
+       0.11646,
+       0.093
+      ],
+      [
+       0.1177,
+       0.08683
+      ],
+      [
+       0.11193,
+       0.09012
+      ],
+      [
+       0.10617,
+       0.0893
+      ],
+      [
+       0.10206,
+       0.09506
+      ],
+      [
+       0.07819,
+       0.07119
+      ],
+      [
+       0.07078,
+       0.07778
+      ],
+      [
+       0.06255,
+       0.07119
+      ],
+      [
+       0.05062,
+       0.0823
+      ],
+      [
+       0.06214,
+       0.09547
+      ],
+      [
+       0.05473,
+       0.10288
+      ],
+      [
+       0.05597,
+       0.10988
+      ],
+      [
+       0.06502,
+       0.10905
+      ],
+      [
+       0.07407,
+       0.11811
+      ],
+      [
+       0.0823,
+       0.11235
+      ],
+      [
+       0.09465,
+       0.11893
+      ],
+      [
+       0.10988,
+       0.13498
+      ],
+      [
+       0.09383,
+       0.15185
+      ],
+      [
+       0.08971,
+       0.15021
+      ],
+      [
+       0.06461,
+       0.17531
+      ],
+      [
+       0.08971,
+       0.20288
+      ],
+      [
+       0.09424,
+       0.19753
+      ],
+      [
+       0.09259,
+       0.19342
+      ],
+      [
+       0.09835,
+       0.1893
+      ],
+      [
+       0.09753,
+       0.18436
+      ],
+      [
+       0.09424,
+       0.18354
+      ],
+      [
+       0.09959,
+       0.18313
+      ],
+      [
+       0.10947,
+       0.17407
+      ],
+      [
+       0.1144,
+       0.17407
+      ],
+      [
+       0.12593,
+       0.18395
+      ],
+      [
+       0.1358,
+       0.17407
+      ],
+      [
+       0.15144,
+       0.17737
+      ],
+      [
+       0.17037,
+       0.15844
+      ],
+      [
+       0.19588,
+       0.15844
+      ],
+      [
+       0.20206,
+       0.15391
+      ],
+      [
+       0.20206,
+       0.1358
+      ],
+      [
+       0.1963,
+       0.13251
+      ],
+      [
+       0.20453,
+       0.12346
+      ],
+      [
+       0.20288,
+       0.11934
+      ],
+      [
+       0.20782,
+       0.11358
+      ],
+      [
+       0.20535,
+       0.11029
+      ],
+      [
+       0.21605,
+       0.10041
+      ],
+      [
+       0.2177,
+       0.09547
+      ],
+      [
+       0.21523,
+       0.09465
+      ],
+      [
+       0.22016,
+       0.08889
+      ],
+      [
+       0.193,
+       0.06091
+      ],
+      [
+       0.207,
+       0.05844
+      ],
+      [
+       0.207,
+       0.03704
+      ],
+      [
+       0.19177,
+       0.03663
+      ],
+      [
+       0.18519,
+       0.03251
+      ],
+      [
+       0.17613,
+       0.03745
+      ],
+      [
+       0.16543,
+       0.0251
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "School",
+    "name": "학교",
+    "areaId": 190,
+    "cells": 1,
+    "neighbours": [
+     "Archery",
+     "GasStation",
+     "Hotel",
+     "Laboratory"
+    ],
+    "center": [
+     -0.10453,
+     0.09136
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.0642,
+       0.02428
+      ],
+      [
+       -0.07078,
+       0.02757
+      ],
+      [
+       -0.07572,
+       0.02593
+      ],
+      [
+       -0.08971,
+       0.03909
+      ],
+      [
+       -0.09383,
+       0.03663
+      ],
+      [
+       -0.09506,
+       0.04527
+      ],
+      [
+       -0.13951,
+       0.08889
+      ],
+      [
+       -0.13621,
+       0.09465
+      ],
+      [
+       -0.13704,
+       0.10206
+      ],
+      [
+       -0.13128,
+       0.107
+      ],
+      [
+       -0.13045,
+       0.11358
+      ],
+      [
+       -0.12099,
+       0.11317
+      ],
+      [
+       -0.11399,
+       0.12099
+      ],
+      [
+       -0.11481,
+       0.13086
+      ],
+      [
+       -0.11152,
+       0.13663
+      ],
+      [
+       -0.11646,
+       0.13992
+      ],
+      [
+       -0.11235,
+       0.14897
+      ],
+      [
+       -0.11975,
+       0.15391
+      ],
+      [
+       -0.11893,
+       0.1572
+      ],
+      [
+       -0.11111,
+       0.15844
+      ],
+      [
+       -0.10123,
+       0.16502
+      ],
+      [
+       -0.09794,
+       0.16337
+      ],
+      [
+       -0.09506,
+       0.16626
+      ],
+      [
+       -0.09671,
+       0.17366
+      ],
+      [
+       -0.09053,
+       0.18066
+      ],
+      [
+       -0.08148,
+       0.17737
+      ],
+      [
+       -0.0679,
+       0.16296
+      ],
+      [
+       -0.09588,
+       0.13416
+      ],
+      [
+       -0.0823,
+       0.11811
+      ],
+      [
+       -0.0749,
+       0.12058
+      ],
+      [
+       -0.07202,
+       0.1177
+      ],
+      [
+       -0.07942,
+       0.11111
+      ],
+      [
+       -0.07778,
+       0.09465
+      ],
+      [
+       -0.07531,
+       0.09218
+      ],
+      [
+       -0.07531,
+       0.08642
+      ],
+      [
+       -0.07778,
+       0.08395
+      ],
+      [
+       -0.06502,
+       0.08436
+      ],
+      [
+       -0.06173,
+       0.08189
+      ],
+      [
+       -0.05761,
+       0.08601
+      ],
+      [
+       -0.04774,
+       0.07202
+      ],
+      [
+       -0.04198,
+       0.07613
+      ],
+      [
+       -0.03704,
+       0.07449
+      ],
+      [
+       -0.03539,
+       0.06955
+      ],
+      [
+       -0.03045,
+       0.06955
+      ],
+      [
+       -0.02305,
+       0.07613
+      ],
+      [
+       -0.02058,
+       0.07366
+      ],
+      [
+       -0.01564,
+       0.07531
+      ],
+      [
+       -0.01358,
+       0.07243
+      ],
+      [
+       -0.01481,
+       0.0679
+      ],
+      [
+       -0.02634,
+       0.06296
+      ],
+      [
+       -0.0321,
+       0.05556
+      ],
+      [
+       -0.03621,
+       0.06049
+      ],
+      [
+       -0.04362,
+       0.05638
+      ],
+      [
+       -0.05185,
+       0.0572
+      ],
+      [
+       -0.05062,
+       0.04938
+      ],
+      [
+       -0.05679,
+       0.04321
+      ],
+      [
+       -0.06296,
+       0.04115
+      ],
+      [
+       -0.06049,
+       0.03951
+      ],
+      [
+       -0.05802,
+       0.02881
+      ],
+      [
+       -0.0642,
+       0.02428
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "FireStation",
+    "name": "소방서",
+    "areaId": 110,
+    "cells": 1,
+    "neighbours": [
+     "GasStation",
+     "Laboratory",
+     "PoliceStation",
+     "Pond",
+     "Temple"
+    ],
+    "center": [
+     0.01728,
+     0.10123
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.00247,
+       0.04403
+      ],
+      [
+       -0.00947,
+       0.06008
+      ],
+      [
+       -0.00864,
+       0.06255
+      ],
+      [
+       -0.0144,
+       0.06749
+      ],
+      [
+       -0.01605,
+       0.08313
+      ],
+      [
+       -0.01193,
+       0.08642
+      ],
+      [
+       -0.02016,
+       0.08971
+      ],
+      [
+       -0.02346,
+       0.10041
+      ],
+      [
+       -0.01934,
+       0.10453
+      ],
+      [
+       -0.02099,
+       0.10782
+      ],
+      [
+       -0.0177,
+       0.11358
+      ],
+      [
+       -0.02757,
+       0.1251
+      ],
+      [
+       0.00658,
+       0.15679
+      ],
+      [
+       0.0572,
+       0.10782
+      ],
+      [
+       0.05473,
+       0.10288
+      ],
+      [
+       0.06214,
+       0.09547
+      ],
+      [
+       0.05021,
+       0.08272
+      ],
+      [
+       0.04691,
+       0.08272
+      ],
+      [
+       0.04115,
+       0.07531
+      ],
+      [
+       0.03457,
+       0.07284
+      ],
+      [
+       0.03045,
+       0.06543
+      ],
+      [
+       0.01317,
+       0.06296
+      ],
+      [
+       0.00947,
+       0.05926
+      ],
+      [
+       0.01029,
+       0.05185
+      ],
+      [
+       0.00247,
+       0.04403
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Hotel",
+    "name": "호텔",
+    "areaId": 90,
+    "cells": 2,
+    "neighbours": [
+     "Archery",
+     "Forest",
+     "SandyBeach",
+     "School"
+    ],
+    "center": [
+     -0.14897,
+     0.0321
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.13663,
+       -0.03086
+      ],
+      [
+       -0.15391,
+       -0.01605
+      ],
+      [
+       -0.15802,
+       -0.01852
+      ],
+      [
+       -0.16626,
+       -0.01193
+      ],
+      [
+       -0.17284,
+       -0.01687
+      ],
+      [
+       -0.19465,
+       0.00494
+      ],
+      [
+       -0.19136,
+       0.00823
+      ],
+      [
+       -0.19177,
+       0.01276
+      ],
+      [
+       -0.19342,
+       0.01193
+      ],
+      [
+       -0.20082,
+       0.02016
+      ],
+      [
+       -0.20658,
+       0.01852
+      ],
+      [
+       -0.2107,
+       0.02099
+      ],
+      [
+       -0.22058,
+       0.03416
+      ],
+      [
+       -0.23457,
+       0.03416
+      ],
+      [
+       -0.23498,
+       0.03868
+      ],
+      [
+       -0.23992,
+       0.04362
+      ],
+      [
+       -0.23786,
+       0.05885
+      ],
+      [
+       -0.21399,
+       0.06214
+      ],
+      [
+       -0.1963,
+       0.07984
+      ],
+      [
+       -0.19465,
+       0.08724
+      ],
+      [
+       -0.18683,
+       0.08848
+      ],
+      [
+       -0.18313,
+       0.09218
+      ],
+      [
+       -0.18477,
+       0.09547
+      ],
+      [
+       -0.16955,
+       0.1107
+      ],
+      [
+       -0.15062,
+       0.09177
+      ],
+      [
+       -0.14486,
+       0.09506
+      ],
+      [
+       -0.09506,
+       0.04527
+      ],
+      [
+       -0.09424,
+       0.03704
+      ],
+      [
+       -0.08807,
+       0.03827
+      ],
+      [
+       -0.07778,
+       0.02716
+      ],
+      [
+       -0.13663,
+       -0.03086
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Pond",
+    "name": "연못",
+    "areaId": 30,
+    "cells": 1,
+    "neighbours": [
+     "FireStation",
+     "Laboratory",
+     "Stream",
+     "Temple"
+    ],
+    "center": [
+     0.05926,
+     0.04938
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.06831,
+       -0.00864
+      ],
+      [
+       0.06543,
+       -0.00658
+      ],
+      [
+       0.06543,
+       0.00082
+      ],
+      [
+       0.07119,
+       0.00741
+      ],
+      [
+       0.03704,
+       0.03992
+      ],
+      [
+       0.02222,
+       0.0251
+      ],
+      [
+       0.01317,
+       0.03663
+      ],
+      [
+       0.00288,
+       0.04362
+      ],
+      [
+       0.01029,
+       0.05185
+      ],
+      [
+       0.00947,
+       0.05926
+      ],
+      [
+       0.01317,
+       0.06296
+      ],
+      [
+       0.03045,
+       0.06543
+      ],
+      [
+       0.03416,
+       0.07243
+      ],
+      [
+       0.04115,
+       0.07531
+      ],
+      [
+       0.04691,
+       0.08272
+      ],
+      [
+       0.05021,
+       0.08272
+      ],
+      [
+       0.06255,
+       0.07119
+      ],
+      [
+       0.07078,
+       0.07778
+      ],
+      [
+       0.09259,
+       0.05597
+      ],
+      [
+       0.07942,
+       0.04115
+      ],
+      [
+       0.07942,
+       0.03457
+      ],
+      [
+       0.0823,
+       0.03251
+      ],
+      [
+       0.08971,
+       0.03745
+      ],
+      [
+       0.0963,
+       0.0358
+      ],
+      [
+       0.09588,
+       0.02058
+      ],
+      [
+       0.093,
+       0.01852
+      ],
+      [
+       0.09053,
+       0.02099
+      ],
+      [
+       0.08807,
+       0.01605
+      ],
+      [
+       0.08477,
+       0.01605
+      ],
+      [
+       0.08313,
+       0.01934
+      ],
+      [
+       0.08025,
+       0.01728
+      ],
+      [
+       0.08354,
+       0.01235
+      ],
+      [
+       0.07942,
+       0.00494
+      ],
+      [
+       0.08025,
+       -0.0
+      ],
+      [
+       0.07325,
+       -0.00782
+      ],
+      [
+       0.06831,
+       -0.00864
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Stream",
+    "name": "개울",
+    "areaId": 40,
+    "cells": 2,
+    "neighbours": [
+     "Cemetery",
+     "Hospital",
+     "Laboratory",
+     "Pond",
+     "Temple"
+    ],
+    "center": [
+     0.12757,
+     0.0535
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.10123,
+       -0.04897
+      ],
+      [
+       0.09877,
+       -0.04897
+      ],
+      [
+       0.02263,
+       0.02551
+      ],
+      [
+       0.03704,
+       0.03992
+      ],
+      [
+       0.06955,
+       0.00988
+      ],
+      [
+       0.07119,
+       0.00658
+      ],
+      [
+       0.06543,
+       0.00082
+      ],
+      [
+       0.06543,
+       -0.00658
+      ],
+      [
+       0.06749,
+       -0.00864
+      ],
+      [
+       0.07325,
+       -0.00782
+      ],
+      [
+       0.08025,
+       -0.0
+      ],
+      [
+       0.07942,
+       0.00494
+      ],
+      [
+       0.08354,
+       0.01235
+      ],
+      [
+       0.08025,
+       0.01728
+      ],
+      [
+       0.08313,
+       0.01934
+      ],
+      [
+       0.08477,
+       0.01605
+      ],
+      [
+       0.08807,
+       0.01605
+      ],
+      [
+       0.09053,
+       0.02099
+      ],
+      [
+       0.093,
+       0.01852
+      ],
+      [
+       0.09588,
+       0.02058
+      ],
+      [
+       0.0963,
+       0.0358
+      ],
+      [
+       0.08971,
+       0.03745
+      ],
+      [
+       0.0823,
+       0.03251
+      ],
+      [
+       0.07942,
+       0.03457
+      ],
+      [
+       0.07942,
+       0.04115
+      ],
+      [
+       0.09259,
+       0.05597
+      ],
+      [
+       0.0786,
+       0.0716
+      ],
+      [
+       0.10206,
+       0.09506
+      ],
+      [
+       0.10617,
+       0.0893
+      ],
+      [
+       0.11193,
+       0.09012
+      ],
+      [
+       0.1177,
+       0.08683
+      ],
+      [
+       0.11646,
+       0.093
+      ],
+      [
+       0.11852,
+       0.09506
+      ],
+      [
+       0.12593,
+       0.09012
+      ],
+      [
+       0.13333,
+       0.09753
+      ],
+      [
+       0.15062,
+       0.08025
+      ],
+      [
+       0.15391,
+       0.08683
+      ],
+      [
+       0.16049,
+       0.0893
+      ],
+      [
+       0.16667,
+       0.08477
+      ],
+      [
+       0.17325,
+       0.06173
+      ],
+      [
+       0.16831,
+       0.05185
+      ],
+      [
+       0.16255,
+       0.04774
+      ],
+      [
+       0.15926,
+       0.02716
+      ],
+      [
+       0.16543,
+       0.0251
+      ],
+      [
+       0.17695,
+       0.03745
+      ],
+      [
+       0.18477,
+       0.03045
+      ],
+      [
+       0.18313,
+       0.02222
+      ],
+      [
+       0.16626,
+       0.00617
+      ],
+      [
+       0.15391,
+       0.01605
+      ],
+      [
+       0.13951,
+       0.00165
+      ],
+      [
+       0.14444,
+       -0.00576
+      ],
+      [
+       0.10123,
+       -0.04897
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Laboratory",
+    "name": "연구소",
+    "areaId": 1000,
+    "cells": 2,
+    "neighbours": [
+     "Cemetery",
+     "FireStation",
+     "Forest",
+     "Pond",
+     "School",
+     "Stream"
+    ],
+    "center": [
+     -0.01235,
+     0.00658
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.01235,
+       -0.04979
+      ],
+      [
+       -0.02346,
+       -0.03868
+      ],
+      [
+       -0.02263,
+       -0.03539
+      ],
+      [
+       -0.03292,
+       -0.0251
+      ],
+      [
+       -0.03786,
+       -0.02428
+      ],
+      [
+       -0.04239,
+       -0.01975
+      ],
+      [
+       -0.04321,
+       -0.01481
+      ],
+      [
+       -0.0535,
+       -0.00453
+      ],
+      [
+       -0.05761,
+       -0.00535
+      ],
+      [
+       -0.0679,
+       0.00494
+      ],
+      [
+       -0.06296,
+       0.01235
+      ],
+      [
+       -0.07531,
+       0.02551
+      ],
+      [
+       -0.07078,
+       0.02757
+      ],
+      [
+       -0.0642,
+       0.02428
+      ],
+      [
+       -0.05802,
+       0.02881
+      ],
+      [
+       -0.06049,
+       0.03951
+      ],
+      [
+       -0.06296,
+       0.04115
+      ],
+      [
+       -0.05679,
+       0.04321
+      ],
+      [
+       -0.05062,
+       0.04938
+      ],
+      [
+       -0.05185,
+       0.0572
+      ],
+      [
+       -0.04362,
+       0.05638
+      ],
+      [
+       -0.03621,
+       0.06049
+      ],
+      [
+       -0.0321,
+       0.05556
+      ],
+      [
+       -0.02634,
+       0.06296
+      ],
+      [
+       -0.01646,
+       0.0679
+      ],
+      [
+       -0.00864,
+       0.06255
+      ],
+      [
+       -0.00947,
+       0.06008
+      ],
+      [
+       -0.00123,
+       0.05103
+      ],
+      [
+       -0.00123,
+       0.04774
+      ],
+      [
+       0.0144,
+       0.03539
+      ],
+      [
+       0.02881,
+       0.0177
+      ],
+      [
+       0.03292,
+       0.01687
+      ],
+      [
+       0.04239,
+       0.00741
+      ],
+      [
+       0.03704,
+       -0.00041
+      ],
+      [
+       0.02963,
+       -0.0037
+      ],
+      [
+       0.01934,
+       -0.01399
+      ],
+      [
+       0.01934,
+       -0.01811
+      ],
+      [
+       0.01235,
+       -0.0251
+      ],
+      [
+       0.00905,
+       -0.0251
+      ],
+      [
+       -0.00123,
+       -0.03539
+      ],
+      [
+       -0.007,
+       -0.04691
+      ],
+      [
+       -0.01235,
+       -0.04979
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "SandyBeach",
+    "name": "모래사장",
+    "areaId": 50,
+    "cells": 1,
+    "neighbours": [
+     "Forest",
+     "Hotel",
+     "Uptown"
+    ],
+    "center": [
+     -0.14156,
+     -0.06091
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.1358,
+       -0.1
+      ],
+      [
+       -0.14239,
+       -0.09177
+      ],
+      [
+       -0.15802,
+       -0.0893
+      ],
+      [
+       -0.16379,
+       -0.08436
+      ],
+      [
+       -0.16955,
+       -0.08519
+      ],
+      [
+       -0.17202,
+       -0.08272
+      ],
+      [
+       -0.17531,
+       -0.08601
+      ],
+      [
+       -0.18395,
+       -0.08148
+      ],
+      [
+       -0.18107,
+       -0.07778
+      ],
+      [
+       -0.17449,
+       -0.07778
+      ],
+      [
+       -0.17407,
+       -0.07572
+      ],
+      [
+       -0.17737,
+       -0.06749
+      ],
+      [
+       -0.18066,
+       -0.06667
+      ],
+      [
+       -0.17984,
+       -0.05926
+      ],
+      [
+       -0.19012,
+       -0.05638
+      ],
+      [
+       -0.19383,
+       -0.05021
+      ],
+      [
+       -0.19465,
+       -0.04198
+      ],
+      [
+       -0.18765,
+       -0.03909
+      ],
+      [
+       -0.18395,
+       -0.0321
+      ],
+      [
+       -0.18807,
+       -0.02634
+      ],
+      [
+       -0.18642,
+       -0.01646
+      ],
+      [
+       -0.19095,
+       -0.00864
+      ],
+      [
+       -0.18272,
+       -0.007
+      ],
+      [
+       -0.17284,
+       -0.01687
+      ],
+      [
+       -0.16626,
+       -0.01193
+      ],
+      [
+       -0.15802,
+       -0.01852
+      ],
+      [
+       -0.15391,
+       -0.01605
+      ],
+      [
+       -0.13909,
+       -0.03086
+      ],
+      [
+       -0.1284,
+       -0.02346
+      ],
+      [
+       -0.09506,
+       -0.05761
+      ],
+      [
+       -0.1358,
+       -0.1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Forest",
+    "name": "숲",
+    "areaId": 160,
+    "cells": 1,
+    "neighbours": [
+     "Cemetery",
+     "Church",
+     "Hotel",
+     "Laboratory",
+     "SandyBeach",
+     "Uptown"
+    ],
+    "center": [
+     -0.05267,
+     -0.0535
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.04115,
+       -0.10988
+      ],
+      [
+       -0.12881,
+       -0.02305
+      ],
+      [
+       -0.07737,
+       0.02757
+      ],
+      [
+       -0.06296,
+       0.01235
+      ],
+      [
+       -0.0679,
+       0.00494
+      ],
+      [
+       -0.05761,
+       -0.00535
+      ],
+      [
+       -0.0535,
+       -0.00453
+      ],
+      [
+       -0.04321,
+       -0.01481
+      ],
+      [
+       -0.04239,
+       -0.01975
+      ],
+      [
+       -0.03786,
+       -0.02428
+      ],
+      [
+       -0.03292,
+       -0.0251
+      ],
+      [
+       -0.02263,
+       -0.03539
+      ],
+      [
+       -0.02346,
+       -0.03868
+      ],
+      [
+       -0.01235,
+       -0.04979
+      ],
+      [
+       -0.00658,
+       -0.04733
+      ],
+      [
+       0.007,
+       -0.06173
+      ],
+      [
+       -0.04115,
+       -0.10988
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Cemetery",
+    "name": "묘지",
+    "areaId": 150,
+    "cells": 1,
+    "neighbours": [
+     "Church",
+     "Factory",
+     "Forest",
+     "Hospital",
+     "Laboratory",
+     "Stream"
+    ],
+    "center": [
+     0.05185,
+     -0.05432
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.08066,
+       -0.11235
+      ],
+      [
+       0.05926,
+       -0.09177
+      ],
+      [
+       0.04691,
+       -0.10082
+      ],
+      [
+       -0.00782,
+       -0.04609
+      ],
+      [
+       -0.00123,
+       -0.03868
+      ],
+      [
+       -0.00123,
+       -0.03539
+      ],
+      [
+       0.01934,
+       -0.01811
+      ],
+      [
+       0.01934,
+       -0.01399
+      ],
+      [
+       0.0428,
+       0.00535
+      ],
+      [
+       0.09877,
+       -0.04897
+      ],
+      [
+       0.10535,
+       -0.04568
+      ],
+      [
+       0.12387,
+       -0.0642
+      ],
+      [
+       0.11687,
+       -0.07119
+      ],
+      [
+       0.11605,
+       -0.06872
+      ],
+      [
+       0.10864,
+       -0.06708
+      ],
+      [
+       0.10453,
+       -0.07695
+      ],
+      [
+       0.09877,
+       -0.07531
+      ],
+      [
+       0.08189,
+       -0.07737
+      ],
+      [
+       0.07695,
+       -0.08313
+      ],
+      [
+       0.07942,
+       -0.09136
+      ],
+      [
+       0.07449,
+       -0.09712
+      ],
+      [
+       0.07819,
+       -0.10329
+      ],
+      [
+       0.08313,
+       -0.10082
+      ],
+      [
+       0.08683,
+       -0.10453
+      ],
+      [
+       0.08066,
+       -0.11235
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Hospital",
+    "name": "병원",
+    "areaId": 120,
+    "cells": 1,
+    "neighbours": [
+     "Cemetery",
+     "Factory",
+     "Stream"
+    ],
+    "center": [
+     0.15391,
+     -0.03621
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.14321,
+       -0.08354
+      ],
+      [
+       0.10576,
+       -0.04444
+      ],
+      [
+       0.14444,
+       -0.00576
+      ],
+      [
+       0.13951,
+       0.00165
+      ],
+      [
+       0.15473,
+       0.01605
+      ],
+      [
+       0.16502,
+       0.00576
+      ],
+      [
+       0.16255,
+       0.00247
+      ],
+      [
+       0.16996,
+       -0.00494
+      ],
+      [
+       0.17037,
+       -0.01111
+      ],
+      [
+       0.17695,
+       -0.01276
+      ],
+      [
+       0.18189,
+       -0.01029
+      ],
+      [
+       0.19136,
+       -0.01564
+      ],
+      [
+       0.18683,
+       -0.0251
+      ],
+      [
+       0.18189,
+       -0.02263
+      ],
+      [
+       0.17984,
+       -0.02551
+      ],
+      [
+       0.19136,
+       -0.03786
+      ],
+      [
+       0.16872,
+       -0.06379
+      ],
+      [
+       0.15802,
+       -0.06461
+      ],
+      [
+       0.15432,
+       -0.0749
+      ],
+      [
+       0.14321,
+       -0.08354
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Uptown",
+    "name": "고급 주택가",
+    "areaId": 60,
+    "cells": 1,
+    "neighbours": [
+     "Church",
+     "Forest",
+     "SandyBeach",
+     "Warehouse"
+    ],
+    "center": [
+     -0.09465,
+     -0.093
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.02881,
+       -0.13128
+      ],
+      [
+       -0.05103,
+       -0.12387
+      ],
+      [
+       -0.0535,
+       -0.12058
+      ],
+      [
+       -0.06173,
+       -0.1214
+      ],
+      [
+       -0.06379,
+       -0.11276
+      ],
+      [
+       -0.06049,
+       -0.11111
+      ],
+      [
+       -0.06049,
+       -0.107
+      ],
+      [
+       -0.06831,
+       -0.10823
+      ],
+      [
+       -0.07243,
+       -0.10412
+      ],
+      [
+       -0.07695,
+       -0.10947
+      ],
+      [
+       -0.06955,
+       -0.11276
+      ],
+      [
+       -0.06955,
+       -0.11605
+      ],
+      [
+       -0.07531,
+       -0.12016
+      ],
+      [
+       -0.07366,
+       -0.12593
+      ],
+      [
+       -0.07572,
+       -0.12881
+      ],
+      [
+       -0.07737,
+       -0.12551
+      ],
+      [
+       -0.08395,
+       -0.13045
+      ],
+      [
+       -0.0963,
+       -0.11893
+      ],
+      [
+       -0.10041,
+       -0.12222
+      ],
+      [
+       -0.10453,
+       -0.11811
+      ],
+      [
+       -0.1144,
+       -0.11811
+      ],
+      [
+       -0.11852,
+       -0.11481
+      ],
+      [
+       -0.12346,
+       -0.11811
+      ],
+      [
+       -0.13498,
+       -0.11811
+      ],
+      [
+       -0.13827,
+       -0.11235
+      ],
+      [
+       -0.14444,
+       -0.10864
+      ],
+      [
+       -0.09383,
+       -0.05885
+      ],
+      [
+       -0.03704,
+       -0.11564
+      ],
+      [
+       -0.02428,
+       -0.12181
+      ],
+      [
+       -0.02922,
+       -0.12757
+      ],
+      [
+       -0.02881,
+       -0.13128
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Church",
+    "name": "성당",
+    "areaId": 180,
+    "cells": 1,
+    "neighbours": [
+     "Cemetery",
+     "Factory",
+     "Forest",
+     "Harbor",
+     "Uptown",
+     "Warehouse"
+    ],
+    "center": [
+     0.00741,
+     -0.10453
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.06667,
+       -0.16008
+      ],
+      [
+       0.0572,
+       -0.15144
+      ],
+      [
+       0.05885,
+       -0.14897
+      ],
+      [
+       0.05514,
+       -0.12963
+      ],
+      [
+       0.03704,
+       -0.12798
+      ],
+      [
+       0.0358,
+       -0.13004
+      ],
+      [
+       0.03827,
+       -0.13251
+      ],
+      [
+       0.03128,
+       -0.13951
+      ],
+      [
+       0.02798,
+       -0.13786
+      ],
+      [
+       0.02346,
+       -0.14074
+      ],
+      [
+       0.02346,
+       -0.15062
+      ],
+      [
+       0.01728,
+       -0.15679
+      ],
+      [
+       -0.01152,
+       -0.12798
+      ],
+      [
+       -0.03704,
+       -0.11564
+      ],
+      [
+       -0.04156,
+       -0.11029
+      ],
+      [
+       0.00741,
+       -0.06214
+      ],
+      [
+       0.04691,
+       -0.10082
+      ],
+      [
+       0.05926,
+       -0.09177
+      ],
+      [
+       0.09506,
+       -0.12757
+      ],
+      [
+       0.09588,
+       -0.13086
+      ],
+      [
+       0.09259,
+       -0.13498
+      ],
+      [
+       0.06667,
+       -0.16008
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Factory",
+    "name": "공장",
+    "areaId": 170,
+    "cells": 2,
+    "neighbours": [
+     "Barge",
+     "Cemetery",
+     "Church",
+     "Hospital"
+    ],
+    "center": [
+     0.13169,
+     -0.11934
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.1144,
+       -0.21029
+      ],
+      [
+       0.06379,
+       -0.16379
+      ],
+      [
+       0.09588,
+       -0.13086
+      ],
+      [
+       0.08025,
+       -0.11276
+      ],
+      [
+       0.08683,
+       -0.10453
+      ],
+      [
+       0.08313,
+       -0.10082
+      ],
+      [
+       0.08066,
+       -0.10329
+      ],
+      [
+       0.07613,
+       -0.10123
+      ],
+      [
+       0.07449,
+       -0.09712
+      ],
+      [
+       0.07942,
+       -0.09136
+      ],
+      [
+       0.07695,
+       -0.08313
+      ],
+      [
+       0.08313,
+       -0.07613
+      ],
+      [
+       0.10453,
+       -0.07695
+      ],
+      [
+       0.10864,
+       -0.06708
+      ],
+      [
+       0.11276,
+       -0.06708
+      ],
+      [
+       0.11687,
+       -0.07119
+      ],
+      [
+       0.12428,
+       -0.06461
+      ],
+      [
+       0.14321,
+       -0.08354
+      ],
+      [
+       0.15432,
+       -0.0749
+      ],
+      [
+       0.15802,
+       -0.06461
+      ],
+      [
+       0.16872,
+       -0.06379
+      ],
+      [
+       0.19177,
+       -0.03663
+      ],
+      [
+       0.19753,
+       -0.03909
+      ],
+      [
+       0.20165,
+       -0.03663
+      ],
+      [
+       0.20864,
+       -0.04609
+      ],
+      [
+       0.16914,
+       -0.08642
+      ],
+      [
+       0.17654,
+       -0.09218
+      ],
+      [
+       0.18066,
+       -0.10535
+      ],
+      [
+       0.21276,
+       -0.1358
+      ],
+      [
+       0.21605,
+       -0.14239
+      ],
+      [
+       0.19095,
+       -0.16337
+      ],
+      [
+       0.18025,
+       -0.15185
+      ],
+      [
+       0.17119,
+       -0.14691
+      ],
+      [
+       0.1716,
+       -0.14321
+      ],
+      [
+       0.16543,
+       -0.13868
+      ],
+      [
+       0.14691,
+       -0.15967
+      ],
+      [
+       0.15103,
+       -0.17037
+      ],
+      [
+       0.1428,
+       -0.17695
+      ],
+      [
+       0.1428,
+       -0.18272
+      ],
+      [
+       0.13333,
+       -0.19136
+      ],
+      [
+       0.1284,
+       -0.19218
+      ],
+      [
+       0.12757,
+       -0.19547
+      ],
+      [
+       0.12263,
+       -0.19547
+      ],
+      [
+       0.11605,
+       -0.20041
+      ],
+      [
+       0.1144,
+       -0.21029
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Warehouse",
+    "name": "창고",
+    "areaId": 20,
+    "cells": 1,
+    "neighbours": [
+     "Church",
+     "Harbor",
+     "Uptown"
+    ],
+    "center": [
+     -0.06337,
+     -0.15309
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.04691,
+       -0.193
+      ],
+      [
+       -0.05514,
+       -0.18889
+      ],
+      [
+       -0.05679,
+       -0.18477
+      ],
+      [
+       -0.06667,
+       -0.18066
+      ],
+      [
+       -0.06955,
+       -0.18272
+      ],
+      [
+       -0.06914,
+       -0.19053
+      ],
+      [
+       -0.07737,
+       -0.18807
+      ],
+      [
+       -0.08971,
+       -0.17819
+      ],
+      [
+       -0.09383,
+       -0.17901
+      ],
+      [
+       -0.09794,
+       -0.16831
+      ],
+      [
+       -0.10288,
+       -0.16667
+      ],
+      [
+       -0.10864,
+       -0.17078
+      ],
+      [
+       -0.11235,
+       -0.16626
+      ],
+      [
+       -0.10905,
+       -0.16461
+      ],
+      [
+       -0.11646,
+       -0.1572
+      ],
+      [
+       -0.10905,
+       -0.15062
+      ],
+      [
+       -0.11235,
+       -0.14321
+      ],
+      [
+       -0.10905,
+       -0.1358
+      ],
+      [
+       -0.09712,
+       -0.13539
+      ],
+      [
+       -0.09506,
+       -0.13333
+      ],
+      [
+       -0.09424,
+       -0.12922
+      ],
+      [
+       -0.09753,
+       -0.1251
+      ],
+      [
+       -0.09547,
+       -0.12058
+      ],
+      [
+       -0.08477,
+       -0.13045
+      ],
+      [
+       -0.07737,
+       -0.12551
+      ],
+      [
+       -0.07531,
+       -0.1284
+      ],
+      [
+       -0.07531,
+       -0.12016
+      ],
+      [
+       -0.06955,
+       -0.11605
+      ],
+      [
+       -0.06996,
+       -0.11235
+      ],
+      [
+       -0.07695,
+       -0.10947
+      ],
+      [
+       -0.07243,
+       -0.10412
+      ],
+      [
+       -0.06831,
+       -0.10823
+      ],
+      [
+       -0.06049,
+       -0.107
+      ],
+      [
+       -0.06049,
+       -0.11111
+      ],
+      [
+       -0.06379,
+       -0.11276
+      ],
+      [
+       -0.06173,
+       -0.1214
+      ],
+      [
+       -0.0535,
+       -0.12058
+      ],
+      [
+       -0.05103,
+       -0.12387
+      ],
+      [
+       -0.04856,
+       -0.12305
+      ],
+      [
+       -0.03374,
+       -0.13128
+      ],
+      [
+       -0.02881,
+       -0.13128
+      ],
+      [
+       -0.02922,
+       -0.12757
+      ],
+      [
+       -0.02387,
+       -0.1214
+      ],
+      [
+       -0.01481,
+       -0.12551
+      ],
+      [
+       -0.00617,
+       -0.13333
+      ],
+      [
+       -0.03045,
+       -0.15679
+      ],
+      [
+       -0.0358,
+       -0.15802
+      ],
+      [
+       -0.0358,
+       -0.17119
+      ],
+      [
+       -0.04239,
+       -0.17531
+      ],
+      [
+       -0.03909,
+       -0.18272
+      ],
+      [
+       -0.0465,
+       -0.18765
+      ],
+      [
+       -0.04691,
+       -0.193
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Harbor",
+    "name": "항구",
+    "areaId": 10,
+    "cells": 2,
+    "neighbours": [
+     "Barge",
+     "Church",
+     "Warehouse"
+    ],
+    "center": [
+     0.00082,
+     -0.19506
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -0.02387,
+       -0.24979
+      ],
+      [
+       -0.0321,
+       -0.2465
+      ],
+      [
+       -0.06379,
+       -0.21564
+      ],
+      [
+       -0.05885,
+       -0.21152
+      ],
+      [
+       -0.05802,
+       -0.19918
+      ],
+      [
+       -0.04856,
+       -0.19547
+      ],
+      [
+       -0.0465,
+       -0.18765
+      ],
+      [
+       -0.03909,
+       -0.18272
+      ],
+      [
+       -0.04239,
+       -0.17531
+      ],
+      [
+       -0.0358,
+       -0.17119
+      ],
+      [
+       -0.0358,
+       -0.15802
+      ],
+      [
+       -0.03045,
+       -0.15679
+      ],
+      [
+       -0.00823,
+       -0.13457
+      ],
+      [
+       0.01728,
+       -0.15679
+      ],
+      [
+       0.02346,
+       -0.15062
+      ],
+      [
+       0.02346,
+       -0.14074
+      ],
+      [
+       0.02798,
+       -0.13786
+      ],
+      [
+       0.03128,
+       -0.13951
+      ],
+      [
+       0.03827,
+       -0.13251
+      ],
+      [
+       0.0358,
+       -0.13004
+      ],
+      [
+       0.03704,
+       -0.12798
+      ],
+      [
+       0.05514,
+       -0.12963
+      ],
+      [
+       0.05885,
+       -0.14897
+      ],
+      [
+       0.0572,
+       -0.15144
+      ],
+      [
+       0.06626,
+       -0.16049
+      ],
+      [
+       0.06214,
+       -0.16543
+      ],
+      [
+       0.06543,
+       -0.17531
+      ],
+      [
+       0.0572,
+       -0.18436
+      ],
+      [
+       0.05638,
+       -0.19424
+      ],
+      [
+       0.05391,
+       -0.19671
+      ],
+      [
+       0.0572,
+       -0.20247
+      ],
+      [
+       0.04815,
+       -0.2107
+      ],
+      [
+       0.05144,
+       -0.22551
+      ],
+      [
+       0.0321,
+       -0.24403
+      ],
+      [
+       0.02716,
+       -0.23909
+      ],
+      [
+       0.01975,
+       -0.24403
+      ],
+      [
+       0.01811,
+       -0.23992
+      ],
+      [
+       0.0107,
+       -0.2358
+      ],
+      [
+       0.00658,
+       -0.24239
+      ],
+      [
+       0.00412,
+       -0.23992
+      ],
+      [
+       -0.01564,
+       -0.24074
+      ],
+      [
+       -0.02387,
+       -0.24979
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "key": "Barge",
+    "name": "바지선",
+    "areaId": 200,
+    "cells": 1,
+    "neighbours": [
+     "Factory",
+     "Harbor"
+    ],
+    "center": [
+     0.06667,
+     -0.25844
+    ]
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0.05926,
+       -0.31564
+      ],
+      [
+       0.007,
+       -0.26502
+      ],
+      [
+       0.01481,
+       -0.26461
+      ],
+      [
+       0.01646,
+       -0.25885
+      ],
+      [
+       0.02428,
+       -0.25679
+      ],
+      [
+       0.01605,
+       -0.24938
+      ],
+      [
+       0.02222,
+       -0.24156
+      ],
+      [
+       0.02716,
+       -0.23909
+      ],
+      [
+       0.0321,
+       -0.24403
+      ],
+      [
+       0.05144,
+       -0.22551
+      ],
+      [
+       0.04815,
+       -0.2107
+      ],
+      [
+       0.0572,
+       -0.20247
+      ],
+      [
+       0.05391,
+       -0.19671
+      ],
+      [
+       0.05638,
+       -0.19424
+      ],
+      [
+       0.0572,
+       -0.18436
+      ],
+      [
+       0.06543,
+       -0.17531
+      ],
+      [
+       0.06214,
+       -0.1679
+      ],
+      [
+       0.0642,
+       -0.1642
+      ],
+      [
+       0.11358,
+       -0.21029
+      ],
+      [
+       0.11605,
+       -0.20864
+      ],
+      [
+       0.12058,
+       -0.21811
+      ],
+      [
+       0.11399,
+       -0.22222
+      ],
+      [
+       0.11646,
+       -0.22716
+      ],
+      [
+       0.1144,
+       -0.22922
+      ],
+      [
+       0.11029,
+       -0.22757
+      ],
+      [
+       0.1107,
+       -0.23374
+      ],
+      [
+       0.10329,
+       -0.24033
+      ],
+      [
+       0.10576,
+       -0.24444
+      ],
+      [
+       0.10165,
+       -0.24774
+      ],
+      [
+       0.10082,
+       -0.25267
+      ],
+      [
+       0.10412,
+       -0.25844
+      ],
+      [
+       0.10247,
+       -0.26255
+      ],
+      [
+       0.10658,
+       -0.26831
+      ],
+      [
+       0.05926,
+       -0.31564
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+};
+if (typeof module !== "undefined") module.exports = { LUMIA };
+</script>
+<script>
+// Everything derived from the traced areas: who borders whom, and where someone could be.
+(function (root, factory) {
+  const data = root.LUMIA ? root : require("./lumia-areas.js");
+  const cycle = root.GAME_CYCLE ? root : require("./data.js");
+  const api = factory(data.LUMIA, cycle.GAME_CYCLE);
+  if (typeof module !== "undefined") module.exports = api;
+  else Object.assign(root, api);
+})(typeof globalThis !== "undefined" ? globalThis : this, function (LUMIA, GAME_CYCLE) {
+  const AREAS = LUMIA.features.map((f) => f.properties);
+  const byKey = new Map(AREAS.map((a) => [a.key, a]));
+  const neighbours = new Map(AREAS.map((a) => [a.key, new Set(a.neighbours)]));
+
+  /** Polygon ring in lattice units, y down — ready to drop into an SVG path. */
+  const UNIT = 0.05;
+  const ringOf = (key) =>
+    LUMIA.features.find((f) => f.properties.key === key)
+      .geometry.coordinates[0].map(([lon, lat]) => [lon / UNIT, -lat / UNIT]);
+  const anchorOf = (key) => {
+    const [lon, lat] = byKey.get(key).center;
+    return [lon / UNIT, -lat / UNIT];
+  };
+
+  // Dijkstra from `from`, stopping at `budget` seconds. Banned areas are unreachable
+  // and cannot be passed through — a restricted zone walls off everything behind it.
+  function reachable(from, budget, hopSeconds, banned = new Set()) {
+    if (banned.has(from) || !neighbours.has(from)) return new Map();
+    const dist = new Map([[from, 0]]);
+    const queue = [[0, from]];
+    while (queue.length) {
+      queue.sort((a, b) => a[0] - b[0]);
+      const [d, cur] = queue.shift();
+      if (d > dist.get(cur)) continue;
+      for (const next of neighbours.get(cur)) {
+        if (banned.has(next)) continue;
+        const nd = d + hopSeconds;
+        if (nd <= budget && nd < (dist.get(next) ?? Infinity)) {
+          dist.set(next, nd);
+          queue.push([nd, next]);
+        }
+      }
+    }
+    return dist;
+  }
+
+  // Which day/night phase is the game in, and how long until it flips?
+  function phaseAt(elapsed) {
+    let left = Math.max(0, elapsed);
+    for (let i = 0; i < GAME_CYCLE.length; i++) {
+      const p = GAME_CYCLE[i];
+      if (left < p.duration) return { ...p, index: i, remaining: p.duration - left, over: false };
+      left -= p.duration;
+    }
+    const last = GAME_CYCLE[GAME_CYCLE.length - 1];
+    return { ...last, index: GAME_CYCLE.length - 1, remaining: 0, over: true };
+  }
+
+  return { AREAS, byKey, neighbours, ringOf, anchorOf, reachable, phaseAt, UNIT };
+});
+</script>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, at) => Object.entries(at).reduce((e, [k, v]) => (e.setAttribute(k, v), e),
+                                               document.createElementNS(NS, n));
+const $ = id => document.getElementById(id);
+const svg = $("map");
+const nameOf = Object.fromEntries(AREAS.map(a => [a.key, a.name]));
+const nodes = new Map();
+const mmss = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+// One clock drives everything. `sightAt` is a point on that clock, so the elapsed-time
+// slider and the running game timer are the same number seen two ways.
+const q = new URLSearchParams(location.search);
+const state = {
+  clock: +(q.get("clock") || 0),
+  running: false,
+  sightAt: +(q.get("clock") || 0) - +(q.get("t") || 0),
+  sight: q.get("from") || "Laboratory",
+  shut: new Set((q.get("ban") || "").split(",").filter(Boolean)),
+  speed: +(q.get("speed") || 1),
+};
+let lastTick = 0;
+
+for (const area of AREAS) {
+  const g = el("g", { class: "area", tabindex: "0", role: "button", "aria-label": area.name });
+  g.appendChild(el("polygon", { class: "cell",
+    points: ringOf(area.key).map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join(" ") }));
+
+  const [cx, cy] = anchorOf(area.key);
+  const label = el("text", { class: "name", x: cx, y: cy + 0.02 });
+  label.textContent = area.name;
+  const eta = el("text", { class: "eta", x: cx, y: cy + 0.33 });
+  g.append(label, eta);
+
+  const act = shift => {
+    if (shift) state.shut.has(area.key) ? state.shut.delete(area.key) : state.shut.add(area.key);
+    else { state.sight = area.key; state.sightAt = state.clock; }
+    render();
+  };
+  g.addEventListener("click", e => act(e.shiftKey));
+  g.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(e.shiftKey); }
+  });
+  svg.appendChild(g);
+  nodes.set(area.key, { g, eta });
+}
+
+function render() {
+  const elapsed = Math.max(0, state.clock - state.sightAt);
+  const hop = HOP_SECONDS / state.speed;
+  const dist = reachable(state.sight, elapsed, hop, state.shut);
+
+  for (const [key, { g, eta }] of nodes) {
+    const d = dist.get(key);
+    const isShut = state.shut.has(key);
+    g.classList.toggle("shut", isShut);
+    g.classList.toggle("sight", key === state.sight && !isShut);
+    g.classList.toggle("reach", d !== undefined && key !== state.sight);
+    g.classList.toggle("cold", d === undefined && !isShut);
+    if (d !== undefined && key !== state.sight)
+      g.style.setProperty("--w", Math.max(20, 64 - (d / Math.max(elapsed, 1)) * 44) + "%");
+    eta.textContent = d ? Math.round(d) + "초" : "";
+  }
+
+  const p = phaseAt(state.clock);
+  const ko = p.type === "day" ? "낮" : "밤";
+  $("phase").textContent = p.over ? "게임 종료" : `${p.day}일차 ${ko}`;
+  $("phase").className = "phase " + p.type;
+  $("left").textContent = mmss(p.remaining);
+  $("left2").textContent = mmss(p.remaining);
+  $("nextPhase").textContent = p.over ? "—" : (p.type === "day" ? "밤" : "낮");
+  $("bar").style.width = (100 * (1 - p.remaining / p.duration)).toFixed(1) + "%";
+
+  $("sight").textContent = nameOf[state.sight];
+  $("nb").textContent = [...neighbours.get(state.sight)].map(k => nameOf[k]).join(", ");
+  $("cnt").textContent = dist.size + "곳";
+  $("reachChips").innerHTML = [...dist.keys()]
+    .sort((a, b) => dist.get(a) - dist.get(b))
+    .map(k => `<span class="chip">${nameOf[k]}${dist.get(k)
+      ? ` <em>${Math.round(dist.get(k))}s</em>` : ""}</span>`).join("");
+  $("shutChips").innerHTML = state.shut.size
+    ? [...state.shut].map(k => `<span class="chip shut">${nameOf[k]}</span>`).join("")
+    : `<span class="chip none">아직 없음 — Shift+클릭으로 지정</span>`;
+
+  const t = $("t");
+  t.value = Math.min(+t.max, Math.round(elapsed));
+  $("tOut").textContent = Math.round(elapsed) + "초";
+  $("sOut").textContent = state.speed.toFixed(2) + "×";
+  $("go").textContent = state.running ? "일시정지" : (state.clock ? "이어서" : "시작");
+}
+
+function tick(now) {
+  if (state.running) {
+    state.clock += (now - lastTick) / 1000;
+    render();
+  }
+  lastTick = now;
+  requestAnimationFrame(tick);
+}
+
+$("go").onclick = () => { state.running = !state.running; render(); };
+$("reset").onclick = () => {
+  Object.assign(state, { clock: 0, running: false, sightAt: 0 });
+  render();
+};
+for (const b of document.querySelectorAll(".nudge"))
+  b.onclick = () => {
+    const by = +b.dataset.nudge;
+    state.clock = Math.max(0, state.clock + by);
+    state.sightAt = Math.min(state.sightAt, state.clock);
+    render();
+  };
+// dragging the elapsed slider moves the sighting, not the clock — the game time stays true
+$("t").oninput = e => { state.sightAt = state.clock - +e.target.value; render(); };
+$("s").value = state.speed;
+$("s").oninput = e => { state.speed = +e.target.value; render(); };
+
+requestAnimationFrame(tick);
+render();
+</script>
+</body>
+</html>

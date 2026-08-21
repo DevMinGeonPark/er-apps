@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>아글라이아 연구소 — 실험체 운용 자격 검정</title>
+<link rel="stylesheet" href="/style.css?v=8">
+</head>
+<body>
+<header class="site-header">
+  <div class="emblem">
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,3 38.5,12.5 38.5,31.5 22,41 5.5,31.5 5.5,12.5" stroke="#d4af37" stroke-width="1.6"/>
+      <ellipse cx="22" cy="22" rx="12" ry="5" stroke="#d4af37" stroke-width="1" transform="rotate(30 22 22)"/>
+      <ellipse cx="22" cy="22" rx="12" ry="5" stroke="#d4af37" stroke-width="1" transform="rotate(-30 22 22)"/>
+      <circle cx="22" cy="22" r="2.4" fill="#d4af37"/>
+    </svg>
+  </div>
+  <h1>아글라이아 연구소</h1>
+  <p class="tagline">AGLAIA 실험체 관리부 — 루미아 섬 전 시즌 · 랭크/일반/코발트 프로토콜 통합 VF 실험 데이터 기반 운용 자격 검정</p>
+</header>
+
+<main>
+  <section id="form-section" class="panel">
+    <div class="field">
+      <label for="nickname">피검정자 닉네임</label>
+      <div class="row">
+        <input id="nickname" type="text" placeholder="예: 마르코프체인" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label>운용 실험체 선택 <span id="picked-label"></span></label>
+      <input id="char-search" type="text" placeholder="실험체 검색…" autocomplete="off">
+      <div id="char-grid" class="char-grid"><div class="grid-loading">실험체 목록 불러오는 중…</div></div>
+    </div>
+    <div class="field" id="skin-field">
+      <label>증명사진 스킨 선택 <span id="skin-label"></span></label>
+      <div id="skin-row" class="skin-row"></div>
+    </div>
+    <div class="field">
+      <label>증서 양식</label>
+      <div class="style-row">
+        <div class="style-cell selected" data-style="aglaia">
+          <div class="tt">아글라이아 연구소</div>
+          <div class="dd">세계관 컨셉 · 대외비 표식 · 연구소장 소견</div>
+        </div>
+        <div class="style-cell" data-style="classic">
+          <div class="tt">검정원 표준</div>
+          <div class="dd">클래식 자격증 양식</div>
+        </div>
+      </div>
+    </div>
+    <button id="issue-btn" disabled>운용 능력 검정 신청</button>
+    <p id="form-error" class="error" hidden></p>
+  </section>
+
+  <section id="loading-section" class="panel" hidden>
+    <div class="spinner"></div>
+    <p id="loading-msg">루미아 섬 관제탑에 전적 조회 중…</p>
+  </section>
+
+  <section id="cert-section" hidden>
+    <div id="cert-wrap"></div>
+    <div class="cert-actions">
+      <button id="download-btn">PNG로 저장</button>
+      <button id="copy-link-btn">발급 링크 복사</button>
+      <button id="again-btn">다시 발급하기</button>
+    </div>
+    <div id="season-detail" class="panel"></div>
+  </section>
+</main>
+
+<footer>
+  본 자격증은 <a href="https://dak.gg/er" target="_blank" rel="noopener">dak.gg</a> 전적 데이터를 기반으로 재미를 위해 발급되며, 법적 효력이 없습니다.<br>
+  '아글라이아'와 이터널 리턴 관련 명칭·이미지는 님블뉴런의 자산이며, 본 사이트는 비공식 팬 사이트입니다.
+</footer>
+
+<script src="/app.js?v=8"></script>
+</body>
+</html>

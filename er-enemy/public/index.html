@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>루미아섬 원수 관측소</title>
+<link rel="stylesheet" href="/style.css?v=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <span class="rec" aria-hidden="true"></span>
+      <h1>원수 관측소</h1>
+      <span class="sub">LUMIA ISLAND ENEMY OBSERVATORY</span>
+    </div>
+    <p class="tagline">그놈은 어떻게 됐을까 — 당신을 죽인 자의 그 후를 추적합니다</p>
+  </div>
+</header>
+
+<main>
+  <section class="console" id="searchConsole">
+    <form id="meForm" autocomplete="off">
+      <label for="meInput" class="visually-hidden">내 닉네임</label>
+      <input id="meInput" type="text" placeholder="내 닉네임 — 최근 전적에서 원수를 색출합니다" required>
+      <button type="submit" id="meBtn">원수 색출</button>
+    </form>
+    <button type="button" class="linklike" id="directToggle">원수의 닉네임을 이미 아는 경우 →</button>
+    <form id="directForm" autocomplete="off" hidden>
+      <label for="enemyInput" class="visually-hidden">원수 닉네임</label>
+      <input id="enemyInput" type="text" placeholder="원수 닉네임 — 근황만 관측합니다">
+      <button type="submit">관측 개시</button>
+    </form>
+    <p class="hint" id="hint">관측 자료 출처: dak.gg · 본 시설은 팬메이드 유머 시설이며 실제 감시 기능이 없습니다.</p>
+  </section>
+
+  <section class="killers" id="killersSec" hidden>
+    <div class="sec-head">
+      <h2>원수 후보 명단</h2>
+      <span class="sec-note" id="killersNote"></span>
+    </div>
+    <div class="killer-grid" id="killerGrid"></div>
+  </section>
+
+  <section class="observation" id="obsSec" hidden>
+    <button type="button" class="linklike back" id="backBtn">← 원수 후보 명단으로</button>
+    <div id="obsRoot"></div>
+  </section>
+</main>
+
+<footer class="pagefoot">
+  루미아섬 3부작 — <a href="https://er-cert.dev-heptivision.com">자격증</a> ·
+  <a href="https://er-death.dev-heptivision.com">사망진단서</a> · 원수 관측소
+</footer>
+
+<script src="/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# deps / build output
+node_modules/
+target/
+.next/
+dist/
+build/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# runtime junk
+.DS_Store
+*.log
+npm-debug.log*
+.pm2/
+
+# scraper caches
+.cache/
+tmp/

@@ -1,0 +1,387 @@
+@font-face {
+  font-family: 'GowunBatang';
+  src: url('/fonts/gowun-batang.woff') format('woff');
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'GowunBatang';
+  src: url('/fonts/gowun-batang-bold.woff') format('woff');
+  font-weight: 700; font-display: swap;
+}
+@font-face {
+  font-family: 'SongMyung';
+  src: url('/fonts/song-myung.woff') format('woff');
+  font-weight: 400; font-display: swap;
+}
+
+:root {
+  --desk: #12181a;
+  --desk-deep: #0c1113;
+  --paper: #fbfaf6;
+  --ink: #1c1e24;
+  --rule: rgba(28, 30, 36, 0.55);
+  --rule-soft: rgba(28, 30, 36, 0.22);
+  --pen: #1e4fa3;
+  --stamp: #c8351f;
+  --muted: #5c6068;
+  --desk-text: #8a938f;
+  --serif: 'GowunBatang', 'AppleMyungjo', 'Noto Serif KR', serif;
+  --display: 'SongMyung', 'GowunBatang', serif;
+  --gothic: 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--desk) 0%, var(--desk-deep) 100%);
+  min-height: 100vh;
+  font-family: var(--serif);
+  color: var(--ink);
+  padding: 0 16px 72px;
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  clip: rect(0 0 0 0); overflow: hidden;
+}
+
+/* ---------- 상단/발급 UI (책상 위) ---------- */
+.masthead { padding: 34px 0 6px; }
+.masthead-inner {
+  max-width: 720px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 10px; flex-wrap: wrap;
+  font-family: var(--gothic);
+  color: var(--desk-text);
+}
+.masthead .org { font-size: 13px; font-weight: 700; letter-spacing: 0.14em; }
+.masthead .org em { font-style: normal; font-weight: 400; opacity: 0.75; }
+.masthead .q { font-size: 12px; letter-spacing: 0.06em; }
+
+.issue-panel { max-width: 720px; margin: 14px auto 0; }
+#issueForm { display: flex; gap: 8px; }
+#nick {
+  flex: 1;
+  font-family: var(--serif);
+  font-size: 16px;
+  padding: 12px 14px;
+  background: rgba(251, 250, 246, 0.06);
+  border: 1px solid rgba(251, 250, 246, 0.22);
+  color: #e8e6df;
+  border-radius: 0;
+  outline: none;
+}
+#nick::placeholder { color: rgba(232, 230, 223, 0.4); }
+#nick:focus { border-color: rgba(251, 250, 246, 0.55); }
+#issueBtn {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  padding: 12px 26px;
+  background: var(--paper);
+  color: var(--ink);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+#issueBtn:hover { background: #efece2; }
+#issueBtn:disabled { opacity: 0.5; cursor: wait; }
+#issueBtn:focus-visible, #printBtn:focus-visible, #nick:focus-visible {
+  outline: 2px solid #e8e6df; outline-offset: 2px;
+}
+.hint {
+  margin: 10px 2px 0;
+  font-family: var(--gothic);
+  font-size: 11.5px;
+  color: var(--desk-text);
+}
+.hint.error { color: #d98b7f; }
+
+/* ---------- 사망 기록 선택 ---------- */
+.picker { max-width: 720px; margin: 18px auto 0; }
+.picker-title {
+  font-family: var(--gothic);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--desk-text);
+  margin-bottom: 8px;
+}
+.picker-list { display: flex; flex-direction: column; gap: 4px; }
+.picker-item {
+  display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+  font-family: var(--gothic);
+  font-size: 12.5px;
+  padding: 8px 12px;
+  background: rgba(251, 250, 246, 0.05);
+  border: 1px solid transparent;
+  color: #c9c6bd;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.picker-item:hover { background: rgba(251, 250, 246, 0.1); }
+.picker-item.active { border-color: rgba(251, 250, 246, 0.4); background: rgba(251, 250, 246, 0.1); }
+.picker-item .d { color: var(--desk-text); }
+.picker-item .k { font-weight: 700; }
+.picker-item .rank { margin-left: auto; color: var(--desk-text); }
+
+/* ---------- 서류 ---------- */
+.paper {
+  position: relative;
+  max-width: 720px;
+  margin: 22px auto 0;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 46px 44px 40px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 18px 48px rgba(0,0,0,0.38);
+}
+@media (max-width: 560px) { .paper { padding: 32px 18px 28px; } }
+
+.form-no {
+  display: flex; justify-content: space-between;
+  font-size: 11.5px; color: var(--muted);
+  margin-bottom: 22px; gap: 8px; flex-wrap: wrap;
+}
+
+.paper h1 {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 400;
+  text-align: center;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  margin: 0 0 6px;
+}
+.subtitle {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0 0 26px;
+  letter-spacing: 0.04em;
+}
+.subtitle .strike { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+
+.sec { margin: 26px 0 0; }
+.sec-title { font-size: 14px; font-weight: 700; letter-spacing: 0.04em; margin: 0 0 8px; }
+.sec-title .q { font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
+
+.paper table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.55; }
+.formtable { border: 1.5px solid var(--rule); }
+.formtable th, .formtable td {
+  border: 1px solid var(--rule-soft);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 13px;
+}
+.formtable th {
+  width: 104px;
+  font-weight: 700;
+  font-size: 12px;
+  background: rgba(28,30,36,0.045);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+@media (max-width: 560px) { .formtable th { width: 78px; white-space: normal; } }
+
+.v { font-family: var(--gothic); font-weight: 700; color: var(--pen); letter-spacing: 0.01em; }
+.v small, .formtable small { font-weight: 500; font-size: 11px; color: var(--muted); font-family: var(--gothic); }
+.note { font-size: 11px; color: var(--muted); }
+
+/* 영정사진 셀 */
+.victim-layout { display: flex; border: 1.5px solid var(--rule); }
+.victim-layout .formtable { border: none; flex: 1; }
+.victim-layout .formtable th, .victim-layout .formtable td { border-color: var(--rule-soft); }
+.portrait-cell {
+  flex: 0 0 118px;
+  border-right: 1px solid var(--rule-soft);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  padding: 12px 8px; gap: 6px;
+}
+.portrait-frame {
+  position: relative;
+  width: 88px; height: 104px;
+  border: 1px solid var(--rule);
+  background: rgba(28,30,36,0.05);
+  overflow: hidden;
+}
+.portrait-frame img { width: 100%; height: 100%; object-fit: cover; object-position: top; filter: grayscale(1) contrast(1.05); }
+.portrait-frame .ribbon {
+  position: absolute; right: -26px; top: -26px;
+  width: 52px; height: 52px;
+  border-bottom: 7px solid var(--ink);
+  transform: rotate(45deg);
+}
+.portrait-cell .cap { font-family: var(--gothic); font-size: 10px; letter-spacing: 0.12em; color: var(--muted); }
+@media (max-width: 560px) { .portrait-cell { flex-basis: 92px; } .portrait-frame { width: 68px; height: 82px; } }
+
+.chain td:first-child { width: 150px; }
+@media (max-width: 560px) { .chain td:first-child { width: 102px; } }
+.chain .dur { width: 118px; font-size: 11.5px; color: var(--muted); }
+@media (max-width: 560px) { .chain .dur { width: 78px; } }
+
+.checks {
+  display: flex; gap: 22px; flex-wrap: wrap;
+  font-size: 13px; padding: 10px 12px;
+  border: 1.5px solid var(--rule);
+}
+.checks span { color: var(--muted); }
+.checks .on { color: var(--ink); font-weight: 700; }
+.checks .on .box { color: var(--pen); font-family: var(--gothic); }
+
+/* 처형자 박스 */
+.killer-box { border: 2px solid var(--ink); }
+.killer-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1.5px solid var(--rule);
+  background: rgba(200,53,31,0.06);
+}
+.killer-head b { font-size: 13.5px; letter-spacing: 0.08em; }
+.killer-head .tag {
+  font-family: var(--gothic);
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.18em;
+  color: var(--stamp);
+  border: 1.5px solid var(--stamp);
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.killer-body { display: flex; }
+.mugshot {
+  flex: 0 0 118px;
+  border-right: 1px solid var(--rule-soft);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 14px 8px;
+  color: var(--muted);
+  font-family: var(--gothic);
+  font-size: 10px; letter-spacing: 0.1em; text-align: center;
+}
+.mugshot .frame {
+  width: 80px; height: 96px;
+  border: 1px solid var(--rule-soft);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 15px, rgba(28,30,36,0.12) 15px 16px),
+    rgba(28,30,36,0.04);
+  overflow: hidden;
+  position: relative;
+}
+.mugshot .frame img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top;
+  mix-blend-mode: multiply;
+}
+.killer-body table { border: 0; flex: 1; }
+.killer-body th, .killer-body td { border: 1px solid var(--rule-soft); padding: 6px 10px; }
+.killer-body tr th:first-child, .killer-body tr td:first-child { border-left: 0; }
+.killer-body tr:first-child th, .killer-body tr:first-child td { border-top: 0; }
+.killer-body tr:last-child th, .killer-body tr:last-child td { border-bottom: 0; }
+.killer-body th { width: 92px; font-weight: 700; font-size: 12px; background: rgba(28,30,36,0.045); white-space: nowrap; }
+@media (max-width: 560px) { .mugshot { display: none; } }
+
+.opinion { border: 1.5px solid var(--rule); padding: 12px 14px; font-size: 13px; line-height: 1.85; }
+.opinion ul { margin: 0; padding-left: 18px; }
+.opinion li { margin: 2px 0; }
+
+.attest { margin-top: 34px; font-size: 13.5px; line-height: 2.1; text-align: center; }
+.attest .date { letter-spacing: 0.28em; }
+.issuer {
+  position: relative; margin-top: 10px;
+  display: flex; justify-content: center; align-items: center; gap: 14px;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.2em;
+}
+.issuer .sig { font-size: 12px; font-weight: 400; letter-spacing: 0.08em; color: var(--muted); }
+
+.stamp {
+  position: absolute;
+  right: 34px; bottom: 84px;
+  width: 92px; height: 92px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  place-items: center;
+  padding: 10px;
+  border: 3.5px solid var(--stamp);
+  color: var(--stamp);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1;
+  transform: rotate(-6deg);
+  opacity: 0.86;
+  mix-blend-mode: multiply;
+  animation: thump 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) 0.4s backwards;
+}
+@keyframes thump {
+  from { transform: rotate(-14deg) scale(1.9); opacity: 0; }
+  to { transform: rotate(-6deg) scale(1); opacity: 0.86; }
+}
+@media (prefers-reduced-motion: reduce) { .stamp { animation: none; } }
+@media (max-width: 560px) { .stamp { right: 8px; bottom: 96px; width: 78px; height: 78px; font-size: 14px; } }
+
+.barcode {
+  margin-top: 30px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule-soft);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+}
+.bars {
+  height: 30px; flex: 0 0 180px;
+  background: repeating-linear-gradient(90deg,
+    var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 5px, transparent 5px 9px,
+    var(--ink) 9px 12px, transparent 12px 14px, var(--ink) 14px 15px, transparent 15px 17px);
+}
+.barcode .meta { font-family: var(--gothic); font-size: 10.5px; color: var(--muted); line-height: 1.6; }
+
+/* ---------- 하단 ---------- */
+.actions { max-width: 720px; margin: 20px auto 0; display: flex; justify-content: flex-end; gap: 8px; }
+.actions .ghost {
+  background: transparent;
+  color: #c9c6bd;
+  border: 1px solid rgba(251, 250, 246, 0.3);
+}
+.actions .ghost:hover { background: rgba(251, 250, 246, 0.08); }
+#pngBtn { font-family: var(--serif); font-weight: 700; font-size: 15px; letter-spacing: 0.2em; text-indent: 0.2em; padding: 12px 26px; background: var(--paper); color: var(--ink); border: none; cursor: pointer; }
+#pngBtn:hover { background: #efece2; }
+#pngBtn:disabled { opacity: 0.5; cursor: wait; }
+#pngBtn:focus-visible { outline: 2px solid #e8e6df; outline-offset: 2px; }
+.actions .ghost { font-family: var(--serif); font-weight: 400; font-size: 13px; letter-spacing: 0.1em; padding: 12px 18px; cursor: pointer; }
+.pagefoot {
+  max-width: 720px;
+  margin: 26px auto 0;
+  font-family: var(--gothic);
+  font-size: 11px;
+  color: var(--desk-text);
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ---------- 촬영 모드 (?shot=1 — 서버 PNG 렌더링용 고정 규격) ---------- */
+html.shot body {
+  padding: 25px 20px;
+  background: var(--desk);
+  min-height: 0;
+}
+html.shot .masthead, html.shot .issue-panel, html.shot .picker,
+html.shot .actions, html.shot .pagefoot { display: none !important; }
+html.shot .paper {
+  width: 720px;
+  max-width: none;
+  height: 1460px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: none;
+}
+html.shot .paper .attest { margin-top: auto; }
+html.shot .stamp { animation: none; }
+
+/* ---------- 인쇄 ---------- */
+@media print {
+  body { background: #fff; padding: 0; }
+  .masthead, .issue-panel, .picker, .actions, .pagefoot { display: none !important; }
+  .paper { box-shadow: none; margin: 0 auto; max-width: none; }
+  .stamp { animation: none; }
+}

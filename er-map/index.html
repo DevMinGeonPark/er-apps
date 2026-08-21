@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>루미아 섬 상황판</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+  /* Single, committed look: a tactical situation board. Every colour painted explicitly. */
+  :root {
+    --ground:#080c15; --board:#101725; --surface:#162033; --hairline:#263149;
+    --ink:#dbe4f5; --muted:#78879f; --land:#1a2338; --land-lit:#263352;
+    --sight:#4c8dff; --reach:#2fbe8f; --shut:#e0525e; --sun:#e8b04b; --moon:#8f7dd8;
+    --display:"Chakra Petch","IBM Plex Sans KR",system-ui,sans-serif;
+    --body:"IBM Plex Sans KR",system-ui,-apple-system,sans-serif;
+    --num:"Chakra Petch","IBM Plex Sans KR",ui-monospace,monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink);
+         font-family:var(--body); font-size:15px; line-height:1.6; }
+  .shell { max-width:1240px; margin:0 auto; padding:28px 22px 56px;
+           display:flex; flex-direction:column; gap:22px; }
+
+  header { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap;
+           border-bottom:1px solid var(--hairline); padding-bottom:16px; }
+  h1 { font-family:var(--display); font-weight:700; font-size:clamp(26px,4vw,38px);
+       letter-spacing:.01em; margin:0; text-wrap:balance; }
+  .eyebrow { font-family:var(--num); font-size:12px; letter-spacing:.16em;
+             text-transform:uppercase; color:var(--muted); }
+  .tally { margin-left:auto; display:flex; gap:18px; font-family:var(--num); font-size:13px;
+           color:var(--muted); font-variant-numeric:tabular-nums; }
+  .tally b { color:var(--ink); font-weight:600; }
+
+  .board { display:grid; grid-template-columns:minmax(0,1fr) 328px; gap:24px; align-items:start; }
+  @media (max-width:880px) { .board { grid-template-columns:minmax(0,1fr); } }
+
+  .stage { background:var(--board); border:1px solid var(--hairline); border-radius:14px; padding:10px; }
+  svg { width:100%; height:auto; max-height:78vh; display:block; margin:0 auto; }
+
+  g.area { cursor:pointer; }
+  g.area:focus { outline:none; }
+  .cell { fill:var(--land); stroke:var(--hairline); stroke-width:.05;
+          stroke-linejoin:round; transition:fill .14s ease, stroke .14s ease; }
+  g.area:hover .cell, g.area:focus-visible .cell { fill:var(--land-lit); }
+  g.area:focus-visible .cell { stroke:var(--ink); stroke-width:.09; }
+  g.area.reach .cell { fill:color-mix(in srgb, var(--reach) var(--w,40%), var(--land)); }
+  g.area.sight .cell { fill:color-mix(in srgb, var(--sight) 62%, var(--land)); }
+  g.area.shut  .cell { fill:color-mix(in srgb, var(--shut) 42%, var(--land)); }
+  g.area.cold { opacity:.46; }
+  g.area.sight .cell, g.area.reach .cell, g.area.shut .cell { stroke:#9fb2d4; }
+  .name { fill:var(--ink); font-family:var(--body); font-weight:500; font-size:.285px;
+          text-anchor:middle; pointer-events:none;
+          paint-order:stroke; stroke:#080c15; stroke-width:.08px; }
+  .eta { fill:var(--reach); font-family:var(--num); font-weight:600; font-size:.26px;
+         text-anchor:middle; pointer-events:none;
+         paint-order:stroke; stroke:#080c15; stroke-width:.08px; }
+  g.area.sight .eta { fill:#cfe0ff; }
+
+  .rail { display:flex; flex-direction:column; gap:18px; }
+  .card { background:var(--board); border:1px solid var(--hairline); border-radius:14px;
+          padding:16px 16px 18px; }
+  .card h2 { font-family:var(--num); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+             color:var(--muted); margin:0 0 12px; font-weight:600; }
+
+  .clock { display:flex; align-items:baseline; gap:10px; }
+  .phase { font-family:var(--display); font-size:24px; font-weight:700; }
+  .phase.day  { color:var(--sun); }
+  .phase.night{ color:var(--moon); }
+  .clock time { margin-left:auto; font-family:var(--num); font-size:30px; font-weight:700;
+                font-variant-numeric:tabular-nums; }
+  .bar { height:5px; background:var(--surface); border-radius:99px; overflow:hidden; margin:11px 0 9px; }
+  .bar i { display:block; height:100%; background:var(--sight); transition:width .2s linear; }
+  .next { font-size:13px; color:var(--muted); }
+  .next b { color:var(--ink); font-family:var(--num); font-variant-numeric:tabular-nums; }
+  .keys { display:flex; gap:6px; margin-top:13px; }
+  button { flex:1; font:inherit; font-size:13px; color:var(--ink); background:var(--surface);
+           border:1px solid var(--hairline); border-radius:8px; padding:7px 4px; cursor:pointer;
+           transition:background .12s ease; }
+  button:hover { background:var(--land-lit); }
+  button:focus-visible { outline:2px solid var(--sight); outline-offset:2px; }
+  button.go { background:color-mix(in srgb,var(--sight) 26%,var(--surface));
+              border-color:color-mix(in srgb,var(--sight) 50%,var(--hairline)); }
+  button.nudge { flex:0 0 46px; font-family:var(--num); }
+
+  .dial label { display:flex; justify-content:space-between; align-items:baseline;
+                font-size:13px; color:var(--muted); margin:14px 0 6px; }
+  .dial output { font-family:var(--num); font-size:17px; font-weight:600; color:var(--ink);
+                 font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--sight); height:22px; }
+  input[type=range]:focus-visible { outline:2px solid var(--sight); outline-offset:3px; }
+
+  .stat { display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+          padding:9px 0; border-top:1px solid var(--hairline); font-size:14px; }
+  .stat:first-of-type { border-top:0; padding-top:0; }
+  .stat span { color:var(--muted); white-space:nowrap; }
+  .stat b { font-weight:600; text-align:right; }
+  .stat .big { font-family:var(--num); font-size:20px; font-variant-numeric:tabular-nums; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .chip { font-size:12.5px; border:1px solid var(--hairline); background:var(--surface);
+          border-radius:999px; padding:3px 10px; display:inline-flex; gap:6px; }
+  .chip em { font-style:normal; font-family:var(--num); color:var(--reach);
+             font-variant-numeric:tabular-nums; }
+  .chip.shut { border-color:color-mix(in srgb,var(--shut) 55%,var(--hairline)); color:var(--shut); }
+  .chip.none { color:var(--muted); border-style:dashed; }
+
+  .key { display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--muted); }
+  .key div { display:flex; align-items:center; gap:9px; }
+  .swatch { width:13px; height:13px; border-radius:3px; flex:none; border:1px solid #ffffff22; }
+  .how { font-size:13px; color:var(--muted); line-height:1.8; margin:14px 0 0; }
+  .how kbd { font-family:var(--num); font-size:11.5px; background:var(--surface);
+             border:1px solid var(--hairline); border-radius:4px; padding:1px 6px; color:var(--ink); }
+  footer { color:var(--muted); font-size:12.5px; border-top:1px solid var(--hairline); padding-top:14px; }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">Lumia Island</div>
+      <h1>루미아 섬 상황판</h1>
+    </div>
+    <div class="tally">
+      <div>지역 <b>21</b></div><div>경계 <b>42</b></div><div>최신 <b>바지선 포함</b></div>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="stage"><svg id="map" viewBox="-5.05 -5.64 9.70 12.20" role="img"
+      aria-label="루미아 섬 21개 지역 지도"></svg></div>
+
+    <div class="rail">
+      <div class="card">
+        <h2>게임 시계</h2>
+        <div class="clock">
+          <span class="phase day" id="phase">1일차 낮</span>
+          <time id="left">2:20</time>
+        </div>
+        <div class="bar"><i id="bar" style="width:0%"></i></div>
+        <div class="next">다음 <b id="nextPhase">밤</b> 전환 — 야생동물 리젠까지 <b id="left2">2:20</b></div>
+        <div class="keys">
+          <button id="go" class="go">시작</button>
+          <button id="reset">리셋</button>
+          <button class="nudge" data-nudge="-5">−5s</button>
+          <button class="nudge" data-nudge="5">+5s</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>추적</h2>
+        <div class="stat"><span>마지막 목격</span><b id="sight" class="big">—</b></div>
+        <div class="stat"><span>인접 지역</span><b id="nb">—</b></div>
+        <div class="stat"><span>지금 있을 수 있는 곳</span><b id="cnt" class="big">—</b></div>
+        <div class="chips" id="reachChips"></div>
+        <div class="dial">
+          <label for="t">목격 후 경과 <output id="tOut" for="t">0초</output></label>
+          <input type="range" id="t" min="0" max="120" step="1" value="0">
+          <label for="s">이동 속도 배율 <output id="sOut" for="s">1.00×</output></label>
+          <input type="range" id="s" min="0.6" max="1.8" step="0.05" value="1">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>금지구역</h2>
+        <div class="chips" id="shutChips"></div>
+      </div>
+
+      <div class="card">
+        <h2>범례</h2>
+        <div class="key">
+          <div><i class="swatch" style="background:#3d6bc4"></i>마지막으로 본 지역</div>
+          <div><i class="swatch" style="background:#26795f"></i>도달 가능 — 진할수록 빨리 닿음</div>
+          <div><i class="swatch" style="background:#7a3540"></i>금지구역 (통과 불가)</div>
+        </div>
+        <p class="how">
+          <kbd>클릭</kbd> 마지막 목격 지역 지정<br>
+          <kbd>Shift</kbd> + 클릭 금지구역 토글<br>
+          <kbd>Tab</kbd> / <kbd>Enter</kbd> 키보드로도 조작
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    지역 경계는 인게임 미니맵에서 워터셰드로 추출한 실제 경계입니다. 지역 간 이동은 한 칸당
+    7초(기본 이동 속도)로 잡았습니다 — 실측하면 이 값만 바꾸면 됩니다.
+    시계를 켜면 목격 후 경과 시간이 저절로 흐르고, 멈춘 상태에서는 슬라이더로 앞뒤를 볼 수 있습니다.
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="lumia-areas.js"></script>
+<script src="graph.js"></script>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const el = (n, at) => Object.entries(at).reduce((e, [k, v]) => (e.setAttribute(k, v), e),
+                                               document.createElementNS(NS, n));
+const $ = id => document.getElementById(id);
+const svg = $("map");
+const nameOf = Object.fromEntries(AREAS.map(a => [a.key, a.name]));
+const nodes = new Map();
+const mmss = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+// One clock drives everything. `sightAt` is a point on that clock, so the elapsed-time
+// slider and the running game timer are the same number seen two ways.
+const q = new URLSearchParams(location.search);
+const state = {
+  clock: +(q.get("clock") || 0),
+  running: false,
+  sightAt: +(q.get("clock") || 0) - +(q.get("t") || 0),
+  sight: q.get("from") || "Laboratory",
+  shut: new Set((q.get("ban") || "").split(",").filter(Boolean)),
+  speed: +(q.get("speed") || 1),
+};
+let lastTick = 0;
+
+for (const area of AREAS) {
+  const g = el("g", { class: "area", tabindex: "0", role: "button", "aria-label": area.name });
+  g.appendChild(el("polygon", { class: "cell",
+    points: ringOf(area.key).map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join(" ") }));
+
+  const [cx, cy] = anchorOf(area.key);
+  const label = el("text", { class: "name", x: cx, y: cy + 0.02 });
+  label.textContent = area.name;
+  const eta = el("text", { class: "eta", x: cx, y: cy + 0.33 });
+  g.append(label, eta);
+
+  const act = shift => {
+    if (shift) state.shut.has(area.key) ? state.shut.delete(area.key) : state.shut.add(area.key);
+    else { state.sight = area.key; state.sightAt = state.clock; }
+    render();
+  };
+  g.addEventListener("click", e => act(e.shiftKey));
+  g.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(e.shiftKey); }
+  });
+  svg.appendChild(g);
+  nodes.set(area.key, { g, eta });
+}
+
+function render() {
+  const elapsed = Math.max(0, state.clock - state.sightAt);
+  const hop = HOP_SECONDS / state.speed;
+  const dist = reachable(state.sight, elapsed, hop, state.shut);
+
+  for (const [key, { g, eta }] of nodes) {
+    const d = dist.get(key);
+    const isShut = state.shut.has(key);
+    g.classList.toggle("shut", isShut);
+    g.classList.toggle("sight", key === state.sight && !isShut);
+    g.classList.toggle("reach", d !== undefined && key !== state.sight);
+    g.classList.toggle("cold", d === undefined && !isShut);
+    if (d !== undefined && key !== state.sight)
+      g.style.setProperty("--w", Math.max(20, 64 - (d / Math.max(elapsed, 1)) * 44) + "%");
+    eta.textContent = d ? Math.round(d) + "초" : "";
+  }
+
+  const p = phaseAt(state.clock);
+  const ko = p.type === "day" ? "낮" : "밤";
+  $("phase").textContent = p.over ? "게임 종료" : `${p.day}일차 ${ko}`;
+  $("phase").className = "phase " + p.type;
+  $("left").textContent = mmss(p.remaining);
+  $("left2").textContent = mmss(p.remaining);
+  $("nextPhase").textContent = p.over ? "—" : (p.type === "day" ? "밤" : "낮");
+  $("bar").style.width = (100 * (1 - p.remaining / p.duration)).toFixed(1) + "%";
+
+  $("sight").textContent = nameOf[state.sight];
+  $("nb").textContent = [...neighbours.get(state.sight)].map(k => nameOf[k]).join(", ");
+  $("cnt").textContent = dist.size + "곳";
+  $("reachChips").innerHTML = [...dist.keys()]
+    .sort((a, b) => dist.get(a) - dist.get(b))
+    .map(k => `<span class="chip">${nameOf[k]}${dist.get(k)
+      ? ` <em>${Math.round(dist.get(k))}s</em>` : ""}</span>`).join("");
+  $("shutChips").innerHTML = state.shut.size
+    ? [...state.shut].map(k => `<span class="chip shut">${nameOf[k]}</span>`).join("")
+    : `<span class="chip none">아직 없음 — Shift+클릭으로 지정</span>`;
+
+  const t = $("t");
+  t.value = Math.min(+t.max, Math.round(elapsed));
+  $("tOut").textContent = Math.round(elapsed) + "초";
+  $("sOut").textContent = state.speed.toFixed(2) + "×";
+  $("go").textContent = state.running ? "일시정지" : (state.clock ? "이어서" : "시작");
+}
+
+function tick(now) {
+  if (state.running) {
+    state.clock += (now - lastTick) / 1000;
+    render();
+  }
+  lastTick = now;
+  requestAnimationFrame(tick);
+}
+
+$("go").onclick = () => { state.running = !state.running; render(); };
+$("reset").onclick = () => {
+  Object.assign(state, { clock: 0, running: false, sightAt: 0 });
+  render();
+};
+for (const b of document.querySelectorAll(".nudge"))
+  b.onclick = () => {
+    const by = +b.dataset.nudge;
+    state.clock = Math.max(0, state.clock + by);
+    state.sightAt = Math.min(state.sightAt, state.clock);
+    render();
+  };
+// dragging the elapsed slider moves the sighting, not the clock — the game time stays true
+$("t").oninput = e => { state.sightAt = state.clock - +e.target.value; render(); };
+$("s").value = state.speed;
+$("s").oninput = e => { state.speed = +e.target.value; render(); };
+
+requestAnimationFrame(tick);
+render();
+</script>
+</body>
+</html>

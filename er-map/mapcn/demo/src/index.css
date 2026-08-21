@@ -1,0 +1,5 @@
+@import "tailwindcss";
+:root { color-scheme: dark; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: #0a1424; color: #dbe4f5; overflow: hidden;
+       font-family: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif; }
