@@ -25,12 +25,6 @@ function setStatus(msg, isError) {
   statusEl.textContent = msg;
 }
 
-async function api(path) {
-  const res = await fetch(path);
-  const json = await res.json().catch(() => ({ error: '응답을 해석할 수 없습니다.' }));
-  if (!res.ok) throw new Error(json.error || `조회 실패 (${res.status})`);
-  return json;
-}
 
 // ---------- 등급표 ----------
 function renderTable(d) {
@@ -114,7 +108,7 @@ function renderReport(d) {
   if (d.thinFile) {
     body = `
       <div class="verdict">
-        <img class="portrait" src="/img/char/${esc(d.character.key)}" alt="${esc(d.character.name)}">
+        <img class="portrait" crossorigin="anonymous" src="${DAK.charImgUrl(d.character.key)}" alt="${esc(d.character.name)}">
         <div class="verdict-main">
           <div class="who"><b>${esc(d.player.name)}</b> 님 · ${esc(d.character.name)}</div>
           <div class="big-grade">평가불가<small>NO SCORE</small></div>
@@ -133,7 +127,7 @@ function renderReport(d) {
       d.grade <= 2 ? '--g-good' : d.grade <= 4 ? '--g-fair' : d.grade <= 6 ? '--g-mid' : d.grade <= 8 ? '--g-warn' : '--g-bad');
     body = `
       <div class="verdict">
-        <img class="portrait" src="/img/char/${esc(d.character.key)}" alt="${esc(d.character.name)}">
+        <img class="portrait" crossorigin="anonymous" src="${DAK.charImgUrl(d.character.key)}" alt="${esc(d.character.name)}">
         <div class="verdict-main">
           <div class="who"><b>${esc(d.player.name)}</b> 님 · ${esc(d.character.name)}</div>
           <div class="big-grade" style="color:${color}">${d.grade}등급<small>${d.score}점 / 1000점 · ${GRADE_WORD[d.grade]}</small></div>
@@ -229,7 +223,7 @@ function statTable(d) {
 async function openReport(name, cid) {
   setStatus('신용조사서 발급 중…');
   try {
-    renderReport(await api(`/api/credit?name=${encodeURIComponent(name)}&characterId=${cid}`));
+    renderReport(await DAK.credit(name, cid));
     setStatus('');
   } catch (e) { setStatus(e.message, true); }
 }
@@ -246,7 +240,7 @@ async function lookup(name, cid) {
   tableView.hidden = true; reportView.hidden = true;
   setStatus('전 시즌 거래 이력을 조회하고 있습니다. 시즌 수에 따라 10초 이상 걸릴 수 있습니다…');
   try {
-    const d = await api(`/api/report?name=${encodeURIComponent(name)}`);
+    const d = await DAK.report(name);
     renderTable(d);
     setStatus('');
     if (cid) await openReport(d.player.name, cid);

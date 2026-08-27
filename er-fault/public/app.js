@@ -9,7 +9,7 @@ let lastResult = null;
 
 // ---------- 초기화 ----------
 async function loadSeasons() {
-  const seasons = await (await fetch('/api/seasons')).json();
+  const seasons = await DAK.seasons();
   $('#season').innerHTML = '<option value="auto">자동 (최근 기록 있는 시즌)</option>'
     + seasons.map(s => `<option value="${s.key}">${s.name}</option>`).join('');
 }
@@ -41,12 +41,7 @@ async function run() {
   $('#loading-msg').textContent = LOADING_MSGS[0];
   loadingTimer = setInterval(() => { $('#loading-msg').textContent = LOADING_MSGS[++i % LOADING_MSGS.length]; }, 1500);
   try {
-    const res = await fetch('/api/assess?' + q.toString());
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { throw new Error('서버 응답이 지연되거나 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'); }
-    if (!res.ok) throw new Error(data.error || '산정에 실패했습니다.');
+    const data = await DAK.assessRequest({ ...Object.fromEntries(q), mates });
     lastResult = data;
     await renderPaper(data);
     renderDetail(data);
@@ -63,10 +58,7 @@ async function run() {
 }
 
 // ---------- 산정서 SVG ----------
-async function imgToDataUri(url) {
-  const blob = await (await fetch(url)).blob();
-  return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
-}
+const imgToDataUri = (url) => DAK.imgToDataUri(url);
 function esc(s) { return String(s).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c])); }
 
 async function renderPaper(d) {
@@ -99,7 +91,7 @@ async function renderPaper(d) {
   }
 
   const culprit = d.culpritIdx;
-  const photo = d.mainChar[culprit].key ? await imgToDataUri(`/img/char/${d.mainChar[culprit].key}`) : null;
+  const photo = d.mainChar[culprit].key ? await imgToDataUri(DAK.charImgUrl(d.mainChar[culprit].key)) : null;
 
   // 과실 스택바
   const barX = 90, barW = 820, barY = 236, barH = 46;
@@ -183,7 +175,7 @@ function renderDetail(d) {
   const members = d.names.map((nm, i) => `
     <div class="member ${i === d.culpritIdx ? 'culprit' : ''}">
       <div class="head">
-        ${d.mainChar[i].key ? `<img src="/img/char/${d.mainChar[i].key}" alt="">` : ''}
+        ${d.mainChar[i].key ? `<img src="${DAK.charImgUrl(d.mainChar[i].key)}" crossorigin="anonymous" alt="">` : ''}
         <div><div class="nm">${esc(nm)}</div><div class="role">${d.mainChar[i].role ? d.mainChar[i].role + ' · ' : ''}${roleOf(i)}</div></div>
         <div class="pct" style="color:${PCOLORS[i]}">${d.fault[i]}%</div>
       </div>
@@ -206,7 +198,7 @@ function renderDetail(d) {
       return `
       <div class="game-member ${i === a.culprit ? 'culprit' : ''}">
         <div class="gm-head">
-          ${p.charKey ? `<img src="/img/char/${p.charKey}" alt="">` : ''}
+          ${p.charKey ? `<img src="${DAK.charImgUrl(p.charKey)}" crossorigin="anonymous" alt="">` : ''}
           <div>
             <b style="color:${PCOLORS[i]}">${esc(p.name)}</b> <span class="gm-fault">${a.fault[i]}%</span>${i === a.culprit ? ' <span class="culprit-chip">이 판의 범인</span>' : ''}
             <div class="gm-stat">${esc(p.character)}${p.role ? ` · ${p.role}` : ''} — 딜 ${fmt(p.damage)} · ${p.kill}/${p.assist}/${p.deaths} · 생존 ${mmss(p.playTime)}${p.giveUp ? ' · <b style="color:#ff8d7d">기권</b>' : ''}</div>

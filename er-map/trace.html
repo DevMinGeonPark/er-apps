@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>루미아 섬 — 경계 그리기</title>
+<style>
+  :root { --ink:#dbe4f5; --muted:#7d8ba4; --line:#2a3550; --panel:#111826; --pick:#4c8dff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#080c15; color:var(--ink); display:flex; height:100vh;
+         font:14px/1.5 "IBM Plex Sans KR", -apple-system, system-ui, sans-serif; overflow:hidden; }
+  #stage { flex:1; position:relative; overflow:hidden; cursor:crosshair; }
+  canvas { position:absolute; top:0; left:0; transform-origin:0 0; image-rendering:pixelated; }
+  aside { width:250px; background:var(--panel); border-left:1px solid var(--line);
+          display:flex; flex-direction:column; }
+  h1 { font-size:15px; margin:0; padding:14px 14px 4px; }
+  .hint { color:var(--muted); font-size:12px; padding:0 14px 10px; line-height:1.7; }
+  kbd { background:#1a2438; border:1px solid var(--line); border-radius:4px; padding:0 5px; }
+  ul { list-style:none; margin:0; padding:0; overflow:auto; flex:1; border-top:1px solid var(--line); }
+  li { padding:6px 14px; cursor:pointer; display:flex; justify-content:space-between; font-size:13px; }
+  li:hover { background:#18213a; }
+  li.on { background:var(--pick); color:#fff; }
+  li.edited::after { content:"●"; color:#2fbe8f; }
+  li.on.edited::after { color:#fff; }
+  .bar { padding:12px 14px; border-top:1px solid var(--line); display:flex; gap:8px; }
+  button { flex:1; font:inherit; font-size:13px; color:var(--ink); background:#18213a;
+           border:1px solid var(--line); border-radius:8px; padding:8px; cursor:pointer; }
+  button.go { background:#2f6b3e; border-color:#3d8a51; }
+  #msg { padding:0 14px 12px; font-size:12px; color:var(--muted); min-height:18px; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas></div>
+<aside>
+  <h1>경계 그리기</h1>
+  <div class="hint">
+    지역 선택 → 클릭으로 점 찍기<br>
+    <kbd>Enter</kbd> 닫기 · <kbd>Backspace</kbd> 한 점 취소<br>
+    <kbd>Esc</kbd> 그리기 취소 · <kbd>Shift</kbd> 45° 스냅<br>
+    휠 확대 · 드래그(오른쪽) 이동<br>
+    <kbd>B</kbd> 원본/정리본 전환
+  </div>
+  <ul id="list"></ul>
+  <div class="bar">
+    <button id="redraw">다시 그리기</button>
+    <button id="save" class="go">저장</button>
+  </div>
+  <div id="msg"></div>
+</aside>
+<script>
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const stage = document.getElementById("stage"), list = document.getElementById("list");
+const msg = document.getElementById("msg");
+const img = new Image();
+let areas = {}, keys = [], active = null, drawing = null, edited = new Set();
+let scale = 1, ox = 0, oy = 0;
+
+async function boot() {
+  areas = await (await fetch("/areas")).json();
+  keys = Object.keys(areas);
+  img.onload = () => {
+    cv.width = img.width; cv.height = img.height;
+    scale = Math.min(stage.clientWidth / img.width, stage.clientHeight / img.height);
+    render();
+  };
+  img.src = "minimap-clean.png";
+  list.innerHTML = keys.map(k =>
+    `<li data-k="${k}"><span>${areas[k].name}</span></li>`).join("");
+  list.onclick = e => {
+    const li = e.target.closest("li");
+    if (li) { active = li.dataset.k; drawing = null; paint(); }
+  };
+}
+
+function place() { cv.style.transform = `translate(${ox}px, ${oy}px) scale(${scale})`; }
+
+function render() { place(); paint(); }
+
+function paint() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(img, 0, 0);
+  for (const k of keys) {
+    const on = k === active;
+    const ring = (on && drawing) ? drawing : areas[k].ring;
+    if (!ring.length) continue;
+    ctx.beginPath();
+    ring.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    if (!(on && drawing)) ctx.closePath();
+    ctx.lineWidth = (on ? 2.5 : 1) / scale;
+    ctx.strokeStyle = on ? "#4c8dff" : "rgba(140,170,210,.55)";
+    ctx.stroke();
+    if (on) {
+      ctx.fillStyle = "rgba(76,141,255,.16)"; ctx.fill();
+      for (const [x, y] of ring) {
+        ctx.beginPath(); ctx.arc(x, y, 3 / scale, 0, 7);
+        ctx.fillStyle = "#cfe0ff"; ctx.fill();
+      }
+    }
+  }
+  [...list.children].forEach(li => {
+    li.classList.toggle("on", li.dataset.k === active);
+    li.classList.toggle("edited", edited.has(li.dataset.k));
+  });
+}
+
+const at = e => [(e.clientX - stage.getBoundingClientRect().left - ox) / scale,
+                 (e.clientY - stage.getBoundingClientRect().top - oy) / scale];
+
+stage.addEventListener("click", e => {
+  if (!active || !drawing) return;
+  let [x, y] = at(e);
+  if (e.shiftKey && drawing.length) {   // the map's borders run on the diagonals
+    const [px, py] = drawing[drawing.length - 1];
+    const dx = x - px, dy = y - py;
+    const a = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+    const len = Math.hypot(dx, dy);
+    x = px + Math.cos(a) * len; y = py + Math.sin(a) * len;
+  }
+  drawing.push([Math.round(x), Math.round(y)]);
+  paint();
+});
+
+stage.addEventListener("contextmenu", e => e.preventDefault());
+let pan = null;
+stage.addEventListener("mousedown", e => { if (e.button === 2) pan = [e.clientX - ox, e.clientY - oy]; });
+addEventListener("mousemove", e => { if (pan) { ox = e.clientX - pan[0]; oy = e.clientY - pan[1]; place(); } });
+addEventListener("mouseup", () => (pan = null));
+stage.addEventListener("wheel", e => {
+  e.preventDefault();
+  const [mx, my] = at(e), k = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  scale *= k;
+  ox -= mx * scale * (k - 1) / k * 0 + (mx * (k - 1) * scale) / k;
+  oy -= (my * (k - 1) * scale) / k;
+  place();
+}, { passive: false });
+
+addEventListener("keydown", e => {
+  if (e.key === "Enter" && drawing && drawing.length >= 3) {
+    areas[active].ring = drawing; edited.add(active); drawing = null;
+    msg.textContent = `${areas[active].name} 갱신 — 저장 눌러야 반영`;
+    paint();
+  } else if (e.key === "Backspace" && drawing) { e.preventDefault(); drawing.pop(); paint(); }
+  else if (e.key === "Escape") { drawing = null; paint(); }
+  else if (e.key === "b" || e.key === "B") {
+    // the cleaned plate is easier to trace on; the original still has the name plates
+    img.src = img.src.includes("clean") ? "minimap.png" : "minimap-clean.png";
+    img.onload = paint;
+  }
+});
+
+document.getElementById("redraw").onclick = () => {
+  if (!active) { msg.textContent = "지역을 먼저 고르세요"; return; }
+  drawing = []; msg.textContent = `${areas[active].name} 그리는 중 — Enter로 닫기`; paint();
+};
+document.getElementById("save").onclick = async () => {
+  const body = {};
+  for (const k of edited) body[k] = areas[k].ring;
+  if (!Object.keys(body).length) { msg.textContent = "바뀐 지역이 없습니다"; return; }
+  const r = await fetch("/save", { method: "POST", body: JSON.stringify(body) });
+  msg.textContent = r.ok ? `저장됨 (${Object.keys(body).length}개 지역)` : "저장 실패";
+  if (r.ok) edited.clear();
+  paint();
+};
+boot();
+</script>
+</body>
+</html>

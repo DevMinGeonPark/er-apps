@@ -28,11 +28,7 @@ async function issue(name, gameId) {
   hint.classList.remove('error');
   hint.textContent = '루미아섬 관전 기록을 열람하는 중…';
   try {
-    const qs = new URLSearchParams({ name });
-    if (gameId) qs.set('gameId', gameId);
-    const res = await fetch('/api/deathcert?' + qs);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '발급에 실패했습니다.');
+    const data = await DAK.deathCert(name, gameId);
     currentName = name;
     currentGameId = data.death.gameId;
     renderPicker(data);
@@ -64,14 +60,15 @@ pngBtn.addEventListener('click', async () => {
   const orig = pngBtn.textContent;
   pngBtn.textContent = '촬영 중…';
   try {
-    const qs = new URLSearchParams({ name: currentName });
-    if (currentGameId) qs.set('gameId', currentGameId);
-    const res = await fetch('/api/png?' + qs);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'PNG 생성에 실패했습니다.');
-    }
-    const blob = await res.blob();
+    // 구 server.js는 헤드리스 Chrome으로 페이지를 촬영했다. 정적 배포에는 서버가
+    // 없으므로 브라우저에서 직접 래스터화한다.
+    const canvas = await html2canvas(certRoot, {
+      scale: 2,
+      useCORS: true,                                  // cdn.dak.gg 머그샷 (ACAO: *)
+      backgroundColor: getComputedStyle(document.body).backgroundColor || '#ffffff',
+    });
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    if (!blob) throw new Error('PNG 생성에 실패했습니다.');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `사망진단서_${currentName}.png`;
@@ -152,7 +149,7 @@ function renderCert(data) {
       </div>
       <div class="killer-body">
         <div class="mugshot">
-          <div class="frame">${k.mugshot ? `<img src="${esc(k.mugshot)}" alt="${esc(k.characterName)} 머그샷">` : ''}</div>
+          <div class="frame">${k.mugshot ? `<img src="${esc(k.mugshot)}" crossorigin="anonymous" alt="${esc(k.characterName)} 머그샷">` : ''}</div>
           <span>관전 카메라 채증</span>
         </div>
         <table>
@@ -195,7 +192,7 @@ function renderCert(data) {
       <div class="victim-layout">
         <div class="portrait-cell">
           <div class="portrait-frame">
-            ${v.portrait ? `<img src="${esc(v.portrait)}" alt="고인 영정사진">` : ''}
+            ${v.portrait ? `<img src="${esc(v.portrait)}" crossorigin="anonymous" alt="고인 영정사진">` : ''}
             <div class="ribbon"></div>
           </div>
           <span class="cap">영정사진</span>

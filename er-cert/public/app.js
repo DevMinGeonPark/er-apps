@@ -42,8 +42,7 @@ function buildOpinion(d) {
 
 // ---------- 캐릭터 그리드 ----------
 async function loadCharacters() {
-  const res = await fetch('/api/characters');
-  characters = await res.json();
+  characters = await DAK.getCharacters();
   characters.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   renderGrid('');
 }
@@ -56,7 +55,7 @@ function renderGrid(filter) {
   for (const c of list) {
     const cell = document.createElement('div');
     cell.className = 'char-cell' + (selectedChar?.id === c.id ? ' selected' : '');
-    cell.innerHTML = `<img src="/img/char/${c.key}" loading="lazy" alt="${c.name}"><div class="nm">${c.name}</div>`;
+    cell.innerHTML = `<img src="${DAK.charImgUrl(c.key)}" crossorigin="anonymous" loading="lazy" alt="${c.name}"><div class="nm">${c.name}</div>`;
     cell.onclick = () => selectCharacter(c, cell);
     grid.appendChild(cell);
   }
@@ -83,7 +82,7 @@ function renderSkinRow() {
   for (const s of selectedChar.skins) {
     const cell = document.createElement('div');
     cell.className = 'skin-cell' + (selectedSkin?.imageName === s.imageName ? ' selected' : '');
-    cell.innerHTML = `<img src="/img/skin/${s.imageName}" loading="lazy" alt="${s.name}">
+    cell.innerHTML = `<img src="${DAK.skinImgUrl(s.imageName)}" crossorigin="anonymous" loading="lazy" alt="${s.name}">
       <div class="nm">${s.name}</div><div class="gd">${GRADE_LABEL[s.grade] || ''}</div>`;
     cell.onclick = () => {
       selectedSkin = s;
@@ -153,9 +152,7 @@ async function issue(name, charId) {
   loadingTimer = setInterval(() => { $('#loading-msg').textContent = LOADING_MSGS[++i % LOADING_MSGS.length]; }, 1400);
 
   try {
-    const res = await fetch(`/api/certificate?name=${encodeURIComponent(name)}&characterId=${charId}`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '발급에 실패했습니다.');
+    const data = await DAK.issueCertificate(name, charId);
     lastCert = data;
     await renderCertificate(data);
     renderSeasonTable(data);
@@ -186,7 +183,7 @@ const BODY_FONT = `GowunBatang, AppleMyungjo, Batang, serif`;
 const TITLE_FONT = `SongMyung, GowunBatang, AppleMyungjo, serif`;
 
 async function renderCertificate(d) {
-  const skinImage = selectedSkin ? `/img/skin/${selectedSkin.imageName}` : `/img/char/${d.character.key}`;
+  const skinImage = selectedSkin ? DAK.skinImgUrl(selectedSkin.imageName) : DAK.charImgUrl(d.character.key);
   const photo = await imgToDataUri(skinImage);
   const issued = new Date(d.issuedAt);
   const ctx = {

@@ -58,9 +58,7 @@ meForm.addEventListener('submit', async (e) => {
   meBtn.disabled = true;
   startScan();
   try {
-    const res = await fetch('/api/killers?' + new URLSearchParams({ name }));
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '색출에 실패했습니다.');
+    const data = await DAK.killers(name);
     myName = data.me;
     hadKillers = true;
     renderKillers(data);
@@ -100,7 +98,7 @@ function renderKillers(data) {
     btn.type = 'button';
     btn.className = 'killer-card';
     btn.innerHTML = `
-      ${k.last.byCharKey ? `<img src="/img/char/${esc(k.last.byCharKey)}" alt="">` : '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">'}
+      ${k.last.byCharKey ? `<img src="${DAK.charImgUrl(k.last.byCharKey)}" crossorigin="anonymous" alt="">` : '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">'}
       <span class="info">
         <span class="nick">${esc(k.nickname)}</span><br>
         <span class="meta">${esc(k.last.byCharName)} · ${esc(k.last.placeName || '불상')} · ${esc(k.last.modeName)} · ${fmtDate(k.last.startDtm)}</span>
@@ -115,12 +113,7 @@ function renderKillers(data) {
 async function observe({ enemy, me, gameId }) {
   startScan();
   try {
-    const qs = new URLSearchParams({ enemy });
-    if (me) qs.set('me', me);
-    if (gameId) qs.set('gameId', gameId);
-    const res = await fetch('/api/observe?' + qs);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '관측에 실패했습니다.');
+    const data = await DAK.observe(enemy, me, gameId);
     renderObservation(data);
     stopScan('관측 완료.');
   } catch (err) {
@@ -147,7 +140,7 @@ function renderObservation(data) {
   let html = `
   <div class="target-banner">
     <div class="crosshair">
-      ${t.characterKey ? `<img src="/img/char/${esc(t.characterKey)}" alt="">` : ''}
+      ${t.characterKey ? `<img src="${DAK.charImgUrl(t.characterKey)}" crossorigin="anonymous" alt="">` : ''}
     </div>
     <div class="who">
       <div class="label">TARGET — 요주의 인물</div>
