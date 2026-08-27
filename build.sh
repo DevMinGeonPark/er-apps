@@ -18,6 +18,10 @@ done
 mkdir -p dist/map
 cp er-map/dist.html dist/map/index.html
 
+# 커스텀 도메인을 쓸 때만 존재 — Cloudflare DNS에 CNAME er -> devmingeonpark.github.io 를
+# 먼저 넣고, 루트에 CNAME 파일(내용: er.dev-heptivision.com)을 만들면 자동으로 실린다
+[ -f CNAME ] && cp CNAME dist/CNAME
+
 # GitHub Pages 의 Jekyll 처리를 끈다 (_shared 같은 밑줄 경로가 누락되는 것 방지)
 touch dist/.nojekyll
 
