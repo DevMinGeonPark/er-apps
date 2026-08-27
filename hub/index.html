@@ -42,6 +42,12 @@
   }
   a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
   .card .no { font-size: 11px; letter-spacing: 2px; color: var(--dim); }
+  .card .wip {
+    float: right; font-size: 10px; letter-spacing: 1px; color: #e0a03a;
+    border: 1px solid #e0a03a; border-radius: 2px; padding: 1px 6px; line-height: 1.5;
+  }
+  a.card.wip-card { opacity: .72; }
+  a.card.wip-card:hover { opacity: 1; }
   .card h2 { font-size: 18px; margin: 6px 0 8px; }
   .card p { margin: 0; font-size: 13.5px; color: var(--dim); }
 
@@ -90,8 +96,8 @@
     <p>실험체별 성적을 신용등급으로 환산합니다. Thin File과 연체 이력까지.</p>
   </a>
 
-  <a class="card" href="map/">
-    <div class="no">부록 · 지형</div>
+  <a class="card wip-card" href="map/">
+    <div class="no"><span class="wip">개발중</span>부록 · 지형</div>
     <h2>루미아섬 상황판</h2>
     <p>21개 지역과 34개 경계를 격자로 재구성한 지도.</p>
   </a>
