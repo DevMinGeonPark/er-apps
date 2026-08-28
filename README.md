@@ -3,25 +3,26 @@
 이터널리턴(Eternal Return) 전적 데이터를 다른 제도의 언어로 번역하는 사이트 모음.
 같은 dak.gg 데이터를 자격증·진단서·과실비율·주가·페르소나로 재해석한다.
 
-## 포트 / 도메인 레지스트리
+## 배포 주소
 
-새 사이트 추가 시 **반드시 여기 먼저 등록**하고 포트를 배정할 것. (과거 er-enemy가
-er-fault와 같은 3622를 기본값으로 써서 충돌한 이력 있음)
+전부 **https://er.dev-heptivision.com** 한 곳으로 통합됐다 (GitHub Pages · 정적).
 
-| 포트 | PM2 | 디렉토리 | 도메인 | 비고 |
-|---|---|---|---|---|
-| 3620 | `er-cert` | `er-cert/` | er-cert.dev-heptivision.com | 실험체 자격증 |
-| 3621 | `er-death` | `er-death/` | er-death.dev-heptivision.com | 사망진단서 |
-| 3622 | `er-fault` | `er-fault/` | er-fault.dev-heptivision.com | 과실비율 산정서 |
-| 3623 | `er-enemy` | `er-enemy/` | er-enemy.dev-heptivision.com | **`PORT=3623` 환경변수 필수** (코드 기본값 3622 충돌) |
-| 3624 | — | `lumia-exchange/` | lumia.dev-heptivision.com | 증권거래소, 터널만 예약 · 미기동 |
-| 3625 | `er-credit` | `er-credit/` | (터널 미연결) | **루미아 신용정보원** — (유저 × 실험체) 신용평가 |
-| 8793 | `markov-fantasy` | `fantasy/sites/markov-fantasy/` | — | `pm2 serve <dir> 8793 --spa` |
-| 3626 | — | — | — | **다음 배정분** |
+| 경로 | 디렉토리 | 비고 |
+|---|---|---|
+| `/` | `hub/` | 루미아 문서국 (허브) |
+| `/cert/` | `er-cert/public/` | 실험체 자격증 |
+| `/death/` | `er-death/public/` | 사망진단서 |
+| `/fault/` | `er-fault/public/` | 과실비율 산정서 |
+| `/enemy/` | `er-enemy/public/` | 원수 관측소 |
+| `/credit/` | `er-credit/public/` | 루미아 신용정보원 |
+| `/map/` | `er-map/dist.html` | 루미아섬 상황판 (개발중) |
 
-서버 없는 것: `er-map/` (정적 · 빌드 산출물), `martial/wuxia-forge/` ·
-`fantasy/arcane-forge/` (Python 생성기 — 산출물을 `~/move/<slug>`,
-`fantasy/sites/<slug>`로 배포)
+**구 주소(`er-cert.dev-heptivision.com` 등 4개)는 2026-08-28에 제거했다** — PM2 프로세스,
+cloudflared ingress, Cloudflare DNS 레코드 전부. 포트 레지스트리도 더 이상 필요 없다
+(로컬에서 `server.js`를 골든 기준으로 띄울 때만 3620~3625를 쓴다).
+
+여전히 서버가 필요한 것: `lumia-exchange/`(:3624 예약, 미기동 · 진짜 백엔드),
+`fantasy/sites/markov-fantasy/`(PM2 `markov-fantasy`, :8793).
 
 ### 헤드리스 Chrome 스크린샷
 
