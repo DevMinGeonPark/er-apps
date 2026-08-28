@@ -188,7 +188,7 @@ function renderReport(d) {
       </div>
       ${body}
       <div class="doc-foot">
-        본 조사서는 dak.gg 공개 전적 ${num(d.seasonsPlayed)}개 시즌 자료를 근거로 산정되었습니다.
+        본 조사서는 공개 전적 ${num(d.seasonsPlayed)}개 시즌 자료를 근거로 산정되었습니다.
         평가 기준선은 조회 대상 본인의 전체 평균이며, 타 이용자와의 절대 비교가 아닙니다.
         본 기관은 실존하지 않으며 평가 결과는 오락 목적입니다.
       </div>

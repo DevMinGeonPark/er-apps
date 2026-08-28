@@ -266,7 +266,7 @@ function classicSvg({ d, photo, dateStr, isDefaultSkin, skinName, statRows }) {
     <text y="-6" text-anchor="middle" font-size="19" font-weight="bold" fill="#c0392b" opacity="0.85">검정</text>
     <text y="18" text-anchor="middle" font-size="19" font-weight="bold" fill="#c0392b" opacity="0.85">원장</text>
   </g>
-  <text x="500" y="702" text-anchor="middle" font-size="10" fill="#a0a0a0">data: dak.gg · 랭크/일반/코발트 통합 · 재미로 발급된 증서로 법적 효력이 없음</text>
+  <text x="500" y="702" text-anchor="middle" font-size="10" fill="#a0a0a0">랭크/일반/코발트 통합 · 재미로 발급된 증서로 법적 효력이 없음</text>
 </svg>`;
 }
 
@@ -391,7 +391,7 @@ function aglaiaSvg({ d, photo, dateStr, isDefaultSkin, skinName, subjects, statR
   ${barcode}
   <text x="90" y="674" font-size="8" letter-spacing="1.5" fill="${dim}">${d.certNo} · SPECIMEN CONTROL DIV.</text>
 
-  <text x="500" y="702" text-anchor="middle" font-size="9.5" fill="${dim}">AGLAIA RESEARCH DIVISION · data: dak.gg · 랭크/일반/코발트 프로토콜 통합 · 재미로 발급된 증서로 법적 효력이 없음</text>
+  <text x="500" y="702" text-anchor="middle" font-size="9.5" fill="${dim}">AGLAIA RESEARCH DIVISION · 랭크/일반/코발트 프로토콜 통합 · 재미로 발급된 증서로 법적 효력이 없음</text>
 </svg>`;
 }
 

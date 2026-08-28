@@ -85,7 +85,7 @@ async function renderPaper(d) {
   </g>
   <text x="500" y="600" text-anchor="middle" font-size="16" fill="${ink}">${dateStr}</text>
   <text x="500" y="634" text-anchor="middle" font-size="20" letter-spacing="6" fill="${ink}" font-family="${TITLE_FONT}">루미아 손해사정법인</text>
-  <text x="500" y="688" text-anchor="middle" font-size="10" fill="#999">data: dak.gg · 재미로 발급된 문서로 효력이 없음</text>
+  <text x="500" y="688" text-anchor="middle" font-size="10" fill="#999">재미로 발급된 문서로 효력이 없음</text>
 </svg>`;
     return;
   }
@@ -163,7 +163,7 @@ async function renderPaper(d) {
     <text y="-3" text-anchor="middle" font-size="13" font-weight="bold" fill="${red}" opacity="0.85">손해</text>
     <text y="12" text-anchor="middle" font-size="13" font-weight="bold" fill="${red}" opacity="0.85">사정</text>
   </g>
-  <text x="500" y="701" text-anchor="middle" font-size="9" fill="#aaa">data: dak.gg · 재미로 발급된 문서로 실제 보험·법률 효력이 없음 · 팀워크 보호를 위해 용법·용량을 지켜 사용하세요</text>
+  <text x="500" y="701" text-anchor="middle" font-size="9" fill="#aaa">재미로 발급된 문서로 실제 보험·법률 효력이 없음 · 팀워크 보호를 위해 용법·용량을 지켜 사용하세요</text>
 </svg>`;
   $('#paper').innerHTML = svg;
 }
