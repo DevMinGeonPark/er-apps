@@ -7,6 +7,32 @@
   const tone = value => value === null || value === 0 ? '' : value < 0 ? 'negative' : 'positive';
   let current = null, isSample = true;
 
+  function buttonBusy(id, busy, label) {
+    $(id).setAttribute('aria-busy', String(busy));
+    $(id + '-label').textContent = label;
+  }
+
+  function startLoading(nickname) {
+    const started = performance.now();
+    $('loading-title').textContent = `${nickname} 님의 공식 전적을 조회하고 있어요.`;
+    $('loading-detail').textContent = '출퇴근 기록을 한 장씩 확인하고 있습니다. 조회가 끝나면 급여명세서를 보여드릴게요.';
+    $('loading-elapsed').textContent = '0초 경과';
+    $('loading').hidden = false;
+    $('results').hidden = true;
+    buttonBusy('submit', true, '정산 중…');
+    let delayed = false;
+    return setInterval(() => {
+      const seconds = Math.floor((performance.now() - started) / 1000);
+      $('loading-elapsed').textContent = `${seconds}초 경과`;
+      if (seconds >= 15 && !delayed) {
+        delayed = true;
+        const message = '공식 전적 응답을 기다리고 있어요. 기록이 많거나 조회가 몰리면 시간이 조금 더 걸릴 수 있습니다.';
+        $('loading-detail').textContent = message;
+        $('status').textContent = message;
+      }
+    }, 1000);
+  }
+
   function render(report, sample = false) {
     current = report; isSample = sample;
     const stampDate = date(Date.now());
@@ -31,6 +57,7 @@
   }
 
   async function issue() {
+    if ($('submit').disabled) return;
     const nickname = $('nickname').value.trim();
     if (!nickname) { $('nickname').focus(); return; }
     const count = Number($('count').value);
@@ -38,6 +65,7 @@
     $('save').disabled = true; $('share').disabled = true;
     $('results').setAttribute('aria-busy', 'true');
     $('status').className = ''; $('status').textContent = '공식 출퇴근 기록을 확인하고 있습니다. 최대 100경기를 조회해요…';
+    const loadingTimer = startLoading(nickname);
     try {
       const matches = await ERCore.getMatches(nickname, { pages: 10, mode: 3 });
       const report = Payroll.calculate(matches, count);
@@ -50,6 +78,10 @@
       $('status').className = 'error';
       $('status').textContent = (error.name === 'TimeoutError' ? '공식 전적 조회가 지연되고 있습니다. 잠시 후 다시 정산해주세요.' : error.message || '전적 조회에 실패했습니다.') + ' 아래 명세서는 이전 결과입니다.';
     } finally {
+      clearInterval(loadingTimer);
+      $('loading').hidden = true;
+      $('results').hidden = false;
+      buttonBusy('submit', false, '급여 정산하기');
       for (const id of ['submit', 'demo', 'nickname', 'count', 'save']) $(id).disabled = false;
       $('share').disabled = isSample;
       $('results').setAttribute('aria-busy', 'false');
@@ -64,6 +96,7 @@
   });
   $('save').addEventListener('click', async () => {
     $('save').disabled = true;
+    buttonBusy('save', true, 'PNG 만드는 중…');
     $('action-status').textContent = '급여명세서 이미지를 만들고 있습니다…';
     try {
       await document.fonts.ready;
@@ -76,7 +109,7 @@
       link.href = url; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
       $('action-status').textContent = '급여명세서 PNG를 저장했습니다.';
     } catch (error) { $('action-status').textContent = error.message || '이미지를 저장하지 못했습니다.'; }
-    finally { $('save').disabled = false; }
+    finally { $('save').disabled = false; buttonBusy('save', false, '명세서 PNG 저장'); }
   });
   $('share').addEventListener('click', async () => {
     if (isSample) return;
