@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#193a32">
+  <title>루미아 노동청 — RP 급여명세서</title>
+  <meta name="description" content="오늘도 일했는데, 통장이 줄었다. 이터널리턴 랭크 전적으로 실수령 RP와 시급을 정산하고 급여명세서를 발급하세요.">
+  <meta property="og:title" content="루미아 노동청 · 당신의 RP 시급은?">
+  <meta property="og:description" content="랭크 획득 RP는 급여, 입장 비용은 공제. 오늘의 열정을 정산해드립니다.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23193a32'/%3E%3Ctext x='50' y='72' text-anchor='middle' font-size='65' fill='%23d7edab'%3E₽%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=1">
+  <script defer src="er-config.js?v=1"></script>
+  <script defer src="er-core.js?v=1"></script>
+  <script defer src="payroll.js?v=1"></script>
+  <script defer src="vendor/html2canvas.min.js"></script>
+  <script defer src="app.js?v=1"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="./" aria-label="루미아 노동청 처음으로"><span class="brand-mark" aria-hidden="true">L<span>／</span></span><span>루미아 노동청<small>LUMIA LABOR OFFICE</small></span></a>
+    <a class="back" href="../">문서국으로 <span aria-hidden="true">↗</span></a>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="title">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> 제 6 과 · 랭크 근로 정산</div>
+        <h1 id="title">오늘도 일했는데,<br><em>통장이 줄었다.</em></h1>
+        <p class="lede">승리는 성과급. 입장료는 공제.<br>당신이 갈아 넣은 시간을 <strong>RP 급여명세서</strong>로 돌려드립니다.</p>
+      </div>
+      <div class="intro-note"><span class="note-no">민원 서식 006</span><span class="clock-art" aria-hidden="true"><i></i></span><p>이 섬에서는<br>퇴근도 실력입니다.</p><span class="note-foot">RANK IN. CASH OUT.</span></div>
+    </section>
+
+    <section class="application" aria-label="급여명세서 신청">
+      <form id="payroll-form">
+        <div class="field nickname-field"><label for="nickname">근로자 닉네임</label><input id="nickname" name="nickname" placeholder="정산할 닉네임을 입력하세요" maxlength="100" required autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="count">정산 범위</label><select id="count" name="count"><option value="10">최근 랭크 10판</option><option value="20" selected>최근 랭크 20판</option><option value="30">최근 랭크 30판</option></select></div>
+        <button class="primary" id="submit" type="submit"><span>급여 정산하기</span><span aria-hidden="true">↗</span></button>
+      </form>
+      <div class="form-foot"><p id="status" role="status" aria-live="polite">공식 전적 조회 · 일반전 제외 · 첫 조회는 잠시 걸릴 수 있어요.</p><button id="demo" class="text-button" type="button">발급 예시 보기</button></div>
+    </section>
+
+    <section id="results" aria-label="급여 정산 결과" aria-busy="false">
+      <div class="result-heading"><h2>당신의 노동, 정산 완료.</h2><span id="result-tag">가상 기록으로 만든 예시</span></div>
+      <div class="result-grid">
+        <article id="payslip" class="payslip" aria-label="RP 급여명세서"></article>
+        <aside class="analysis" aria-label="근로 분석">
+          <section class="hourly-card"><div class="eyebrow">당신의 노동 가치는</div><p class="hourly-value" id="hourly">—</p><p class="muted">실수령 RP ÷ 실제 플레이 시간</p><div class="rule"></div><p class="verdict" id="verdict"></p><p class="fine">대기·매칭 시간은 근무 시간에 포함하지 않습니다. 실제 체감 시급은 마음속에서 계산해주세요.</p></section>
+          <section class="stats-card"><h3>인사팀의 한 줄 기록</h3><dl id="stats"></dl></section>
+          <div class="actions"><button id="save" class="primary" type="button">명세서 PNG 저장 <span aria-hidden="true">↓</span></button><button id="share" class="secondary" type="button">내 급여 공유하기 <span aria-hidden="true">↗</span></button></div>
+          <p id="action-status" class="fine" role="status" aria-live="polite"></p>
+        </aside>
+      </div>
+      <details id="ledger"><summary><span>출퇴근 기록부 <small id="ledger-count"></small></span><span aria-hidden="true">＋</span></summary><div class="table-scroll"><table><caption class="sr-only">경기별 RP 지급 및 공제 내역</caption><thead><tr><th scope="col">출근 시각</th><th scope="col">성과</th><th scope="col">근무</th><th scope="col">지급</th><th scope="col">입장 공제</th><th scope="col">기타 조정</th><th scope="col">실수령</th></tr></thead><tbody id="ledger-body"></tbody></table></div></details>
+    </section>
+
+    <section class="method" aria-labelledby="method-title"><h2 id="method-title">노동청은 이렇게 정산합니다.</h2><div class="method-grid"><div><span>01 / 지급</span><p>경기에서 획득한 RP를<br>급여로 올립니다.</p></div><div><span>02 / 공제</span><p>공식 입장 비용을<br>그대로 공제합니다.</p></div><div><span>03 / 정산</span><p>실제 RP 증감을 합산해<br>실수령액을 확정합니다.</p></div></div><p>공식 API가 제공하는 최근 90일 이내·최대 100경기 중 선택한 수만큼의 최신 랭크 경기를 정산합니다. 닉네임 변경 이전 기록은 제외되며, 조회 범위의 랭크 경기 수가 부족하면 확인된 경기만 발급합니다. 세부 지급·공제와 실제 RP 증감의 차이는 기타 조정으로 표시합니다. RP가 누락된 경기는 0으로 처리하지 않으며 정산을 보류합니다.</p></section>
+  </main>
+  <footer><span>루미아 노동청 <small>당신의 열정에 영수증을.</small></span><p>이터널리턴 공식 Open API 전적 기반 팬 제작물 · 님블뉴런과 무관합니다.<br>RP를 급여에 빗댄 재미용 문서이며 실제 임금·현금 가치·법적 효력이 없습니다.</p><a href="../">루미아 문서국 ↗</a></footer>
+</body>
+</html>

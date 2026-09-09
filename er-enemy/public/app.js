@@ -58,7 +58,7 @@ meForm.addEventListener('submit', async (e) => {
   meBtn.disabled = true;
   startScan();
   try {
-    const data = await DAK.killers(name);
+    const data = await ER.killers(name);
     myName = data.me;
     hadKillers = true;
     renderKillers(data);
@@ -98,7 +98,7 @@ function renderKillers(data) {
     btn.type = 'button';
     btn.className = 'killer-card';
     btn.innerHTML = `
-      ${k.last.byCharKey ? `<img src="${DAK.charImgUrl(k.last.byCharKey)}" crossorigin="anonymous" alt="">` : '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">'}
+      ${k.last.byCharKey ? `<img src="${ER.charImgUrl(k.last.byCharKey)}" crossorigin="anonymous" alt="">` : '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="">'}
       <span class="info">
         <span class="nick">${esc(k.nickname)}</span><br>
         <span class="meta">${esc(k.last.byCharName)} · ${esc(k.last.placeName || '불상')} · ${esc(k.last.modeName)} · ${fmtDate(k.last.startDtm)}</span>
@@ -113,7 +113,7 @@ function renderKillers(data) {
 async function observe({ enemy, me, gameId }) {
   startScan();
   try {
-    const data = await DAK.observe(enemy, me, gameId);
+    const data = await ER.observe(enemy, me, gameId);
     renderObservation(data);
     stopScan('관측 완료.');
   } catch (err) {
@@ -140,7 +140,7 @@ function renderObservation(data) {
   let html = `
   <div class="target-banner">
     <div class="crosshair">
-      ${t.characterKey ? `<img src="${DAK.charImgUrl(t.characterKey)}" crossorigin="anonymous" alt="">` : ''}
+      ${t.characterKey ? `<img src="${ER.charImgUrl(t.characterKey)}" crossorigin="anonymous" alt="">` : ''}
     </div>
     <div class="who">
       <div class="label">TARGET — 요주의 인물</div>
@@ -149,8 +149,8 @@ function renderObservation(data) {
     </div>
     <div class="target-stats">
       <span>계정 레벨 <b>${esc(t.accountLevel ?? '—')}</b></span>
-      <span>시즌 참가 <b>${esc(t.seasonPlays)}</b></span>
-      <span>시즌 킬 <b>${t.seasonKills.toLocaleString('ko-KR')}</b></span>
+      <span>시즌 랭크 참가 <b>${esc(t.seasonPlays ?? '—')}</b></span>
+      <span>시즌 평균 킬 <b>${t.averageKills == null ? '—' : esc(t.averageKills)}</b></span>
       <span>현재 MMR <b>${t.mmr ? t.mmr.toLocaleString('ko-KR') : '—'}</b></span>
     </div>
   </div>`;
@@ -165,7 +165,7 @@ function renderObservation(data) {
     );
     for (const s of data.chain) {
       if (s.missing) {
-        items += chainItem('', '?', null, esc(s.nickname), null, '기록 접근 불가 — 관측이 여기서 끊겼습니다.');
+        items += chainItem('', '?', null, esc(s.nickname), null, esc(s.reason || '기록 접근 불가 — 관측이 여기서 끊겼습니다.'));
         continue;
       }
       if (s.won) {
@@ -198,7 +198,7 @@ function renderObservation(data) {
 
   // ----- 근황 -----
   const f = data.fate;
-  const total = f.total || 0;
+  const total = f.total;
   const dirCls = total > 0 ? 'up' : total < 0 ? 'down' : 'flat';
   const maxAbs = Math.max(1, ...data.afterGames.map(g => Math.abs(g.mmrGain)));
   const rows = data.afterGames.map(g => {
@@ -208,8 +208,8 @@ function renderObservation(data) {
     <div class="mmr-row">
       <span>${fmtDate(g.startDtm)}</span>
       <span class="rank ${g.died ? 'dead' : ''}">${g.gameRank}위</span>
-      <span class="bar-track">${g.mmrGain !== 0 ? `<span class="bar ${cls}" style="width:${pct}%"></span>` : ''}</span>
-      <span class="val ${cls}">${g.mmrGain === 0 ? '·' : fmtSigned(g.mmrGain)}</span>
+      <span class="bar-track">${g.mmrGain != null && g.mmrGain !== 0 ? `<span class="bar ${cls}" style="width:${pct}%"></span>` : ''}</span>
+      <span class="val ${cls}">${g.mmrGain == null ? '—' : g.mmrGain === 0 ? '·' : fmtSigned(g.mmrGain)}</span>
     </div>`;
   }).join('');
   html += `
@@ -217,7 +217,7 @@ function renderObservation(data) {
     <h2>그 후의 행적</h2>
     <p class="desc">${data.baseline ? '당신을 죽인 그 판 이후의 궤적입니다.' : '최근 궤적입니다.'}</p>
     <div class="fate-hero">
-      <span class="num ${dirCls}">${data.afterGames.length ? fmtSigned(total) : '—'}</span>
+      <span class="num ${dirCls}">${data.afterGames.length && total != null ? fmtSigned(total) : '—'}</span>
       <span class="cap">누적 MMR (${data.afterGames.length}판)</span>
     </div>
     ${f.notes && f.notes.length ? `<div class="fate-notes">${f.notes.map(esc).join(' · ')}</div>` : ''}

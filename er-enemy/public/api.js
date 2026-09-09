@@ -1,22 +1,17 @@
 // 루미아섬 원수 관측소 집계 — 구 er-enemy/server.js 를 브라우저로 옮긴 것.
-// fetch/캐시/캐릭터 메타는 dakgg-core.js(DAKCore)가 담당한다.
+// 공식 전적과 메타는 er-core.js(ERCore)와 er-ps 서버가 담당한다.
 // app.js 와 같은 전역 렉시컬 스코프를 쓰면 이름이 충돌한다
 // (fmt·fmtElapsed·observe·imgToDataUri 등이 실제로 겹쳤다). IIFE로 가둔다.
 (function () {
-  const { dakJson, getCharacters, charImgUrl } = DAKCore;
-  const META_TTL = DAKCore.META_TTL;
-  const { cacheGet, cacheSet } = DAKCore;
+  const { getCharacters, charImgUrl } = ERCore;
+  const META_TTL = ERCore.META_TTL;
+  const { cacheGet, cacheSet } = ERCore;
 
   // ---------- 메타데이터 ----------
   async function getMeta() {
     const hit = cacheGet('meta:all');
     if (hit) return hit;
-    const [chars, areas, masteries, monsters] = await Promise.all([
-      getCharacters(),
-      dakJson('/data/areas?hl=ko', META_TTL),
-      dakJson('/data/masteries?hl=ko', META_TTL),
-      dakJson('/data/monsters?hl=ko', META_TTL),
-    ]);
+    const { characters: chars, areas, masteries, monsters } = await ERCore.metadata();
     const meta = {
       charById: new Map(), charByKey: new Map(),
       areaById: new Map(), masteryByKey: new Map(), monsterByKey: new Map(),
@@ -26,9 +21,9 @@
       meta.charById.set(c.id, info);
       meta.charByKey.set(c.key.toLowerCase(), info);
     }
-    for (const a of areas.areas) meta.areaById.set(a.id, a.name);
-    for (const m of masteries.masteries) meta.masteryByKey.set(m.key.toLowerCase(), m.name);
-    for (const m of monsters.monsters) meta.monsterByKey.set(m.key.toLowerCase(), m.name);
+    for (const a of areas) meta.areaById.set(a.id, a.name);
+    for (const m of masteries) meta.masteryByKey.set(m.key.toLowerCase(), m.name);
+    for (const m of monsters) meta.monsterByKey.set(m.key.toLowerCase(), m.name);
     cacheSet('meta:all', meta, META_TTL);
     return meta;
   }
@@ -37,30 +32,14 @@
   const MATCH_TTL = 5 * 60 * 1000;
   // mode: 'RANK'(기본) — 관측소는 MMR이 걸린 랭크만 다룬다. null이면 전체 모드.
   async function getMatchesPage(nick, page, mode = 'RANK') {
-    const enc = encodeURIComponent(nick);
-    const d = await dakJson(`/players/${enc}/matches?page=${page}${mode ? `&matchingMode=${mode}` : ''}`, MATCH_TTL);
-    return d.matches || [];
+    const rows = await ERCore.getMatches(nick, { pages: page * 2 });
+    return rows.slice((page - 1) * 20, page * 20).filter(row => !mode || row.matchingMode === 3);
   }
   async function getMatches(nick, pages, mode = 'RANK') {
-    const out = [];
-    for (let p = 1; p <= pages; p++) {
-      const ms = await getMatchesPage(nick, p, mode);
-      out.push(...ms);
-      if (ms.length < 20) break;
-    }
-    return out;
+    return ERCore.getMatches(nick, { pages: pages * 2, mode: mode ? 3 : null });
   }
   async function findGameRecord(nick, gameId, pages = 5) {
-    for (let p = 1; p <= pages; p++) {
-      let ms;
-      try { ms = await getMatchesPage(nick, p); } catch (e) { return null; }
-      const m = ms.find(x => x.gameId === gameId);
-      if (m) return m;
-      if (!ms.length || ms.length < 20) break;
-      // 페이지가 이미 대상 게임보다 과거로 내려갔으면 중단
-      if (ms[ms.length - 1].gameId < gameId) break;
-    }
-    return null;
+    try { return await ERCore.findGameRecord(nick, gameId); } catch { return null; }
   }
 
   function describeCause(cause) {
@@ -105,12 +84,22 @@
   // ---------- 복수의 사슬 ----------
   async function buildChain(startNick, gameId, meta, myPlayTime) {
     const steps = [];
+    const visited = new Set();
     let nick = startNick;
     let prevTime = myPlayTime || 0;
     for (let depth = 0; depth < 8; depth++) {
+      if (visited.has(nick)) {
+        steps.push({ nickname: nick, missing: true, reason: '부활로 기록이 순환하여 추적을 마칩니다.' });
+        break;
+      }
+      visited.add(nick);
       const m = await findGameRecord(nick, gameId);
       if (!m) {
         steps.push({ nickname: nick, missing: true });
+        break;
+      }
+      if (!Number.isFinite(m.playTime) || m.playTime < prevTime) {
+        steps.push({ nickname: nick, missing: true, reason: '부활 기록으로 사망 순서를 확정할 수 없어 추적을 마칩니다.' });
         break;
       }
       const c = meta.charById.get(m.characterNum);
@@ -158,7 +147,8 @@
   // ---------- 근황 판정 ----------
   function fateReport(afterGames, lastSeenMs) {
     const n = afterGames.length;
-    if (!n) return { tone: 'silent', text: '그날 이후 실험 참가 기록이 없습니다 — 죄책감으로 추정됩니다.', total: 0 };
+    if (!n) return { tone: 'silent', text: '조회 범위에서 이후 랭크 기록을 찾지 못했습니다 — 잠적 여부는 관측 불가입니다.', total: null };
+    if (afterGames.some(g => g.mmrGain == null)) return { tone: 'hold', text: '일부 경기의 RP 증감이 제공되지 않아 누적 손익 판정을 보류합니다.', total: null };
     const total = afterGames.reduce((s, g) => s + (g.mmrGain || 0), 0);
     const bad = afterGames.filter(g => g.gameRank >= 7).length;
     let worstStreak = 0, cur = 0;
@@ -184,8 +174,6 @@
   // 내 킬러 집계
   async function buildKillers(name) {
     const meta = await getMeta();
-    const enc = encodeURIComponent(name);
-    const profile = await dakJson(`/players/${enc}/profile`, 10 * 60 * 1000); // 닉네임 검증
     const matches = await getMatches(name, 3);
     const byNick = new Map();
     let beastDeaths = 0, zoneDeaths = 0;
@@ -214,33 +202,31 @@
       .slice(0, 12);
     if (!killers.length) {
       const e = new Error(matches.length
-        ? `'${profile.player.name}'님의 최근 랭크 ${matches.length}판에서 플레이어에게 처형당한 기록이 없습니다.`
-        : `'${profile.player.name}'님의 이번 시즌 랭크 기록이 없습니다. 원수는 랭크에서만 생깁니다.`);
+        ? `'${name}'님의 조회한 랭크 ${matches.length}판에서 플레이어에게 처형당한 상세 기록이 없습니다.`
+        : `'${name}'님의 조회 범위에서 랭크 기록을 찾지 못했습니다.`);
       e.status = 404;
       throw e;
     }
-    return { me: profile.player.name, scanned: matches.length, killers, beastDeaths, zoneDeaths };
+    return { me: matches[0]?.nickname || name, scanned: matches.length, killers, beastDeaths, zoneDeaths };
   }
 
   // 관측
   async function buildObservation(enemy, me, gameId) {
     const meta = await getMeta();
-    const enc = encodeURIComponent(enemy);
-    const profile = await dakJson(`/players/${enc}/profile`, 10 * 60 * 1000);
-    const bucket = (profile.playerSeasonOverviews || []).find(o => o.matchingModeId === 0 && o.teamModeId === 0) || {};
+    const profile = await ERCore.getProfile(enemy);
     const matches = (await getMatches(enemy, 2)).sort((a, b) => a.gameId - b.gameId);
 
     // 대상 프로필 카드
     const lastMatch = matches[matches.length - 1];
     const lastChar = lastMatch ? meta.charById.get(lastMatch.characterNum) : null;
     const target = {
-      nickname: profile.player.name,
-      accountLevel: profile.player.accountLevel,
+      nickname: profile.nickname,
+      accountLevel: profile.accountLevel,
       characterKey: lastChar ? lastChar.key : null,
       characterName: lastChar ? lastChar.name : null,
-      mmr: bucket.mmr || null,
-      seasonPlays: bucket.play || 0,
-      seasonKills: bucket.playerKill || 0,
+      mmr: profile.mmr,
+      seasonPlays: profile.seasonPlays,
+      averageKills: profile.averageKills,
     };
 
     // 복수의 사슬 (내 사망 판이 지정된 경우)
@@ -267,11 +253,12 @@
     const pool = gameId ? matches.filter(m => m.gameId > gameId) : matches.slice(-12);
     let cum = 0;
     const afterGames = pool.slice(0, 20).map(m => {
-      cum += m.mmrGain || 0;
+      const delta = typeof m.mmrGain === 'number' ? m.mmrGain : null;
+      cum = cum == null || delta == null ? null : cum + delta;
       const c = meta.charById.get(m.characterNum);
       return {
         gameId: m.gameId, startDtm: m.startDtm, gameRank: m.gameRank,
-        mmrGain: m.mmrGain || 0, cum,
+        mmrGain: delta, cum,
         characterName: c ? c.name : '?',
         modeName: MODE_NAMES[m.matchingMode] || '기타',
         died: extractDeaths(m, meta).length > 0 && m.gameRank !== 1,
@@ -311,6 +298,6 @@
     try { return await buildObservation(enemy, (me || '').trim() || null, gameId || null); } catch (e) { rethrow(e); }
   }
 
-  window.DAK = { getCharacters, charImgUrl, killers, observe };
+  window.ER = { getCharacters, charImgUrl, killers, observe };
 
 })();

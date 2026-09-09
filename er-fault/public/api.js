@@ -1,37 +1,29 @@
 // 과실비율 산정 — 구 er-fault/server.js 를 브라우저로 옮긴 것.
-// fetch/캐시/캐릭터 메타는 dakgg-core.js(DAKCore)가 담당한다.
+// 공식 전적과 메타는 er-core.js(ERCore)와 er-ps 서버가 담당한다.
 // app.js 와 같은 전역 렉시컬 스코프를 쓰면 이름이 충돌한다
 // (fmt·fmtElapsed·observe·imgToDataUri 등이 실제로 겹쳤다). IIFE로 가둔다.
 (function () {
-  const { dakJson, charImgUrl, imgToDataUri } = DAKCore;
-  const META_TTL = DAKCore.META_TTL;
+  const { charImgUrl, imgToDataUri } = ERCore;
+  const META_TTL = ERCore.META_TTL;
 
   async function getCharacters() {
     // 구 server.js는 archeTypes만 쓰는 축소 형태였으나, 코어의 전체 형태가 상위 호환이다
-    return await DAKCore.getCharacters();
+    return await ERCore.getCharacters();
   }
   const ROLE_KO = { Tanker: '탱커', Supporter: '서포터', Assasin: '암살자', Warrior: '전사', Mage: '스킬러', Marksman: '사수' };
   async function getSeasons() {
-    const d = await dakJson('/data/seasons?hl=ko', META_TTL);
-    return d.seasons;
+    return ERCore.getSeasons();
   }
 
   // ---------- 매치 수집 ----------
   async function fetchMatches(name, seasonKey, pages) {
-    const enc = encodeURIComponent(name);
-    const all = [];
-    for (let p = 1; p <= pages; p++) {
-      const d = await dakJson(`/players/${enc}/matches?season=${seasonKey}&page=${p}`, 10 * 60 * 1000);
-      const ms = d.matches || [];
-      all.push(...ms);
-      if (ms.length < 20) break; // 마지막 페이지
-    }
-    return all;
+    return ERCore.getMatches(name, { pages: pages * 2, season: seasonKey });
   }
 
   // ---------- 과실 산정 ----------
   // 순 RP 증감 = 게임 내 획득 RP + 입장료(음수)
   function netRp(m) {
+    if (typeof m.mmrGain === 'number') return m.mmrGain;
     if (typeof m.mmrGainInGame !== 'number' || typeof m.mmrLossEntryCost !== 'number') return null;
     return m.mmrGainInGame + m.mmrLossEntryCost;
   }
@@ -64,7 +56,7 @@
     const dmg = rows.map(r => r.damageToPlayer || 0);
     const dmgSum = dmg.reduce((a, b) => a + b, 0) || 1;
     const dmgTaken = rows.map(r => r.damageFromPlayer || 0);
-    const support = rows.map(r => (r.healAmount || 0) + (r.protectAbsorb || 0));
+    const support = rows.map(r => (r.teamRecover || 0) + (r.protectAbsorb || 0));
     const play = rows.map(r => r.playTime || 0);
     const maxPlay = Math.max(...play);
     const deaths = rows.map(r => r.playerDeaths || 0);
@@ -135,7 +127,7 @@
       }
       // 제11조 — 티어별 주의 의무 (랭크 한정): 팀 평균 RP 대비 격차로 책임 가중·참작
       if (r.matchingMode === 3) {
-        const rps = rows.map(x => x.rankPoint || 0);
+        const rps = rows.map(x => x.mmrBefore || 0);
         if (rps.every(v => v > 0) && n > 1) {
           const avg = rps.reduce((a, b) => a + b, 0) / n;
           const diff = Math.round(rps[i] - avg);
@@ -291,13 +283,15 @@
   // 구 /api/seasons · /api/assess 라우트의 검증·에러 문구까지 포함한 진입점.
   async function seasons() {
     const ss = await getSeasons();
-    return ss.filter(s => s.id >= 18 || s.id === 0).map(s => ({ key: s.key, name: s.name })).reverse();
+    const cutoff = Date.now() - 90 * 86400000;
+    return ss.filter(s => s.isCurrent || Date.parse(s.end.replace(' ', 'T') + '+09:00') >= cutoff)
+      .map(s => ({ key: s.key, name: s.name })).reverse();
   }
 
   async function assessRequest({ me, mates = [], season = 'auto', pages = 3, mode = 'all', demo = null }) {
     me = (me || '').trim();
     mates = mates.map(s => s.trim()).filter(Boolean);
-    pages = Math.min(parseInt(pages, 10) || 3, 5);
+    pages = Math.max(1, Math.min(parseInt(pages, 10) || 3, 5));
     demo = (demo || '').trim() || null;
     if (!me || !mates.length) throw new Error('본인과 팀원 닉네임을 입력하세요.');
     const names = [me, ...mates].slice(0, 3);
@@ -308,8 +302,7 @@
     try {
       if (season === 'auto') {
         // 최근 시즌부터 함께한 기록이 있는 시즌을 자동 탐색
-        const ss = await getSeasons();
-        const candidates = ss.filter(s => s.id >= 18).sort((a, b) => b.id - a.id).slice(0, 4).map(s => s.key);
+        const candidates = (await seasons()).map(s => s.key);
         for (const key of candidates) {
           result = await assess(names, key, pages, mode, demo);
           if (result.sharedGames > 0) break;
@@ -326,6 +319,6 @@
     return result;
   }
 
-  window.DAK = { getCharacters, charImgUrl, imgToDataUri, seasons, assessRequest, assessGame };
+  window.ER = { getCharacters, charImgUrl, imgToDataUri, seasons, assessRequest, assessGame };
 
 })();

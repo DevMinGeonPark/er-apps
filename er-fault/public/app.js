@@ -9,7 +9,7 @@ let lastResult = null;
 
 // ---------- 초기화 ----------
 async function loadSeasons() {
-  const seasons = await DAK.seasons();
+  const seasons = await ER.seasons();
   $('#season').innerHTML = '<option value="auto">자동 (최근 기록 있는 시즌)</option>'
     + seasons.map(s => `<option value="${s.key}">${s.name}</option>`).join('');
 }
@@ -41,7 +41,7 @@ async function run() {
   $('#loading-msg').textContent = LOADING_MSGS[0];
   loadingTimer = setInterval(() => { $('#loading-msg').textContent = LOADING_MSGS[++i % LOADING_MSGS.length]; }, 1500);
   try {
-    const data = await DAK.assessRequest({ ...Object.fromEntries(q), mates });
+    const data = await ER.assessRequest({ ...Object.fromEntries(q), mates });
     lastResult = data;
     await renderPaper(data);
     renderDetail(data);
@@ -58,7 +58,7 @@ async function run() {
 }
 
 // ---------- 산정서 SVG ----------
-const imgToDataUri = (url) => DAK.imgToDataUri(url);
+const imgToDataUri = (url) => ER.imgToDataUri(url);
 function esc(s) { return String(s).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c])); }
 
 async function renderPaper(d) {
@@ -91,7 +91,7 @@ async function renderPaper(d) {
   }
 
   const culprit = d.culpritIdx;
-  const photo = d.mainChar[culprit].key ? await imgToDataUri(DAK.charImgUrl(d.mainChar[culprit].key)) : null;
+  const photo = d.mainChar[culprit].key ? await imgToDataUri(ER.charImgUrl(d.mainChar[culprit].key)) : null;
 
   // 과실 스택바
   const barX = 90, barW = 820, barY = 236, barH = 46;
@@ -175,7 +175,7 @@ function renderDetail(d) {
   const members = d.names.map((nm, i) => `
     <div class="member ${i === d.culpritIdx ? 'culprit' : ''}">
       <div class="head">
-        ${d.mainChar[i].key ? `<img src="${DAK.charImgUrl(d.mainChar[i].key)}" crossorigin="anonymous" alt="">` : ''}
+        ${d.mainChar[i].key ? `<img src="${ER.charImgUrl(d.mainChar[i].key)}" crossorigin="anonymous" alt="">` : ''}
         <div><div class="nm">${esc(nm)}</div><div class="role">${d.mainChar[i].role ? d.mainChar[i].role + ' · ' : ''}${roleOf(i)}</div></div>
         <div class="pct" style="color:${PCOLORS[i]}">${d.fault[i]}%</div>
       </div>
@@ -198,7 +198,7 @@ function renderDetail(d) {
       return `
       <div class="game-member ${i === a.culprit ? 'culprit' : ''}">
         <div class="gm-head">
-          ${p.charKey ? `<img src="${DAK.charImgUrl(p.charKey)}" crossorigin="anonymous" alt="">` : ''}
+          ${p.charKey ? `<img src="${ER.charImgUrl(p.charKey)}" crossorigin="anonymous" alt="">` : ''}
           <div>
             <b style="color:${PCOLORS[i]}">${esc(p.name)}</b> <span class="gm-fault">${a.fault[i]}%</span>${i === a.culprit ? ' <span class="culprit-chip">이 판의 범인</span>' : ''}
             <div class="gm-stat">${esc(p.character)}${p.role ? ` · ${p.role}` : ''} — 딜 ${fmt(p.damage)} · ${p.kill}/${p.assist}/${p.deaths} · 생존 ${mmss(p.playTime)}${p.giveUp ? ' · <b style="color:#ff8d7d">기권</b>' : ''}</div>
@@ -306,4 +306,7 @@ $('#again').addEventListener('click', () => {
   if (p.get('pages')) $('#pages').value = p.get('pages');
   updateBtn();
   if (p.get('me') && mates.length) run();
-})();
+})().catch(error => {
+  $('#form-error').textContent = error.message;
+  $('#form-error').hidden = false;
+});

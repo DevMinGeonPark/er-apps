@@ -520,4 +520,8 @@ $('#again-btn').addEventListener('click', () => {
   }
   updateIssueBtn();
   if (name && selectedChar) issue(name, selectedChar.id);
-})();
+})().catch(error => {
+  $('#char-grid').textContent = '실험체 목록을 불러오지 못했습니다. 잠시 후 새로고침해주세요.';
+  $('#form-error').textContent = error.message;
+  $('#form-error').hidden = false;
+});

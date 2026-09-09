@@ -1,6 +1,5 @@
-// er.dakgg.io 공용 클라이언트 코어 — 사이트 5곳에 복붙돼 있던 캐시·fetch·메타 계층.
-// dak.gg API가 CORS를 오리진 반사로 열어둬서 브라우저가 직접 호출한다(서버 불필요).
-// cdn.dak.gg 이미지는 access-control-allow-origin: * 이라 캔버스도 오염되지 않는다.
+// 자격증·신용평가의 전 시즌 상세 누적 및 스킨 이미지용 DAK 클라이언트.
+// 이름·직군은 공식 ERCore 메타에서 읽고, 기존 전 시즌 기록의 DAK ID는 별도로 유지한다.
 (function (global) {
   const DAK = 'https://er.dakgg.io/api/v1';
   const META_TTL = 6 * 3600 * 1000;
@@ -39,17 +38,23 @@
   let charsCache = null;
   async function getCharacters() {
     if (charsCache) return charsCache;
-    const d = await dakJson('/data/characters?hl=ko', META_TTL);
-    charsCache = d.characters.map(c => ({
-      id: c.id, key: c.key, name: c.name, imageUrl: 'https:' + c.imageUrl,
+    const [d, official] = await Promise.all([
+      dakJson('/data/characters?hl=ko', META_TTL), global.ERCore.getCharacters(),
+    ]);
+    const byKey = new Map(official.map(c => [c.key, c]));
+    charsCache = d.characters.map(c => {
+      const current = byKey.get(c.key);
+      if (!current) throw new Error(`공식 실험체 정보와 연결하지 못했습니다: ${c.key}`);
+      return ({
+      id: c.id, key: c.key, name: current.name, imageUrl: 'https:' + c.imageUrl,
       masteries: c.masteries || [],
-      archeTypes: (c.charArcheTypes || []).filter(a => a && a !== 'None'),
+      archeTypes: current.archeTypes,
       skins: (c.skins || []).map(s => ({
         id: s.id, name: s.name, grade: s.grade, imageName: s.imageName,
         // CharResult(전신) URL을 CharProfile(초상)로 바꿔 증명사진용으로 사용
         profileUrl: ('https:' + s.imageUrl).replace('CharResult_', 'CharProfile_'),
       })),
-    }));
+    }); });
     return charsCache;
   }
 

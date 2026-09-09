@@ -11,6 +11,7 @@ on:
       - 'er-fault/public/**'
       - 'er-enemy/public/**'
       - 'er-credit/public/**'
+      - 'er-payroll/public/**'
       - 'er-map/dist.html'
       - 'build.sh'
       - '.github/workflows/pages.yml'

@@ -28,7 +28,7 @@ async function issue(name, gameId) {
   hint.classList.remove('error');
   hint.textContent = '루미아섬 관전 기록을 열람하는 중…';
   try {
-    const data = await DAK.deathCert(name, gameId);
+    const data = await ER.deathCert(name, gameId);
     currentName = name;
     currentGameId = data.death.gameId;
     renderPicker(data);
@@ -64,7 +64,7 @@ pngBtn.addEventListener('click', async () => {
     // 없으므로 브라우저에서 직접 래스터화한다.
     const canvas = await html2canvas(certRoot, {
       scale: 2,
-      useCORS: true,                                  // cdn.dak.gg 머그샷 (ACAO: *)
+      useCORS: true,                                  // 공용 서버가 CORS를 제공하는 초상화
       backgroundColor: getComputedStyle(document.body).backgroundColor || '#ffffff',
     });
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -145,7 +145,7 @@ function renderCert(data) {
     <div class="killer-box">
       <div class="killer-head">
         <b>처형자 신원조회 결과</b>
-        <span class="tag">${k.record ? `당 시즌 전과 ${fmt(k.record.seasonKills)}킬` : '전과 조회 불가'}</span>
+        <span class="tag">${k.record?.averageKills != null ? `당 시즌 랭크 평균 ${esc(k.record.averageKills)}킬` : '전과 조회 불가'}</span>
       </div>
       <div class="killer-body">
         <div class="mugshot">
@@ -156,7 +156,7 @@ function renderCert(data) {
           <tr><th scope="row">닉네임</th><td class="v">${esc(k.nickname)}</td></tr>
           <tr><th scope="row">실험체</th><td class="v">${esc(k.characterName)} ${k.weaponName ? `<small>(${esc(k.weaponName)})</small>` : ''}</td></tr>
           <tr><th scope="row">처형 도구</th><td class="v">${k.cause ? esc(k.cause) : '불상'}</td></tr>
-          ${k.record ? `<tr><th scope="row">활동 이력</th><td class="v">당 시즌 ${fmt(k.record.seasonPlays)}회 실험 참가 <small>— 상습성 인정</small></td></tr>` : ''}
+          ${k.record?.seasonPlays != null ? `<tr><th scope="row">활동 이력</th><td class="v">당 시즌 랭크 ${fmt(k.record.seasonPlays)}회 실험 참가 <small>— 상습성 인정</small></td></tr>` : ''}
           <tr><th scope="row">범행 동기</th><td class="v"><small>${esc(k.motive)}</small></td></tr>
         </table>
       </div>
@@ -202,7 +202,7 @@ function renderCert(data) {
             <th scope="row">닉네임</th>
             <td class="v">${esc(v.nickname)}</td>
             <th scope="row">계정 레벨</th>
-            <td class="v">${esc(v.accountLevel)}</td>
+            <td class="v">${esc(v.accountLevel ?? '불상')}</td>
           </tr>
           <tr>
             <th scope="row">실험체</th>
@@ -265,7 +265,7 @@ function renderCert(data) {
 
     <div class="barcode">
       <div class="meta">
-        DAKGG-MIRRORED · GAME #${esc(d.gameId)}<br>
+        ER-OPEN-API · GAME #${esc(d.gameId)}<br>
         killDetail · killerCharacter · causeOfDeath · placeOfDeath
       </div>
       <div class="bars" aria-hidden="true"></div>

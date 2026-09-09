@@ -1,22 +1,16 @@
 // 사망진단서 생성 — 구 er-death/server.js 를 브라우저로 옮긴 것.
-// fetch/캐시는 dakgg-core.js(DAKCore)가 담당한다.
+// 공식 전적 조회는 er-core.js(ERCore)와 er-ps 서버가 담당한다.
 // app.js 와 같은 전역 렉시컬 스코프를 쓰면 이름이 충돌한다
 // (fmt·fmtElapsed·observe·imgToDataUri 등이 실제로 겹쳤다). IIFE로 가둔다.
 (function () {
-  const { dakJson } = DAKCore;
-  const META_TTL = DAKCore.META_TTL;
-  const { cacheGet, cacheSet } = DAKCore;
+  const META_TTL = ERCore.META_TTL;
+  const { cacheGet, cacheSet } = ERCore;
 
   // ---------- 메타데이터 ----------
   async function getMeta() {
     const hit = cacheGet('meta:all');
     if (hit) return hit;
-    const [chars, areas, masteries, monsters] = await Promise.all([
-      DAKCore.getCharacters(),
-      dakJson('/data/areas?hl=ko', META_TTL),
-      dakJson('/data/masteries?hl=ko', META_TTL),
-      dakJson('/data/monsters?hl=ko', META_TTL),
-    ]);
+    const { characters: chars, areas, masteries, monsters } = await ERCore.metadata();
     const meta = {
       charById: new Map(), charByKey: new Map(),
       areaById: new Map(),
@@ -31,12 +25,12 @@
       meta.charById.set(c.id, info);
       meta.charByKey.set(c.key.toLowerCase(), info);
     }
-    for (const a of areas.areas) meta.areaById.set(a.id, a.name);
-    for (const m of masteries.masteries) {
+    for (const a of areas) meta.areaById.set(a.id, a.name);
+    for (const m of masteries) {
       meta.masteryById.set(m.id, m.name);
       meta.masteryByKey.set(m.key.toLowerCase(), m.name);
     }
-    for (const m of monsters.monsters) meta.monsterByKey.set(m.key.toLowerCase(), m.name);
+    for (const m of monsters) meta.monsterByKey.set(m.key.toLowerCase(), m.name);
     cacheSet('meta:all', meta, META_TTL);
     return meta;
   }
@@ -141,7 +135,7 @@
 
     // (나) — 전적 조건 기반
     const na = [];
-    if ((m.damageFromPlayer || 0) > (m.maxHp || 1) * 2.5)
+    if (m.maxHp > 0 && (m.damageFromPlayer || 0) > m.maxHp * 2.5)
       na.push({ text: `감당 범위(체력 ${fmt(m.maxHp)})의 ${(m.damageFromPlayer / m.maxHp).toFixed(1)}배에 달하는 피해 축적`, dur: '약 14초' });
     if ((m.useEmoticonCount || 0) >= 8)
       na.push({ text: `과도한 감정표현(${m.useEmoticonCount}회)으로 인한 주의력 분산`, dur: '경기 내내' });
@@ -181,7 +175,7 @@
       ops.push(`고인은 ${m.playerKill}명을 먼저 보낸 후 사망하여, 최소한 혼자 가지는 않은 것으로 확인됨.`);
     if ((m.useEmoticonCount || 0) >= 5)
       ops.push(`경기 중 감정표현 ${m.useEmoticonCount}회 사용 — 검시관은 이 중 일부가 사인(死因)에 기여했을 가능성을 배제하지 않음.`);
-    if ((m.tacticalSkillUseCount || 0) === 0)
+    if (m.tacticalSkillUseCount === 0)
       ops.push('전술 스킬을 한 번도 사용하지 않은 채 사망함. 아껴서 남 주게 됨.');
     if ((m.mmrGain || 0) < 0)
       ops.push(`유족(본인)에게 MMR ${m.mmrGain}이 상속됨.`);
@@ -215,15 +209,12 @@
   // ---------- 처형자 신원조회 (best-effort) ----------
   async function lookupKiller(nickname) {
     try {
-      const enc = encodeURIComponent(nickname);
-      const p = await dakJson(`/players/${enc}/profile`, 10 * 60 * 1000);
-      const bucket = (p.playerSeasonOverviews || []).find(o => o.matchingModeId === 0 && o.teamModeId === 0);
-      if (!bucket) return null;
+      const p = await ERCore.getProfile(nickname);
       return {
-        accountLevel: p.player && p.player.accountLevel,
-        seasonKills: bucket.playerKill || 0,
-        seasonPlays: bucket.play || 0,
-        mmr: bucket.mmr || null,
+        accountLevel: p.accountLevel,
+        averageKills: p.averageKills,
+        seasonPlays: p.seasonPlays,
+        mmr: p.mmr,
       };
     } catch (e) {
       return null;
@@ -232,23 +223,26 @@
 
   // ---------- 진단서 생성 ----------
   async function buildDeathCert(name, gameId) {
-    const enc = encodeURIComponent(name);
-    const [meta, profile, matchData] = await Promise.all([
+    const [meta, matches] = await Promise.all([
       getMeta(),
-      dakJson(`/players/${enc}/profile`, 10 * 60 * 1000),
-      dakJson(`/players/${enc}/matches`, 5 * 60 * 1000),
+      ERCore.getMatches(name, { pages: 2 }),
     ]);
-    const matches = matchData.matches || [];
+    if (gameId && !matches.some(row => row.gameId === gameId)) {
+      const record = await ERCore.findGameRecord(name, gameId);
+      if (!record) throw new Error('해당 경기에서 이 닉네임의 기록을 찾을 수 없습니다.');
+      matches.unshift(record);
+    }
 
     // 사망 기록이 있는 매치만
     const deathMatches = matches.filter(m => extractDeaths(m, meta).length > 0);
     if (!deathMatches.length) {
-      const e = new Error(`'${profile.player.name}'님은 최근 ${matches.length}판 내 사망 기록이 없습니다. 생존왕이시거나, 최근 전적이 없습니다.`);
+      const e = new Error(`'${name}'님은 조회한 최근 ${matches.length}판 내 사망 상세 기록이 없습니다.`);
       e.status = 404;
       throw e;
     }
 
-    const m = (gameId && deathMatches.find(x => x.gameId === gameId)) || deathMatches[0];
+    const m = gameId ? deathMatches.find(x => x.gameId === gameId) : deathMatches[0];
+    if (!m) throw new Error('지정한 경기에 사망 상세 기록이 없습니다.');
     const deaths = extractDeaths(m, meta);
     const finalDeath = deaths[deaths.length - 1];
     const seed = hashStr(name + ':' + m.gameId);
@@ -293,16 +287,16 @@
       certNo,
       issuedAt: fmtDate(new Date()),
       victim: {
-        nickname: profile.player.name,
-        accountLevel: profile.player.accountLevel,
+        nickname: m.nickname,
+        accountLevel: m.accountLevel ?? null,
         characterName: victimChar ? victimChar.name : '불상',
         characterKey: victimChar ? victimChar.key : null,
         characterLevel: m.characterLevel,
         weaponName: meta.masteryById.get(m.bestWeapon) || null,
         weaponLevel: m.bestWeaponLevel,
-        portrait: skin ? DAKCore.skinImgUrl(skin.imageName) : (victimChar ? DAKCore.charImgUrl(victimChar.key) : null),
-        mmrBefore: m.mmrBefore || null,
-        mmrGain: m.mmrGain || 0,
+        portrait: skin ? ERCore.skinImgUrl(skin.imageName) : (victimChar ? ERCore.charImgUrl(victimChar.key) : null),
+        mmrBefore: m.mmrBefore ?? null,
+        mmrGain: m.mmrGain ?? null,
       },
       death: {
         gameId: m.gameId,
@@ -323,7 +317,7 @@
         kind: finalDeath.kind,
         nickname: finalDeath.killerNickname,
         characterName: finalDeath.killerCharName,
-        mugshot: finalDeath.killerCharKey ? DAKCore.charImgUrl(finalDeath.killerCharKey) : null,
+        mugshot: finalDeath.killerCharKey ? ERCore.charImgUrl(finalDeath.killerCharKey) : null,
         weaponName: finalDeath.weaponName,
         cause: finalDeath.cause,
         motive: killerMotive(m, seed),
@@ -353,6 +347,6 @@
     }
   }
 
-  window.DAK = { deathCert };
+  window.ER = { deathCert };
 
 })();
