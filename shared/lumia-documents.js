@@ -75,6 +75,16 @@
       inputHint: '접수대에서 최근 랭크 10·20·30판 중 정산 범위를 선택합니다.',
       dialogue: { quote: '이만큼 했는데\n오히려 깎였다고?', aside: '…명세서 뽑아줄게.' },
     },
+    {
+      id: 'playstyle', name: '이리 팀원 유형 검사', category: '플레이 성향',
+      short: '나는 어떤 이리 팀원일까? 12문항 · 16유형',
+      description: '교전 앞에서, 팀원의 콜 앞에서. 12가지 상황으로 내 플레이 성향을 찾고 친구와 우리 팀 사용설명서를 만들어보세요.',
+      target: '12가지 게임 상황에서 고른 선택', href: '/type/', status: 'active',
+      featured: true, searchKeywords: ['MBTI', '엠비티아이', '성격', '테스트', '궁합', '팀원', '유형'],
+      inputSchema: [{ name: 'nickname', label: '결과 카드에 쓸 이름', required: false }],
+      inputHint: '12문항 · 약 2분. 닉네임 없이도 할 수 있어요. 실제 전적 조회 없이 선택한 답으로 결과를 만듭니다.',
+      dialogue: { quote: '네가 어떤 팀원인지?\n…팀원한테 물으면 되잖아.', aside: '직접 알고 싶으면, 솔직하게 골라.' },
+    },
   ];
 
   const STORAGE_KEY = 'lumia.context.v1';

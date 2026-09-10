@@ -18,11 +18,12 @@ function load(options = {}) {
 }
 const plain = value => JSON.parse(JSON.stringify(value));
 
-test('six stable document routes retain their input contracts', () => {
+test('existing routes retain their input contracts and the local playstyle test is registered', () => {
   const { LumiaDocuments: docs } = load();
   assert.deepEqual(plain(docs.map(item => [item.id, item.href])), [
     ['license', '/cert/'], ['autopsy', '/death/'], ['liability', '/fault/'],
     ['tracking', '/enemy/'], ['credit', '/credit/'], ['payroll', '/payroll/'],
+    ['playstyle', '/type/'],
   ]);
   for (const item of docs) {
     assert.equal(item.status, 'active');
@@ -32,6 +33,9 @@ test('six stable document routes retain their input contracts', () => {
   assert.deepEqual(plain(docs.find(item => item.id === 'license').inputSchema.map(field => field.name)), ['nickname', 'character', 'skin', 'style']);
   assert.deepEqual(plain(docs.find(item => item.id === 'liability').inputSchema.find(field => field.name === 'mode').options), ['all', 'squad', 'cobalt']);
   assert.deepEqual(plain(docs.find(item => item.id === 'payroll').inputSchema.find(field => field.name === 'count').options), [10, 20, 30]);
+  const quiz = docs.find(item => item.id === 'playstyle');
+  assert.equal(quiz.inputSchema[0].required, false);
+  assert.equal(quiz.featured, true);
 });
 
 test('catalog scales through 6, 7, 30, 60, and 100 registrations and clamps deleted pages', () => {
@@ -56,6 +60,7 @@ test('catalog searches whitespace-insensitively, combines categories, and handle
   assert.equal(catalog.selectPage(docs, '전체', '사 망 진 단 서').items[0].id, 'autopsy');
   assert.equal(catalog.selectPage(docs, '경기 분석', '누 적 전 적').count, 0);
   assert.equal(catalog.selectPage(docs, '전체', '전 시 즌 누 적').items[0].id, 'license');
+  assert.equal(catalog.selectPage(docs, '전체', 'm b t i').items[0].id, 'playstyle');
   const result = catalog.selectPage(docs, '전체', '없는 문서', 10);
   assert.equal(result.page, 0);
   assert.equal(result.pages, 1);

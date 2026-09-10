@@ -113,6 +113,13 @@
   }
 
   function renderRecent() {
+    const featured = documents.filter(item => item.featured && item.status === 'active');
+    q('#am-featured').hidden = !featured.length;
+    q('#am-featured').replaceChildren(...featured.map(item => {
+      const row = makeRow(item, true);
+      row.querySelector('.am-num').textContent = 'NEW';
+      return row;
+    }));
     const recent = context.getRecent();
     const ids = recent.length ? recent : ['autopsy', 'liability', 'payroll'].filter(id => documents.some(item => item.id === id));
     q('#am-recent-label').textContent = recent.length ? '최근 선택한 서류' : '바로 찾기';
@@ -174,7 +181,7 @@
     q('#am-error').hidden = item.status === 'active';
     q('#am-error').textContent = item.status === 'active' ? '' : (item.disabledReason || '현재 접수할 수 없는 문서입니다.');
     q('#am-submit').disabled = item.status !== 'active';
-    q('#am-submit-label').textContent = '접수대 열기';
+    q('#am-submit-label').textContent = item.id === 'playstyle' ? '유형 검사 열기' : '접수대 열기';
     q('#am-form').removeAttribute('aria-busy');
   }
 

@@ -49,8 +49,8 @@ try {
   const text = selector => page.$eval(selector, el=>el.textContent);
   async function fill(selector, value) { await page.$eval(selector,(el,value)=>{el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));},value); }
   async function waitState(state) { await page.waitForFunction(state=>document.body.dataset.lumiaState===state, {timeout:6000}, state); }
-  await check('all seven routes / responsive widths / no map navigation', async () => {
-    for (const slug of ['', 'cert','death','fault','enemy','credit','payroll']) {
+  await check('all eight routes / responsive widths / no map navigation', async () => {
+    for (const slug of ['', 'cert','death','fault','enemy','credit','payroll','type']) {
       await go(slug);
       for (const width of [360,390,720,768,860,1024,1200,1440]) {
         await page.setViewport({width,height:1000});

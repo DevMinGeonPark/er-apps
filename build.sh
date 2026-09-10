@@ -12,7 +12,7 @@ mkdir -p dist/shared dist/assets
 cp shared/lumia-documents.js shared/night-clerk.js shared/night-clerk.css dist/shared/
 cp docs/lumia-night-clerk-2026-09-10/assets/lumia-art.jpg dist/assets/lumia-art.jpg
 
-for pair in er-cert:cert er-death:death er-fault:fault er-enemy:enemy er-credit:credit er-payroll:payroll; do
+for pair in er-cert:cert er-death:death er-fault:fault er-enemy:enemy er-credit:credit er-payroll:payroll er-type:type; do
   src="${pair%%:*}"; slug="${pair##*:}"
   cp -RL "$src/public" "dist/$slug"
 done

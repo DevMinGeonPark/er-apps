@@ -5,6 +5,8 @@
 
 새 시리즈 **[루미아 노동청](https://er.dev-heptivision.com/payroll/)**: 실제 랭크 RP로 지급·공제·실수령액과 RP 시급을 정산한다. PNG 저장과 링크 공유를 지원한다.
 
+**[이리 팀원 유형 검사](https://er.dev-heptivision.com/type/)**: 12가지 게임 상황으로 16가지 플레이 성향을 찾는다. 결과 링크·PNG 카드와 2~3인 팀 사용설명서를 제공하며, 전적 조회나 외부 API 없이 브라우저에서 동작한다.
+
 2026-09-09 공식 API 전환 범위·제약·검증은 [전환 기록](docs/official-api-migration.md)에 정리했다.
 
 새 전적 서비스 [루미아섬 CCTV](er-ps/README.md)는 `er-ps/`에서 개발한다.
@@ -26,6 +28,7 @@
 | `/enemy/` | `er-enemy/public/` | 원수 관측소 |
 | `/credit/` | `er-credit/public/` | 루미아 신용정보원 |
 | `/payroll/` | `er-payroll/public/` | 루미아 노동청 · RP 급여명세서 |
+| `/type/` | `er-type/public/` | 12문항 · 16유형 플레이 성향 검사 |
 | `/map/` | 빌드 시 안내 페이지 | 문서국 `/`으로 이동 |
 
 **구 주소(`er-cert.dev-heptivision.com` 등 4개)는 2026-08-28에 제거했다** — PM2 프로세스,
@@ -68,11 +71,14 @@ python3 -m http.server 8099 --directory dist
 ./build.sh
 node --test test/lumia-*.test.cjs er-payroll/test/*.test.cjs
 LUMIA_EXTRA_CHECKS=1 node scripts/check-night-clerk.mjs
+node scripts/check-lumia-type.mjs
 ```
 
 결과 보고서, 화면 캡처와 PNG/PDF는 `.cache/night-clerk/`에 저장합니다. 로컬 화면은 `python3 -m http.server 8099 --bind 127.0.0.1 --directory dist`로 확인합니다. 로비·문서 이동은 닉네임을 브라우저에 보존하며 자동 조회를 시작하지 않습니다. 기존 공유 URL로 직접 접속하면 해당 문서의 기존 조회 규칙을 따릅니다.
 
 Node 24와 Chrome, 브라우저 검증용 `er-agent/map`의 `puppeteer-core`가 필요하다.
+
+유형 검사 검증은 `.cache/lumia-type/`에 저장한다. 문항별 선택지의 극성은 `quiz-model.js`에서 정의하며, 각 축에 3문항씩 배정해 동점 없이 4개 축의 조합으로 유형을 결정한다. 결과 링크에는 유형 코드만 들어간다. 답변 진행은 이 브라우저에만 보존하고, 닉네임은 선택 사항이다. 유형 설명과 팀 조합은 게임을 즐기기 위한 콘텐츠이며 심리 진단이나 전적 평가가 아니다.
 
 ```bash
 (cd er-ps && npm test)
