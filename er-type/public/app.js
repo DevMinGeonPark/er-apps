@@ -14,6 +14,8 @@
   let progress = emptyProgress();
   let currentProfile = null;
   let currentSource = null;
+  let currentScored = null;
+  let cardRevision = 0;
   let stage = 'intro';
   let exporting = false;
 
@@ -54,6 +56,7 @@
     $('#type-quiz').hidden = next !== 'question';
     $('#type-result').hidden = next !== 'result';
     $('#type-catalog').hidden = next === 'question';
+    if (next !== 'result') { cardRevision++; document.querySelector('.type-print-sheet')?.remove(); delete document.body.dataset.typePrint; }
     globalThis.LumiaClerk?.setState(next === 'result' ? 'result' : 'intake', next === 'question' ? '문항 응답 중' : undefined);
   }
   function clearSharedHash() {
@@ -107,6 +110,7 @@
     if (!profile) { showIntro('유형을 확인할 수 없습니다. 아래에서 내 검사를 시작해 주세요.'); return; }
     currentProfile = profile;
     currentSource = source;
+    currentScored = source === 'own' ? scored : null;
     setStage('result');
     $('#type-profile').dataset.code = code;
     setText('#type-code', typeNumber(code));
@@ -115,6 +119,8 @@
     setText('#type-result-title', profile.name);
     setText('#type-tagline', profile.tagline);
     setText('#type-description', profile.description);
+    $('#type-portrait').src = `/type/art/${code}.png`;
+    $('#type-portrait').alt = profile.name + '의 플레이 모습을 그린 귀여운 만화 캐릭터';
     setText('#type-self-view', profile.selfView);
     setText('#type-team-view', profile.teamView);
     setText('#type-tip', profile.tip);
@@ -124,10 +130,13 @@
       const counted = source === 'own' ? scored?.axes[index] : null;
       const pole = counted ? counted.pole : Number(code[index]);
       const counts = counted?.counts;
-      const detail = counts ? `${axis.poles[0]} ${counts[0]}회 · ${axis.poles[1]} ${counts[1]}회` : axis.poles.join(' ↔ ');
       const caption = axis.descriptions?.[pole] || axis.poles[pole];
-      const rail = counts ? Array.from({ length: counts[0] + counts[1] }, (_, i) => `<span data-active="${i < counts[0]}" aria-hidden="true"></span>`).join('') : `<span data-active="${pole === 0}" aria-hidden="true"></span><span data-active="${pole === 1}" aria-hidden="true"></span>`;
-      return `<div class="type-axis"${counts ? ` data-count-left="${counts[0]}" data-count-right="${counts[1]}"` : ''}><div class="type-axis-heading"><span>${esc(axis.title || axis.poles.join(' · '))}</span><strong>${esc(axis.poles[pole])}</strong></div><div class="type-axis-rail" aria-hidden="true">${rail}</div><div class="type-axis-detail"><span>${esc(detail)}</span></div><p class="type-axis-caption">${esc(caption)}</p></div>`;
+      const total = counts ? counts[0] + counts[1] : 0;
+      const share = counts ? counts[pole] / total * 100 : null;
+      const graphLabel = counts ? `${axis.poles[0]} ${counts[0]}회, ${axis.poles[1]} ${counts[1]}회` : `${axis.poles[pole]} 성향. 문항별 응답 비율은 공유되지 않았습니다.`;
+      const arc = counts ? `<circle class="type-axis-value" cx="60" cy="60" r="49" pathLength="100" stroke-dasharray="${share} 100" transform="rotate(-90 60 60)"></circle>` : '';
+      const legend = axis.poles.map((name, side) => `<span><i class="type-axis-key${side === pole ? ' is-dominant' : ''}" aria-hidden="true"></i>${esc(name)}${counts ? ` ${counts[side]}회` : ''}</span>`).join('');
+      return `<div class="type-axis"${counts ? ` data-count-left="${counts[0]}" data-count-right="${counts[1]}"` : ''}><div class="type-axis-heading">${esc(axis.title || axis.poles.join(' · '))}</div><div class="type-axis-chart${counts ? '' : ' is-unmeasured'}" role="img" aria-label="${esc(graphLabel)}"><svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle class="type-axis-track" cx="60" cy="60" r="49"></circle>${arc}</svg><div class="type-axis-center" aria-hidden="true"><strong>${esc(axis.poles[pole])}</strong><small>${counts ? `${counts[pole]} / ${total} 선택` : '유형 성향'}</small></div></div><div class="type-axis-detail">${legend}</div><p class="type-axis-caption">${esc(caption)}</p></div>`;
     }).join('');
     $('#type-compatibility-list').innerHTML = [['best', '호흡을 맞추기 쉬운 유형'], ['spicy', '한 번 더 대화하면 좋은 유형']].map(([key, label]) => {
       const partner = model.getType(profile[key]);
@@ -141,6 +150,41 @@
     $('#type-team-submit').disabled = !$('#type-friend-one').value;
     say(source === 'own' ? '12문항을 모두 확인했습니다. 결과를 읽어 보세요.' : '공유된 유형과 내 검사 기록은 별도로 유지됩니다.');
     focusHeading('#type-result-title');
+    prepareCards();
+  }
+
+  function resultNickname() { return currentSource === 'own' ? $('#type-nickname').value.trim() : ''; }
+  function prepareCards() {
+    const revision = ++cardRevision;
+    const profile = currentProfile;
+    const nickname = resultNickname();
+    const scored = currentScored;
+    $('#type-share').disabled = true;
+    $('#type-pdf').disabled = true;
+    setText('#type-share', '카드 준비 중…');
+    document.querySelector('.type-print-sheet')?.remove();
+    delete document.body.dataset.typePrint;
+    globalThis.LumiaTypeShare?.prepare(profile, nickname, scored).then(() => {
+      if (revision !== cardRevision) return;
+      $('#type-share').disabled = false;
+      setText('#type-share', '카드 공유하기');
+    });
+    globalThis.LumiaTypeExport.render(profile, nickname, scored).then(async canvas => {
+      const img = new Image();
+      img.className = 'type-print-image';
+      img.alt = profile.name + ' 결과 카드 — 유형 그림과 네 가지 성향 그래프';
+      img.src = canvas.toDataURL('image/png');
+      await img.decode();
+      if (revision !== cardRevision) return;
+      const sheet = document.createElement('div');
+      sheet.className = 'type-print-sheet';
+      sheet.append(img);
+      document.body.append(sheet);
+      $('#type-pdf').disabled = false;
+    }).catch(() => {
+      if (revision !== cardRevision) return;
+      $('#type-pdf').disabled = false;
+    });
   }
 
   function readHash(focus = true) {
@@ -154,7 +198,7 @@
     const options = model.types.map(type => `<option value="${esc(type.code)}">${esc(type.name)}</option>`).join('');
     $('#type-friend-one').innerHTML = '<option value="">유형 선택</option>' + options;
     $('#type-friend-two').innerHTML = '<option value="">둘이서 볼게요</option>' + options;
-    $('#type-catalog-list').innerHTML = model.types.map(type => `<button type="button" class="type-catalog-item" data-type="${esc(type.code)}"><span>${esc(type.name)}</span><small>${esc(typeNumber(type.code).split(' / ')[0])}</small></button>`).join('');
+    $('#type-catalog-list').innerHTML = model.types.map(type => `<button type="button" class="type-catalog-item" data-type="${esc(type.code)}"><img class="type-catalog-thumb" src="/type/art/${type.code}.png" alt="" width="52" height="52" loading="lazy"><span>${esc(type.name)}</span><small>${esc(typeNumber(type.code).split(' / ')[0])}</small></button>`).join('');
   }
   function previewType(event) {
     const button = event.target.closest('button[data-type]');
@@ -264,11 +308,40 @@
     setText('#type-png', '결과 카드 저장 중…');
     try {
       if (!globalThis.LumiaTypeExport?.save) throw new Error('이미지 저장 기능을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');
-      await globalThis.LumiaTypeExport.save(profile, nickname);
+      await globalThis.LumiaTypeExport.save(profile, nickname, currentScored);
       say('결과 카드를 PNG로 저장했습니다.');
     } catch (error) { say(error.message || '이미지를 저장하지 못했습니다. 다시 시도해 주세요.'); }
     finally { exporting = false; $('#type-png').disabled = false; setText('#type-png', '결과 카드 PNG 저장'); }
   });
+  $('#type-share').addEventListener('click', async () => {
+    if (!currentProfile) return;
+    const revision = cardRevision;
+    const result = await globalThis.LumiaTypeShare.share(currentProfile, resultNickname(), currentScored);
+    if (revision !== cardRevision) return;
+    if (result.status === 'shared') say(result.mode === 'file' ? '공유창을 열었습니다. 카카오톡 등 원하는 앱을 선택하세요.' : '유형 링크 공유창을 열었습니다.');
+    else if (result.status === 'cancelled') say('공유를 취소했습니다. 결과 카드는 그대로 있어요.');
+    else {
+      $('#type-share-fallback').hidden = false;
+      $('#type-share-link').value = resultLink(currentProfile.code);
+      $('#type-share-link').focus();
+      $('#type-share-link').select();
+      say('이 환경에서는 공유창을 열 수 없어요. PNG를 저장해 카카오톡에 첨부하거나 아래 링크를 복사해 주세요.');
+    }
+  });
+  $('#type-pdf').addEventListener('click', () => {
+    if (!document.querySelector('.type-print-image')) {
+      prepareCards();
+      say('유형 그림과 PDF 카드를 다시 준비하고 있어요. 잠시 뒤 PDF로 저장을 눌러주세요.');
+      return;
+    }
+    document.body.dataset.typePrint = 'card';
+    say('인쇄 창의 저장 대상에서 PDF로 저장을 선택하세요.');
+    window.print();
+  });
+  window.addEventListener('beforeprint', () => {
+    if (stage === 'result' && document.querySelector('.type-print-image')) document.body.dataset.typePrint = 'card';
+  });
+  window.addEventListener('afterprint', () => { delete document.body.dataset.typePrint; });
   document.addEventListener('lumia:cancel', event => {
     if (!event.cancelable) return;
     event.preventDefault();

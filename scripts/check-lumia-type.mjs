@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 
@@ -39,6 +40,28 @@ async function preparePage(page) {
   page.setDefaultNavigationTimeout(15000);
   await page.setViewport({ width: 1440, height: 1000 });
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  // Even an accidental automatic share/print in the app must never open OS UI.
+  await page.evaluateOnNewDocument(() => {
+    window.lumiaNativeShareCalls = [];
+    window.lumiaNativeCanShare = true;
+    window.lumiaNativeShareError = null;
+    window.lumiaPrintCalls = [];
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => window.lumiaNativeCanShare });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: payload => {
+      window.lumiaNativeShareCalls.push(payload);
+      return window.lumiaNativeShareError
+        ? Promise.reject(new DOMException('Offline native share fixture', window.lumiaNativeShareError))
+        : Promise.resolve();
+    } });
+    window.print = () => {
+      const sheet = document.querySelector('.type-print-sheet');
+      const image = sheet?.querySelector('.type-print-image');
+      window.lumiaPrintCalls.push({
+        src: image?.src, complete: image?.complete, width: image?.naturalWidth, height: image?.naturalHeight,
+        hasSheet: !!sheet,
+      });
+    };
+  });
   await page.setRequestInterception(true);
   page.on('pageerror', error => browserErrors.push(error.message));
   page.on('dialog', async dialog => {
@@ -50,9 +73,12 @@ async function preparePage(page) {
   });
   page.on('request', request => {
     const url = new URL(request.url());
-    const isApi = /\/api(?:\/|$)/.test(url.pathname) || ['fetch', 'xhr'].includes(request.resourceType());
+    const inMemory = ['data:', 'blob:'].includes(url.protocol);
+    const localPortrait = url.origin === base && /^\/type\/art\/[01]{4}\.png$/.test(url.pathname);
+    const isApi = !inMemory && (/\/api(?:\/|$)/.test(url.pathname)
+      || (['fetch', 'xhr'].includes(request.resourceType()) && !localPortrait));
     if (isApi) apiAttempts.push(url.origin + url.pathname);
-    if (['data:', 'blob:'].includes(url.protocol) || (url.origin === base && !isApi)) {
+    if (inMemory || (url.origin === base && !isApi)) {
       request.continue();
     } else {
       blockedRequests.push({ url: url.origin + url.pathname, kind: request.resourceType() });
@@ -99,8 +125,69 @@ async function finishQuiz(page, answers = Array(12).fill(0)) {
   }
   await stage(page, 'result');
 }
+async function finishWithAxisCounts(page, leftCount, rightCount) {
+  assert.equal(leftCount + rightCount, 3);
+  const answers = await page.evaluate(leftCount => {
+    const occurrence = Array(4).fill(0);
+    return LumiaType.questions.map(question => {
+      const wantedPole = occurrence[question.axis]++ < leftCount ? 0 : 1;
+      return question.choices.findIndex(choice => choice.pole === wantedPole);
+    });
+  }, leftCount);
+  assert(answers.every(answer => answer === 0 || answer === 1), 'each question must offer both axis poles');
+  await page.click('#type-start');
+  await finishQuiz(page, answers);
+}
+async function axisSnapshot(page) {
+  return page.$$eval('#type-axis-list .type-axis', elements => elements.map(element => {
+    const chart = element.querySelector('.type-axis-chart');
+    const track = chart?.querySelector('.type-axis-track');
+    const value = chart?.querySelector('.type-axis-value');
+    const rect = element.getBoundingClientRect();
+    return {
+      left: element.getAttribute('data-count-left'), right: element.getAttribute('data-count-right'),
+      unmeasured: chart?.classList.contains('is-unmeasured'), role: chart?.getAttribute('role'),
+      aria: chart?.getAttribute('aria-label'), center: element.querySelector('.type-axis-center strong')?.textContent,
+      detail: element.querySelector('.type-axis-detail')?.textContent,
+      dominantKeys: element.querySelectorAll('.type-axis-key.is-dominant').length,
+      dominantColor: getComputedStyle(element.querySelector('.type-axis-key.is-dominant')).backgroundColor,
+      arcCount: chart?.querySelectorAll('circle.type-axis-value').length,
+      pathLength: value?.getAttribute('pathLength'), dash: value?.getAttribute('stroke-dasharray'),
+      arcColor: value ? getComputedStyle(value).stroke : null,
+      trackDash: track ? getComputedStyle(track).strokeDasharray : null,
+      box: { x: rect.x, y: rect.y, width: rect.width },
+    };
+  }));
+}
+async function captureAxes(page, label) {
+  for (const width of [360, 1440]) {
+    await page.setViewport({ width, height: width === 360 ? 844 : 1000 });
+    await noOverflow(page, `${label} ${width}`);
+    const axes = await axisSnapshot(page);
+    assert.equal(axes.length, 4);
+    assert(Math.abs(axes[0].box.y - axes[1].box.y) < 2, `${label} ${width}: first two donuts must share a row`);
+    assert(Math.abs(axes[2].box.y - axes[3].box.y) < 2, `${label} ${width}: last two donuts must share a row`);
+    assert(axes[1].box.x > axes[0].box.x && axes[2].box.y > axes[0].box.y, `${label} ${width}: axes must form a 2 by 2 grid`);
+    await (await page.$('#type-axis-list')).screenshot({ path: resolve(output, `axes-${label}-${width}.png`) });
+  }
+}
 async function noOverflow(page, label) {
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${label}: horizontal overflow`);
+}
+async function pngPixelFingerprint(page, source) {
+  return page.evaluate(async source => {
+    const image = new Image();
+    image.src = source;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const digest = await crypto.subtle.digest('SHA-256', pixels);
+    return { width: canvas.width, height: canvas.height, digest: [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('') };
+  }, source);
 }
 async function downloadPng(page) {
   const client = await page.createCDPSession();
@@ -197,6 +284,36 @@ try {
     assert.deepEqual(progress.answers, Array(12).fill(null));
   });
 
+  await check('measured donut charts show actual 2:1, 3:0, and 0:3 choices with labels and a 2 by 2 layout', async () => {
+    for (const [left, right] of [[2, 1], [3, 0], [0, 3]]) {
+      await reset(page);
+      await finishWithAxisCounts(page, left, right);
+      const names = await page.evaluate(() => LumiaType.axes.map(axis => axis.poles));
+      const axes = await axisSnapshot(page);
+      assert.equal(axes.length, 4);
+      axes.forEach((axis, index) => {
+        const pole = left > right ? 0 : 1;
+        assert.equal(axis.left, String(left));
+        assert.equal(axis.right, String(right));
+        assert.equal(axis.unmeasured, false);
+        assert.equal(axis.arcCount, 1);
+        assert.equal(axis.pathLength, '100');
+        const [amount, circumference] = axis.dash.split(/[\s,]+/).map(Number);
+        assert(Math.abs(amount - Math.max(left, right) / 3 * 100) < 0.000001, `${left}:${right} arc must show the actual dominant count`);
+        assert.equal(circumference, 100);
+        assert.equal(axis.center, names[index][pole]);
+        assert.equal(axis.role, 'img');
+        assert(axis.aria.includes(`${names[index][0]} ${left}회`));
+        assert(axis.aria.includes(`${names[index][1]} ${right}회`));
+        assert(axis.detail.includes(`${names[index][0]} ${left}회`));
+        assert(axis.detail.includes(`${names[index][1]} ${right}회`));
+        assert.equal(axis.dominantKeys, 1);
+        assert.equal(axis.dominantColor, axis.arcColor, 'dominant legend color must match the measured arc');
+      });
+      await captureAxes(page, `${left}-${right}`);
+    }
+  });
+
   await check('all 16 shared result types are distinct and never overwrite saved progress', async () => {
     await reset(page);
     await page.click('#type-start');
@@ -211,6 +328,15 @@ try {
       assert.equal(await page.$eval('#type-profile', element => element.dataset.code), code);
       assert.match((await text(page, '#type-code')).trim(), /^\d{2}\s*\/\s*16$/, 'the visible type label must use the user-facing document number');
       assert.equal(await page.$$eval('#type-profile .type-axis', elements => elements.length), 4);
+      const sharedAxes = await axisSnapshot(page);
+      sharedAxes.forEach(axis => {
+        assert.equal(axis.left, null);
+        assert.equal(axis.right, null);
+        assert.equal(axis.unmeasured, true);
+        assert.equal(axis.arcCount, 0, 'a shared type must never fabricate measured arc proportions');
+        assert(axis.trackDash && axis.trackDash !== 'none', 'unknown proportions use a dotted outline');
+        assert.doesNotMatch(axis.detail, /\d+\s*회/);
+      });
       const profile = (await text(page, '#type-profile')).trim();
       assert(profile.length > 100, `${code}: result profile must contain explanations`);
       assert.doesNotMatch(profile, /undefined|NaN|Infinity/);
@@ -218,6 +344,7 @@ try {
       assert.deepEqual(await snapshotProgress(page), saved, `${code}: shared result replaced my saved answers`);
     }
     assert.equal(profiles.size, 16, 'all sixteen codes must render distinct profiles');
+    await captureAxes(page, 'shared');
     await page.$eval('#type-catalog', element => { element.open = true; });
     assert.equal(await page.$$eval('#type-catalog [data-type]', elements => elements.length), 16);
     await page.click('#type-catalog [data-type="0101"]');
@@ -227,6 +354,38 @@ try {
     if (await page.evaluate(() => document.body.dataset.typeStage === 'intro')) await page.click('#type-start');
     await stage(page, 'question');
     assert.deepEqual(await snapshotProgress(page), saved, 'returning from a shared result must retain my question position');
+  });
+
+  await check('all sixteen result portraits and catalog thumbnails use distinct local type artwork', async () => {
+    const fingerprints = new Set();
+    for (let index = 0; index < 16; index++) {
+      const code = index.toString(2).padStart(4, '0');
+      const bytes = await readFile(resolve(root, 'type/art', code + '.png'));
+      assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${code}: portrait must be a PNG file`);
+      assert(bytes.length > 10000, `${code}: portrait must contain real artwork`);
+      fingerprints.add(createHash('sha256').update(bytes).digest('hex'));
+      await go(page, '#type=' + code);
+      await stage(page, 'result');
+      await page.waitForFunction(() => {
+        const portrait = document.querySelector('#type-portrait');
+        return portrait?.complete && portrait.naturalWidth > 0;
+      });
+      const portrait = await page.$eval('#type-portrait', image => ({
+        path: new URL(image.currentSrc || image.src).pathname, width: image.naturalWidth,
+        height: image.naturalHeight, alt: image.alt, inProfile: !!image.closest('#type-profile'),
+      }));
+      assert.equal(portrait.path, `/type/art/${code}.png`);
+      assert(portrait.width >= 200 && portrait.height >= 200, `${code}: portrait resolution must be usable`);
+      assert.equal(portrait.inProfile, true);
+    }
+    assert.equal(fingerprints.size, 16, 'different type codes must not reuse one placeholder portrait');
+    await page.$eval('#type-catalog', element => { element.open = true; });
+    const thumbnails = await page.$$eval('#type-catalog [data-type]', buttons => buttons.map(button => ({
+      code: button.dataset.type,
+      path: button.querySelector('img') ? new URL(button.querySelector('img').src).pathname : null,
+    })));
+    assert.equal(thumbnails.length, 16);
+    thumbnails.forEach(thumbnail => assert.equal(thumbnail.path, `/type/art/${thumbnail.code}.png`));
   });
 
   await check('invalid shared hashes do not create a result or overwrite saved answers', async () => {
@@ -285,6 +444,84 @@ try {
     assert.equal(await page.$eval('#type-share-link', element => element.readOnly), true);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'type-share-link');
     artifacts.push(await downloadPng(page));
+  });
+
+  await check('native sharing is invoked only by a click and shares a local PNG or a type-only URL', async () => {
+    await go(page, '#type=0101');
+    await stage(page, 'result');
+    assert.equal(await page.evaluate(() => lumiaNativeShareCalls.length), 0, 'preparing a result must never open a share sheet');
+    await page.waitForFunction(() => LumiaTypeShare.getState(LumiaType.getType('0101'), '', null).ready, { timeout: 25000 });
+    await page.waitForFunction(() => !document.querySelector('#type-share').disabled);
+    await page.click('#type-share');
+    await page.waitForFunction(() => lumiaNativeShareCalls.length === 1);
+    const sharedFile = await page.evaluate(async () => {
+      const payload = lumiaNativeShareCalls[0];
+      const file = payload.files?.[0];
+      return {
+        title: payload.title, text: payload.text, url: payload.url,
+        files: payload.files?.length || 0, name: file?.name, mime: file?.type, bytes: file?.size,
+        signature: file ? [...new Uint8Array(await file.slice(0, 8).arrayBuffer())] : [],
+      };
+    });
+    assert.equal(sharedFile.files, 1);
+    assert.equal(sharedFile.mime, 'image/png');
+    assert(sharedFile.bytes > 10000);
+    assert.deepEqual(sharedFile.signature, [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.match(sharedFile.name, /^lumia-type-[01]{4}\.png$/);
+    const url = new URL(sharedFile.url);
+    assert.equal(url.origin, base);
+    assert.equal(url.pathname, '/type/');
+    assert.equal(url.search, '');
+    assert.equal(url.hash, '#type=0101');
+
+    await page.evaluate(() => { lumiaNativeCanShare = false; });
+    await page.click('#type-share');
+    await page.waitForFunction(() => lumiaNativeShareCalls.length === 2);
+    assert.equal(await page.evaluate(() => lumiaNativeShareCalls[1].files?.length || 0), 0, 'unsupported file sharing must fall back to a type URL');
+    assert.equal(await page.evaluate(() => lumiaNativeShareCalls[1].url), sharedFile.url);
+
+    await page.evaluate(() => { lumiaNativeShareError = 'AbortError'; });
+    await page.click('#type-share');
+    await page.waitForFunction(() => lumiaNativeShareCalls.length === 3);
+    await page.waitForFunction(() => document.querySelector('#type-status').textContent.includes('취소'));
+    assert.equal(await page.$eval('#type-share', element => element.disabled), false);
+  });
+
+  await check('one PDF click prepares the same art-and-donut card as PNG and prints one A4 page', async () => {
+    await reset(page);
+    await fill(page, '#type-nickname', '인쇄검증기록관');
+    await finishWithAxisCounts(page, 2, 1);
+    await page.waitForFunction(() => document.querySelector('#type-portrait')?.complete && document.querySelector('#type-portrait').naturalWidth > 0);
+    const png = await downloadPng(page);
+    const pngBytes = await readFile(resolve(output, png.filename));
+    assert.equal(await page.evaluate(() => lumiaPrintCalls.length), 0, 'result rendering must not print automatically');
+    await page.waitForFunction(() => !document.querySelector('#type-pdf').disabled, { timeout: 25000 });
+    await page.click('#type-pdf');
+    await page.waitForFunction(() => lumiaPrintCalls.length === 1, { timeout: 25000 });
+    const printed = await page.evaluate(() => lumiaPrintCalls[0]);
+    assert.equal(printed.hasSheet, true);
+    assert.equal(printed.complete, true, 'the print image must finish decoding before print()');
+    assert(printed.width >= 300 && printed.height >= 300);
+    assert.match(printed.src, /^data:image\/png;base64,/);
+    assert.deepEqual(await pngPixelFingerprint(page, printed.src),
+      await pngPixelFingerprint(page, 'data:image/png;base64,' + pngBytes.toString('base64')),
+      'PDF and PNG must use the same complete result card');
+    await page.emulateMediaType('print');
+    try {
+      assert.equal(await page.$eval('.type-print-sheet', element => getComputedStyle(element).display === 'none'), false);
+      assert.equal(await page.$eval('.lc-clerk', element => getComputedStyle(element).display), 'none');
+      assert.equal(await page.$eval('.lc-header', element => getComputedStyle(element).display), 'none');
+      const pdfName = 'lumia-type-print.pdf';
+      await page.pdf({ path: resolve(output, pdfName), format: 'A4', printBackground: true, preferCSSPageSize: true });
+      const pdf = await readFile(resolve(output, pdfName));
+      assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+      assert(pdf.length > 10000);
+      assert.equal((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) || []).length, 1, 'the result card must fit on one PDF page');
+      const box = pdf.toString('latin1').match(/\/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/);
+      assert(box && Math.abs(Number(box[1]) - 595.28) < 2 && Math.abs(Number(box[2]) - 841.89) < 2, 'PDF must use A4 page dimensions');
+      artifacts.push(png, { filename: pdfName, bytes: pdf.length, pages: 1 });
+    } finally { await page.emulateMediaType('screen'); }
+    assert.equal(await page.evaluate(() => lumiaPrintCalls.length), 1, 'PDF preparation must not require another button click');
   });
 
   await check('nickname text is escaped in result and never interpreted as markup', async () => {

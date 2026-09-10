@@ -1,10 +1,24 @@
-/* Result cards are drawn locally. No remote fonts, images, or rendering API. */
+/* One local card renderer for PNG, native sharing, and PDF printing. */
 (function (global) {
   'use strict';
 
   const FONT = '"Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
   const WIDTH = 1080;
   const HEIGHT = 1512;
+  const portraits = new Map();
+
+  function loadPortrait(code) {
+    if (portraits.has(code)) return portraits.get(code);
+    const promise = new Promise((resolve, reject) => {
+      const img = new Image();
+      const timer = setTimeout(() => { portraits.delete(code); reject(new Error('유형 그림을 불러오는 중입니다. 잠시 뒤 다시 저장해 주세요.')); }, 15000);
+      img.onload = () => { clearTimeout(timer); resolve(img); };
+      img.onerror = () => { clearTimeout(timer); portraits.delete(code); reject(new Error('유형 그림을 불러오지 못했어요. 새로고침 후 다시 시도해 주세요.')); };
+      img.src = new URL(`/type/art/${code}.png`, location.href).href;
+    });
+    portraits.set(code, promise);
+    return promise;
+  }
 
   function textLines(ctx, value, width, maxLines = Infinity) {
     const lines = [];
@@ -25,9 +39,10 @@
     return lines;
   }
 
-  async function render(profile, nickname = '') {
+  async function render(profile, nickname = '', scored = null) {
     const type = global.LumiaType?.getType(profile?.code);
     if (!type) throw new Error('유형을 먼저 선택해주세요.');
+    const portrait = await loadPortrait(type.code);
     if (document.fonts?.ready) await document.fonts.ready;
     const canvas = document.createElement('canvas');
     canvas.width = WIDTH;
@@ -47,52 +62,68 @@
       lines.forEach((part, i) => ctx.fillText(part, x, y + i * lineHeight));
       return y + lines.length * lineHeight;
     }
-    text('LUMIA ARCHIVES   /   TEAMMATE FILE', 82, 66, 20, '#a9bebd');
-    text('이리 팀원 유형 검사', 82, 110, 25, '#e4e9e2');
-    line(82, 170, 916, '#526367');
+    text('LUMIA ARCHIVES   /   TEAMMATE FILE', 64, 49, 20, '#a9bebd');
+    text('이리 팀원 유형 검사', 64, 88, 25, '#e4e9e2');
+    line(64, 144, 952, '#526367');
     const fileNumber = String(parseInt(type.code, 2) + 1).padStart(2, '0');
-    text('TYPE ' + fileNumber + ' / 16', 82, 214, 24, accent);
-
-    // Four small marks encode the four gameplay preferences, as a file emblem.
-    type.code.split('').forEach((bit, i) => {
-      const x = 840 + (i % 2) * 68;
-      const y = 212 + Math.floor(i / 2) * 68;
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, 50, 50);
-      ctx.fillStyle = accent;
-      ctx.fillRect(x + (bit === '0' ? 8 : 29), y + 8, 13, 34);
-    });
+    text('TYPE ' + fileNumber + ' / 16', 64, 184, 22, accent);
+    ctx.drawImage(portrait, 606, 194, 410, 410);
     const cleanName = typeof nickname === 'string' ? nickname.trim().slice(0, 100) : '';
-    text(cleanName ? cleanName + '의 플레이 성향' : '나는 어떤 이리 팀원일까?', 82, 288, 26, '#a9bebd', 704, 38, 1);
-    const titleBottom = text(type.name, 78, 354, 68, '#eef0e8', 924, 86, 2, 700);
-    text('“' + type.tagline + '”', 82, titleBottom + 24, 30, accent, 916, 44, 3);
+    text(cleanName ? cleanName + '의 플레이 성향' : '나는 어떤 이리 팀원일까?', 64, 236, 23, '#a9bebd', 496, 34, 1);
+    const titleBottom = text(type.name, 60, 295, 58, '#eef0e8', 506, 76, 3, 700);
+    text('“' + type.tagline + '”', 64, titleBottom + 23, 26, accent, 495, 39, 3);
 
     ctx.fillStyle = '#e8e9df';
-    ctx.fillRect(48, 686, 984, 712);
-    text('나의 네 가지 선택', 82, 724, 22, '#526562');
-    let x = 82;
+    ctx.fillRect(48, 660, 984, 738);
+    text(scored ? '나의 네 가지 선택' : '이 유형의 네 가지 성향', 82, 692, 22, '#526562');
     global.LumiaType.axes.forEach((axis, i) => {
-      text(axis.poles[Number(type.code[i])], x, 770, 37, '#20342e', 204, 50, 1, 700);
-      x += 229;
+      const pole = Number(type.code[i]);
+      const candidate = scored?.code === type.code ? scored.axes?.[i]?.counts : null;
+      const counts = Array.isArray(candidate) && candidate.length === 2 && candidate.every(n => Number.isInteger(n) && n >= 0 && n <= 3)
+        && candidate[0] + candidate[1] === 3 && candidate[pole] >= 2 ? candidate : null;
+      const cx = 197 + i * 229;
+      const cy = 842;
+      function centered(value, y, size, color, weight = 400) {
+        ctx.font = `${weight} ${size}px ${FONT}`;
+        ctx.fillStyle = color;
+        ctx.textBaseline = 'top';
+        ctx.fillText(value, cx - ctx.measureText(value).width / 2, y);
+      }
+      centered(axis.poles.join(' · '), 750, 21, '#53654d');
+      ctx.beginPath();
+      ctx.lineWidth = counts ? 14 : 5;
+      ctx.strokeStyle = '#bdc8b4';
+      ctx.setLineDash(counts ? [] : [4, 7]);
+      ctx.arc(cx, cy, 61, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (counts) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#536e58';
+        ctx.arc(cx, cy, 61, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * counts[pole] / 3);
+        ctx.stroke();
+      }
+      centered(axis.poles[pole], 813, 33, '#314b38', 600);
+      centered(counts ? `${counts[pole]} / 3 선택` : '유형 성향', 858, 18, '#5d6b54');
+      centered(counts ? `${axis.poles[0]} ${counts[0]}회 · ${axis.poles[1]} ${counts[1]}회` : axis.poles[pole] + ' 성향', 932, 18, '#53654d');
     });
-    line(82, 845, 916, '#b9c2b5');
-    text('내가 보는 나', 82, 878, 22, '#617069');
-    text(type.selfView, 82, 920, 28, '#243830', 916, 42, 3);
-    text('팀원이 보는 나', 82, 1070, 22, '#617069');
-    text(type.teamView, 82, 1112, 28, '#243830', 916, 42, 3);
-    line(82, 1255, 916, '#b9c2b5');
+    line(82, 983, 916, '#b9c2b5');
+    text('내가 보는 나', 82, 1015, 22, '#617069');
+    text(type.selfView, 82, 1059, 27, '#243830', 422, 40, 4);
+    text('팀원이 보는 나', 574, 1015, 22, '#617069');
+    text(type.teamView, 574, 1059, 27, '#243830', 422, 40, 4);
+    line(82, 1237, 916, '#b9c2b5');
     const best = global.LumiaType.getType(type.best);
-    text('같이 큐 잡고 싶은 유형', 82, 1284, 20, '#617069');
-    text(best?.name || '서로의 콜을 들어주는 팀원', 82, 1325, 29, '#243830', 916, 42, 1, 600);
+    text('같이 큐 잡고 싶은 유형', 82, 1267, 20, '#617069');
+    text(best?.name || '서로의 콜을 들어주는 팀원', 82, 1308, 30, '#243830', 916, 42, 1, 600);
     text('게임 플레이를 재미로 보는 12문항 검사', 82, 1425, 20, '#a9bebd');
     const url = new URL('/type/', location.href);
     text(url.host + url.pathname, 82, 1460, 19, '#a9bebd');
     return canvas;
   }
 
-  async function save(profile, nickname) {
-    const canvas = await render(profile, nickname);
+  async function save(profile, nickname, scored = null) {
+    const canvas = await render(profile, nickname, scored);
     const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('이미지를 저장하지 못했어요. 다시 눌러주세요.')), 'image/png'));
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

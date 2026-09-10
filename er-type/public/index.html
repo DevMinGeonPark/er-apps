@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230c161c'/%3E%3Cpath d='M19 12h26v40H19zM25 23h14M25 31h14M25 39h9' fill='none' stroke='%23cfdbd3' stroke-width='3'/%3E%3C/svg%3E">
 <meta name="description" content="교전이 열렸을 때, 팀이 갈라졌을 때. 12개의 이터널 리턴 상황으로 알아보는 나의 플레이 성향과 우리 팀 사용 설명서.">
 <title>플레이 성향 검사 · 루미아 문서국</title>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 <link rel="stylesheet" href="/shared/night-clerk.css?v=night-clerk-20260910">
 </head>
 <body data-lumia-document="playstyle" data-type-stage="intro">
@@ -42,17 +42,20 @@
     <p id="type-result-source" class="type-eyebrow"></p>
     <article id="type-profile" class="type-profile">
       <div class="type-paper-meta"><span>루미아 문서국 · 행동 관찰</span><span>유형 <b id="type-code"></b></span></div>
-      <p id="type-person-name" class="type-person-name"></p>
-      <h2 id="type-result-title" tabindex="-1"></h2>
-      <p id="type-tagline" class="type-tagline"></p>
-      <p id="type-description" class="type-description"></p>
+      <div class="type-profile-hero"><div class="type-profile-copy">
+        <p id="type-person-name" class="type-person-name"></p>
+        <h2 id="type-result-title" tabindex="-1"></h2>
+        <p id="type-tagline" class="type-tagline"></p>
+        <p id="type-description" class="type-description"></p>
+      </div><figure class="type-portrait-wrap"><img id="type-portrait" width="512" height="512" alt="" decoding="async"></figure></div>
       <div id="type-axis-list" class="type-axis-list" aria-label="네 가지 플레이 성향"></div>
       <div class="type-perspectives"><section><h3>내가 생각하는 나</h3><p id="type-self-view"></p></section><section><h3>팀원이 바라보는 나</h3><p id="type-team-view"></p></section></div>
       <section class="type-traits"><h3>이럴 때 빛나요</h3><ul id="type-strengths"></ul><h3>이럴 때 잠깐 멈춰요</h3><ul id="type-pitfalls"></ul></section>
       <div class="type-practical-tip"><span>다음 판에 딱 하나만</span><p id="type-tip"></p></div>
       <div class="type-paper-foot"><span>답변으로 읽는 플레이 습관 · 실력 평가는 아닙니다.</span><span class="type-seal" aria-hidden="true">관찰<br>완료</span></div>
     </article>
-    <div class="type-result-actions"><button id="type-png" type="button" class="type-primary">결과 카드 PNG 저장</button><button id="type-copy" type="button" class="type-secondary">유형 링크 복사</button></div>
+    <div class="type-result-actions"><button id="type-share" type="button" class="type-primary" disabled>카드 준비 중…</button><button id="type-png" type="button" class="type-secondary">결과 카드 PNG 저장</button><button id="type-pdf" type="button" class="type-secondary" disabled>PDF로 저장</button><button id="type-copy" type="button" class="type-secondary">유형 링크 복사</button></div>
+    <p id="type-native-share-note" class="type-small">공유창에서 카카오톡을 선택하세요. 내 검사 카드에는 입력한 닉네임과 응답 비율이 담깁니다. 공유할 앱은 기기마다 다를 수 있어요.</p>
     <div id="type-share-fallback" class="type-share-fallback" hidden><label for="type-share-link">아래 링크를 선택해 복사하세요.</label><input id="type-share-link" readonly type="text" aria-describedby="type-share-note"></div>
     <p id="type-share-note" class="type-small">링크에는 유형만 담깁니다. 닉네임과 문항별 답변은 공유되지 않습니다.</p>
     <section class="type-compatibility" aria-labelledby="type-compatibility-title"><h3 id="type-compatibility-title">같이 서면 어떤 팀일까</h3><div id="type-compatibility-list"></div><p class="type-small">잘 맞는 방식도, 부딪히는 방식도 이야기의 시작일 뿐입니다.</p></section>
@@ -74,7 +77,8 @@
 <script src="/shared/lumia-documents.js?v=night-clerk-20260910"></script>
 <script src="/shared/night-clerk.js?v=night-clerk-20260910"></script>
 <script src="quiz-model.js?v=1"></script>
-<script src="export.js?v=1"></script>
-<script src="app.js?v=1"></script>
+<script src="export.js?v=2"></script>
+<script src="share.js?v=1"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 
 새 시리즈 **[루미아 노동청](https://er.dev-heptivision.com/payroll/)**: 실제 랭크 RP로 지급·공제·실수령액과 RP 시급을 정산한다. PNG 저장과 링크 공유를 지원한다.
 
-**[이리 팀원 유형 검사](https://er.dev-heptivision.com/type/)**: 12가지 게임 상황으로 16가지 플레이 성향을 찾는다. 결과 링크·PNG 카드와 2~3인 팀 사용설명서를 제공하며, 전적 조회나 외부 API 없이 브라우저에서 동작한다.
+**[이리 팀원 유형 검사](https://er.dev-heptivision.com/type/)**: 12가지 게임 상황으로 16가지 플레이 성향을 찾는다. 유형별 SD 캐릭터와 네 가지 원형 그래프, 결과 링크·PNG 카드·동일한 PDF, 기기 공유 메뉴와 2~3인 팀 사용설명서를 제공한다. 전적 조회나 외부 API 없이 브라우저에서 동작한다. [일러스트와 생성 프롬프트](docs/lumia-type-art-2026-09-10/README.md)
 
 2026-09-09 공식 API 전환 범위·제약·검증은 [전환 기록](docs/official-api-migration.md)에 정리했다.
 
