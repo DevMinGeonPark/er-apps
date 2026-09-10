@@ -167,7 +167,13 @@
       if (e.status === 404) throw new Error('플레이어를 찾을 수 없습니다. 닉네임을 확인해주세요.');
       throw e;
     }
-    if (!cert.charStats.play) throw new Error(`'${name}'님의 ${cert.character.name} 플레이 기록이 없습니다.`);
+    if (!cert.charStats.play) {
+      const error = new Error(cert.failedSeasons
+        ? `일부 시즌 ${cert.failedSeasons}건을 불러오지 못했으며, 확인된 자료에 ${cert.character.name} 플레이 기록이 없습니다.`
+        : `'${name}'님의 ${cert.character.name} 플레이 기록이 없습니다.`);
+      error.code = cert.failedSeasons ? 'INCOMPLETE_RECORDS' : 'NO_RECORDS';
+      throw error;
+    }
     return cert;
   }
 

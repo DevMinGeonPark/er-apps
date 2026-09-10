@@ -6,6 +6,7 @@ on:
     paths:
       - 'hub/**'
       - 'shared/**'
+      - 'docs/lumia-night-clerk-2026-09-10/assets/lumia-art.jpg'
       - 'er-cert/public/**'
       - 'er-death/public/**'
       - 'er-fault/public/**'

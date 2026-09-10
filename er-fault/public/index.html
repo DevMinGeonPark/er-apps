@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>루미아 손해보험 — 누가 범인인가!</title>
-<link rel="stylesheet" href="style.css?v=3">
+<title>과실비율 산정서 · 루미아 문서국</title>
+<link rel="stylesheet" href="style.css?v=night-clerk-20260910">
+<link rel="stylesheet" href="/shared/night-clerk.css?v=20260910">
 </head>
-<body>
+<body data-lumia-document="liability">
 <header class="site-header">
   <div class="emblem">
     <svg width="46" height="46" viewBox="0 0 46 46" fill="none">
@@ -19,14 +20,18 @@
 </header>
 
 <main>
-  <section id="form-section" class="panel">
+  <form id="form-section" class="panel" novalidate>
+    <h1 class="intake-title">과실비율 산정서</h1>
+    <p class="intake-deck">함께 플레이한 팀원의 닉네임을 입력하세요. 동일한 팀으로 참여한 경기의 과실을 산정합니다.</p>
     <div class="row3">
-      <div class="field"><label for="me">피보험자 (내 닉네임)</label><input id="me" type="text" placeholder="예: 마르코프체인" autocomplete="off"></div>
-      <div class="field"><label for="mate1">공동 피보험자 1 (팀원)</label><input id="mate1" type="text" placeholder="팀원 닉네임" autocomplete="off"></div>
-      <div class="field"><label for="mate2">공동 피보험자 2 (선택)</label><input id="mate2" type="text" placeholder="트리오면 입력" autocomplete="off"></div>
+      <div class="field"><label for="me">본인 · 필수</label><div id="self-summary" class="self-summary" hidden><span id="self-nickname"></span><button id="edit-self" type="button" class="ghost" aria-controls="me">수정</button></div><input id="me" type="text" placeholder="내 닉네임" autocomplete="off" required aria-describedby="me-error"><p id="me-error" class="field-error" hidden></p></div>
+      <div class="field"><label for="mate1">팀원 1 · 필수</label><input id="mate1" type="text" placeholder="팀원 닉네임" autocomplete="off" required aria-describedby="mate1-error"><p id="mate1-error" class="field-error" hidden></p></div>
+      <div class="field"><label for="mate2">팀원 2 · 선택</label><input id="mate2" type="text" placeholder="트리오면 입력" autocomplete="off" aria-describedby="mate2-error"><p id="mate2-error" class="field-error" hidden></p></div>
     </div>
+    <details class="query-conditions">
+    <summary>조회 조건 <span id="conditions-summary">자동 시즌 · 전체 · 최근 60판</span></summary>
     <div class="row3">
-      <div class="field"><label for="season">조회 시즌</label><select id="season"></select></div>
+      <div class="field"><label for="season">조회 시즌</label><select id="season"><option value="auto">자동 (최근 기록 있는 시즌)</option></select></div>
       <div class="field"><label for="mode">사고 유형</label>
         <select id="mode">
           <option value="all">전체 (랭크·일반·코발트)</option>
@@ -36,23 +41,28 @@
       <div class="field"><label for="pages">조회 범위</label>
         <select id="pages"><option value="3">최근 60판</option><option value="5">최근 100판</option><option value="2">최근 40판</option></select></div>
     </div>
-    <button id="go" disabled>사고 접수 및 과실 산정</button>
+    </details>
+    <button id="go" type="submit" aria-describedby="submit-hint" disabled>사고 접수 및 과실 산정</button>
+    <p id="submit-hint" class="intake-note">본인과 팀원 1의 닉네임이 필요합니다.</p>
     <p class="terms-link">산정 기준이 궁금하신가요? <a href="terms.html">「실험체 운용 배상책임 약관」 전문 보기</a></p>
-    <p id="form-error" class="error" hidden></p>
-  </section>
+    <p id="form-error" class="error" role="alert" hidden></p>
+  </form>
 
   <section id="loading-section" class="panel" hidden>
-    <div class="spinner"></div>
-    <p id="loading-msg">사고 접수 중…</p>
+    <p id="loading-msg" role="status">기록 확인 중입니다. 함께한 경기를 대조하고 있습니다.</p>
+    <button id="cancel" type="button" class="ghost">입력으로 돌아가기</button>
   </section>
 
   <section id="result-section" hidden>
-    <div id="paper"></div>
+    <div class="field match-select"><label for="match-choice">판정 범위</label><select id="match-choice"></select></div>
+    <article id="assessment" class="assessment" aria-labelledby="assessment-title"></article>
+    <div id="paper" hidden aria-hidden="true"></div>
     <div class="actions">
       <button id="png">산정서 PNG 저장</button>
       <button id="link">조회 링크 복사</button>
       <button id="again" class="ghost">다시 조회</button>
     </div>
+    <p id="result-status" role="status"></p>
     <div id="detail" class="panel"></div>
   </section>
 <p class="source-note" style="font-size:12px;opacity:.7;text-align:center;padding:16px">전적·게임 정보: 이터널 리턴 공식 Open API · 최근 90일 이내 조회 기록 기준 · 닉네임 변경 이전 기록 제외</p>
@@ -65,7 +75,9 @@
 
 <script src="er-config.js?v=1"></script>
 <script src="er-core.js?v=1"></script>
-<script src="api.js?v=1"></script>
-<script src="app.js?v=official-1"></script>
+<script src="api.js?v=night-clerk-20260910"></script>
+<script src="/shared/lumia-documents.js?v=20260910"></script>
+<script src="/shared/night-clerk.js?v=20260910"></script>
+<script src="app.js?v=night-clerk-20260910"></script>
 </body>
 </html>

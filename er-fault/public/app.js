@@ -1,171 +1,225 @@
-// 루미아 손해보험 — 과실비율 산정 프론트엔드
+// 루미아 손해보험 — 기존 계산 결과를 그대로 사용하는 접수·문서 화면
 const $ = (s) => document.querySelector(s);
-const fmt = (n) => (n ?? 0).toLocaleString('ko-KR');
-const PCOLORS = ['#3a62a8', '#b4691f', '#2e8f5e']; // 검증된 식별 색 (종이 배경)
+const fmt = (n) => n == null ? '—' : Number(n).toLocaleString('ko-KR');
+const PCOLORS = ['#536e66', '#796951', '#596777'];
 const BODY_FONT = `GowunBatang, AppleMyungjo, Batang, serif`;
 const TITLE_FONT = `SongMyung, GowunBatang, AppleMyungjo, serif`;
-
 let lastResult = null;
+let selectedMatch = -1;
+let operation = 0;
+let pending = false;
+let resultQuery = '';
+const clerkState = (state, message) => window.LumiaClerk?.setState(state, message);
+window.LumiaClerk?.bindNickname($('#me'));
+let selfEditing = !$('#me').value.trim();
+function syncSelfSummary() {
+  const name = $('#me').value.trim();
+  const compact = !!name && !selfEditing;
+  $('#self-nickname').textContent = name;
+  $('#self-summary').hidden = !compact;
+  $('#me').hidden = compact;
+}
+function editSelf(focus = true) {
+  selfEditing = true;
+  syncSelfSummary();
+  if (focus) $('#me').focus();
+}
+$('#edit-self').addEventListener('click', () => editSelf());
 
-// ---------- 초기화 ----------
 async function loadSeasons() {
   const seasons = await ER.seasons();
   $('#season').innerHTML = '<option value="auto">자동 (최근 기록 있는 시즌)</option>'
-    + seasons.map(s => `<option value="${s.key}">${s.name}</option>`).join('');
+    + seasons.map(s => `<option value="${esc(s.key)}">${esc(s.name)}</option>`).join('');
+  updateConditions();
 }
-function updateBtn() { $('#go').disabled = !($('#me').value.trim() && $('#mate1').value.trim()); }
-['me', 'mate1', 'mate2'].forEach(id => $('#' + id).addEventListener('input', updateBtn));
-
-const LOADING_MSGS = [
-  '사고 접수 중…',
-  '양측 매치 기록 대조 중… (블랙박스 확보)',
-  '사고 현장 감식 중…',
-  '약관 조항 대조 중…',
-  '분쟁심의위원회 심의 중…',
-];
-let loadingTimer = null;
+function updateConditions() {
+  $('#conditions-summary').textContent = ['season', 'mode', 'pages'].map(id => {
+    const field = $('#' + id);
+    return field.selectedOptions[0]?.textContent || '자동';
+  }).join(' · ');
+}
+['season', 'mode', 'pages'].forEach(id => $('#' + id).addEventListener('change', updateConditions));
+function updateBtn() {
+  const ready = !!($('#me').value.trim() && $('#mate1').value.trim());
+  $('#go').disabled = pending || !ready;
+  $('#submit-hint').textContent = ready ? '입력한 닉네임과 조회 조건으로 산정합니다.' : '본인과 팀원 1의 닉네임이 필요합니다.';
+}
+function setFieldError(id, message) {
+  $('#' + id).setAttribute('aria-invalid', String(!!message));
+  $('#' + id + '-error').textContent = message;
+  $('#' + id + '-error').hidden = !message;
+  if (id === 'me' && message) editSelf(false);
+}
+['me', 'mate1', 'mate2'].forEach(id => $('#' + id).addEventListener('input', () => { setFieldError(id, ''); if (id === 'me') syncSelfSummary(); updateBtn(); }));
+function returnToIntake(focus = true) {
+  operation++;
+  pending = false;
+  $('#result-section').hidden = true;
+  $('#loading-section').hidden = true;
+  $('#form-section').hidden = false;
+  $('#form-section').removeAttribute('aria-busy');
+  $('#form-error').hidden = true;
+  clerkState('intake');
+  updateBtn();
+  editSelf(false);
+  if (focus) $('#me').focus();
+}
+window.addEventListener('pagehide', () => returnToIntake(false));
+document.addEventListener('lumia:cancel', () => returnToIntake(false));
 
 async function run() {
-  const me = $('#me').value.trim();
-  const mates = [$('#mate1').value.trim(), $('#mate2').value.trim()].filter(Boolean);
-  const q = new URLSearchParams({
-    me, mates: mates.join(','), season: $('#season').value,
-    mode: $('#mode').value, pages: $('#pages').value,
+  if (pending) return;
+  const ids = ['me', 'mate1', 'mate2'];
+  const names = ids.map(id => $('#' + id).value.trim());
+  let invalid = null;
+  ids.forEach((id, i) => {
+    const message = i < 2 && !names[i] ? '닉네임을 입력해 주세요.'
+      : names[i] && names.findIndex(n => n.toLowerCase() === names[i].toLowerCase()) !== i ? '다른 참가자와 같은 닉네임입니다.' : '';
+    setFieldError(id, message);
+    if (message && !invalid) invalid = id;
   });
+  if (invalid) { $('#' + invalid).focus(); return; }
+  const me = names[0], mates = names.slice(1).filter(Boolean);
+  const q = new URLSearchParams({ me, mates: mates.join(','), season: $('#season').value, mode: $('#mode').value, pages: $('#pages').value });
   const demo = new URLSearchParams(location.search).get('demo');
   if (demo) q.set('demo', demo);
+  const request = ++operation;
+  pending = true;
+  updateBtn();
+  window.LumiaContext?.setNickname(me);
   $('#form-section').hidden = true;
+  $('#form-section').setAttribute('aria-busy', 'true');
+  $('#form-error').hidden = true;
   $('#result-section').hidden = true;
   $('#loading-section').hidden = false;
-  let i = 0;
-  $('#loading-msg').textContent = LOADING_MSGS[0];
-  loadingTimer = setInterval(() => { $('#loading-msg').textContent = LOADING_MSGS[++i % LOADING_MSGS.length]; }, 1500);
+  $('#loading-msg').textContent = '기록 확인 중입니다. 함께한 경기를 대조하고 있습니다.';
+  clerkState('loading');
+  let timeout;
   try {
-    const data = await ER.assessRequest({ ...Object.fromEntries(q), mates });
+    const data = await Promise.race([
+      ER.assessRequest({ ...Object.fromEntries(q), mates }),
+      new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('기록 조회 시간이 초과되었습니다. 잠시 후 다시 신청해 주세요.')), 180000); }),
+    ]);
+    if (request !== operation) return;
+    if (!Array.isArray(data?.names) || !data.names.length || !Array.isArray(data.accidents) || (!data.noAccident && (!Array.isArray(data.fault) || data.fault.length !== data.names.length))) {
+      throw new Error('산정에 필요한 일부 기록을 받지 못했습니다. 다시 조회해 주세요.');
+    }
     lastResult = data;
-    await renderPaper(data);
+    selectedMatch = -1;
+    resultQuery = q.toString();
+    renderMatchOptions(data);
+    renderPaper(data);
     renderDetail(data);
     $('#result-section').hidden = false;
-    history.replaceState(null, '', '?' + q.toString());
+    $('#result-status').textContent = data.noAccident ? '함께한 경기 중 심의 대상 패배 사고가 없습니다.' : '산정이 완료되었습니다. 경기별 판정과 근거를 확인할 수 있습니다.';
+    history.replaceState(null, '', '?' + resultQuery);
+    clerkState('result');
+    window.LumiaContext?.remember('liability');
+    $('#assessment-title').focus({ preventScroll: true });
+    $('#result-section').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
   } catch (e) {
+    if (request !== operation) return;
     $('#form-section').hidden = false;
-    $('#form-error').textContent = e.message;
+    const participant = e.participant && e.status !== 404 ? `${e.participant === me ? '본인' : '팀원'} '${e.participant}' 기록 조회 실패: ` : '';
+    $('#form-error').textContent = participant + (e.message || '기록을 불러오지 못했습니다. 다시 조회해 주세요.');
     $('#form-error').hidden = false;
+    clerkState('error', $('#form-error').textContent);
   } finally {
-    clearInterval(loadingTimer);
-    $('#loading-section').hidden = true;
+    clearTimeout(timeout);
+    if (request === operation) {
+      pending = false;
+      $('#loading-section').hidden = true;
+      $('#form-section').removeAttribute('aria-busy');
+      updateBtn();
+    }
   }
 }
 
-// ---------- 산정서 SVG ----------
 const imgToDataUri = (url) => ER.imgToDataUri(url);
-function esc(s) { return String(s).replace(/[<>&'"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c])); }
+function esc(s) { return String(s ?? '').replace(/[<>&'"\\]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;', '\\': '&#92;' }[c])); }
+const mmss = s => s == null ? '—' : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+function matchLabel(a) { return `${a.startDtm ? new Date(a.startDtm).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '일시 미제공'} · ${a.mode} · ${a.rank}위 · 경기 #${a.gameId}`; }
+function renderMatchOptions(d) {
+  $('#match-choice').innerHTML = `<option value="-1">전체 사고 종합 · ${d.sharedGames}판 확인 / ${d.accidentCount}건</option>`
+    + d.accidents.map((a, i) => `<option value="${i}">${esc(matchLabel(a))}</option>`).join('');
+  $('.match-select').hidden = d.noAccident;
+}
+function selectedView(d) {
+  const a = selectedMatch >= 0 ? d.accidents[selectedMatch] : null;
+  return { a, names: a ? a.players.map(p => p.name) : d.names, fault: a ? a.fault : d.fault, culprit: a ? a.culprit : d.culpritIdx,
+    scope: a ? matchLabel(a) : `함께한 ${d.sharedGames}판 · 사고 ${d.accidentCount}건 · 사고율 ${d.accidentRate}% · 할인할증등급 ${d.grade}Z` };
+}
+function renderPaper(d) {
+  const { a, names, fault, culprit, scope } = selectedView(d);
+  const issued = new Date(d.issuedAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const labels = names.map((name, i) => `${name} ${fault?.[i] ?? '—'}%`);
+  const ratio = d.noAccident ? '' : `<div class="fault-bar" role="img" aria-label="${esc(labels.join(', '))}">${fault.map((f, i) => `<span style="flex:${f};background:${PCOLORS[i]}" title="${esc(labels[i])}">${f >= 18 ? `<span>${esc(names[i])}<b>${f}%</b></span>` : ''}</span>`).join('')}</div><ul class="fault-legend">${labels.map((label, i) => `<li><i style="background:${PCOLORS[i]}" aria-hidden="true"></i>${esc(label)}</li>`).join('')}</ul>`;
+  const selectedStats = a ? `<div class="selected-context">${esc(a.mode)} · ${a.rank}위 · ${esc(a.severity)} 사고 · RP ${a.rpDelta == null ? '미제공' : (a.rpDelta > 0 ? '+' : '') + a.rpDelta}</div><div class="table-scroll"><table class="selected-stats"><thead><tr><th>참가자 · 실험체</th><th>피해량</th><th>K / A / D</th><th>생존</th><th>기권</th></tr></thead><tbody>${a.players.map(p => `<tr><th scope="row">${esc(p.name)}<small>${esc(p.character)}${p.role ? ' · ' + esc(p.role) : ''}</small></th><td>${fmt(p.damage)}</td><td>${p.kill ?? '—'} / ${p.assist ?? '—'} / ${p.deaths ?? '—'}</td><td>${mmss(p.playTime)}</td><td>${p.giveUp ? '기권' : '없음'}</td></tr>`).join('')}</tbody></table></div>` : '';
+  const evidence = d.noAccident ? '' : `<details class="judgement-evidence" open><summary>판정 근거 · 적용 약관</summary>${names.map((name, i) => {
+    const items = a ? (a.items?.[i] || []).map(it => `${it.clause} · ${it.desc} · ${it.pts > 0 ? '+' : ''}${it.pts}점`) : (d.reasons?.[i] || []).map(r => `${r.clause} · ${r.label} · ${r.count}회 · 벌점 ${Math.round(r.pts)}점`);
+    return `<section><h3>${esc(name)} · ${fault[i]}%</h3><ul>${items.map(item => `<li>${esc(item)}</li>`).join('') || '<li>벌점·감경 항목이 없습니다.</li>'}</ul></section>`;
+  }).join('')}<a href="/fault/terms.html">실험체 운용 배상책임 약관 전문</a></details>`;
+  $('#assessment').innerHTML = `<div class="assessment-meta"><span>루미아 손해보험 · 동일 경기 확인</span><span>문서번호 ${esc(d.docNo)}</span></div><h2 id="assessment-title" tabindex="-1">${d.noAccident ? '무사고 확인서' : '과실비율 산정서'}</h2><p class="assessment-scope">${esc(scope)}</p>${d.noAccident ? `<p class="no-accident"><strong>조회 범위에 심의 대상 패배 사고가 없습니다.</strong><br>${d.names.map(esc).join(' · ')}<br>함께한 ${d.sharedGames}판을 확인했습니다. 할인할증등급 ${d.grade}Z.</p>` : ratio + selectedStats + `<p class="verdict">최대 과실 · <strong>${esc(names[culprit])} ${fault[culprit]}%</strong>${a ? '' : ` <span>보험료 ${Math.min(d.grade * 3, 60)}% 할증</span>`}</p><p class="rounding-note">${a ? '경기별 비율은 기존 산정값을 정수로 반올림하여 합계가 100%와 다를 수 있습니다.' : '전체 과실은 사고별 원값의 평균을 반올림한 뒤 합계 100%로 보정합니다.'}</p>`}${evidence}<div class="assessment-foot"><span>${esc(issued)} · 루미아 손해사정법인</span><span class="document-seal">심의<br>완료</span></div><p class="document-disclaimer">재미용 문서로 실제 보험·법률 효력이 없습니다. 팀워크가 상하지 않을 만큼만 웃고 넘어가세요.<br>전적·게임 정보: 이터널 리턴 공식 Open API · 최근 90일 이내 조회 기록 기준 · 닉네임 변경 이전 기록 제외</p>`;
+  renderExportSvg(d);
+}
 
-async function renderPaper(d) {
-  const ink = '#232323', navy = '#24425f', gold = '#a8862d', red = '#b8382a', paper = '#fdfcf8';
-  const issued = new Date(d.issuedAt);
-  const dateStr = `${issued.getFullYear()}년 ${String(issued.getMonth() + 1).padStart(2, '0')}월 ${String(issued.getDate()).padStart(2, '0')}일`;
-  const n = d.names.length;
-
-  // 무사고: 확인서 발급
+// SVG is generated from the selected server result so PNG includes its scope and full evidence.
+function renderExportSvg(d) {
+  const { a, names, fault, culprit, scope } = selectedView(d);
+  let y = 54;
+  const parts = [];
+  const split = (value, max) => {
+    const lines = []; let line = '', width = 0;
+    for (const char of String(value ?? '—')) {
+      const size = /[\u0000-\u007f]/.test(char) ? .55 : 1;
+      if (char === '\n' || width + size > max) { lines.push(line); line = ''; width = 0; if (char === '\n') continue; }
+      line += char; width += size;
+    }
+    lines.push(line); return lines;
+  };
+  const textLine = (value, size = 19, color = '#354039', bold = false) => {
+    split(value, 890 / size).forEach(line => { parts.push(`<text x="55" y="${y}" font-size="${size}" fill="${color}"${bold ? ' font-weight="bold"' : ''}>${esc(line)}</text>`); y += size * 1.65; });
+  };
+  const rule = () => { y += 8; parts.push(`<line x1="55" y1="${y}" x2="945" y2="${y}" stroke="#bcc4b8"/>`); y += 28; };
+  textLine(`루미아 손해보험 · 문서번호 ${d.docNo}`, 16, '#596757');
+  y += 17;
+  textLine(d.noAccident ? '무사고 확인서' : '과실비율 산정서', 36, '#293429', true);
+  rule(); textLine(scope, 18);
   if (d.noAccident) {
-    $('#paper').innerHTML = `
-<svg id="paper-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 707" font-family="${BODY_FONT}">
-  <rect width="1000" height="707" fill="${paper}"/>
-  <rect x="20" y="20" width="960" height="667" fill="none" stroke="${navy}" stroke-width="3.4"/>
-  <rect x="30" y="30" width="940" height="647" fill="none" stroke="${gold}" stroke-width="1"/>
-  <text x="500" y="86" text-anchor="middle" font-size="15" letter-spacing="5" fill="#666" font-family="${TITLE_FONT}">루미아 손해보험(주)</text>
-  <text x="500" y="180" text-anchor="middle" font-size="46" letter-spacing="18" fill="${ink}" font-family="${TITLE_FONT}">무사고 확인서</text>
-  <text x="500" y="300" text-anchor="middle" font-size="19" fill="${ink}">${d.names.map(esc).join(' · ')}</text>
-  <text x="500" y="352" text-anchor="middle" font-size="15.5" fill="${ink}">위 피보험자 일동은 조회 기간 내 함께한 ${d.sharedGames}판에서 심의 대상 사고가 발견되지 않았음을 확인함.</text>
-  <text x="500" y="384" text-anchor="middle" font-size="15.5" fill="${ink}">호흡이 완벽한 팀입니다. 보험료 할인 등급(1Z) 적용 대상.</text>
-  <g transform="translate(500,470) rotate(-8)">
-    <rect x="-92" y="-34" width="184" height="68" rx="8" fill="none" stroke="#1f7a4d" stroke-width="3"/>
-    <text y="10" text-anchor="middle" font-size="34" font-weight="bold" fill="#1f7a4d" letter-spacing="8">무 사 고</text>
-  </g>
-  <text x="500" y="600" text-anchor="middle" font-size="16" fill="${ink}">${dateStr}</text>
-  <text x="500" y="634" text-anchor="middle" font-size="20" letter-spacing="6" fill="${ink}" font-family="${TITLE_FONT}">루미아 손해사정법인</text>
-  <text x="500" y="688" text-anchor="middle" font-size="10" fill="#999">재미로 발급된 문서로 효력이 없음</text>
-</svg>`;
-    return;
+    textLine('조회 범위에 심의 대상 패배 사고가 없습니다.', 24, '#354039', true);
+    textLine(names.join(' · '));
+  } else {
+    y += 12;
+    const total = fault.reduce((sum, value) => sum + value, 0) || 100;
+    let x = 55;
+    fault.forEach((f, i) => { const width = 890 * f / total; parts.push(`<rect x="${x}" y="${y}" width="${width}" height="46" fill="${PCOLORS[i]}"/>`); x += width; });
+    y += 79;
+    names.forEach((name, i) => textLine(`${name} · ${fault[i]}%`, 23, PCOLORS[i], true));
+    textLine(`최대 과실: ${names[culprit]} ${fault[culprit]}%`, 21);
+    if (a) textLine(`${a.mode} · ${a.rank}위 · ${a.severity} · RP ${a.rpDelta == null ? '미제공' : (a.rpDelta > 0 ? '+' : '') + a.rpDelta}`, 18);
+    else textLine(`보험료 ${Math.min(d.grade * 3, 60)}% 할증`, 18);
+    textLine(a ? '경기별 반올림값이므로 표시 합계는 100%와 다를 수 있습니다.' : '사고별 원값의 평균을 반올림하고 합계 100%로 보정합니다.', 16, '#596757');
+    rule(); textLine('판정 근거', 24, '#293429', true);
+    names.forEach((name, i) => {
+      y += 12;
+      textLine(`${name} · ${fault[i]}%`, 22, '#293429', true);
+      if (a) {
+        const p = a.players[i];
+        textLine(`${p.character}${p.role ? ' · ' + p.role : ''} · 피해량 ${fmt(p.damage)} · K/A/D ${p.kill ?? '—'}/${p.assist ?? '—'}/${p.deaths ?? '—'} · 생존 ${mmss(p.playTime)} · 기권 ${p.giveUp ? '있음' : '없음'}`, 17);
+      } else {
+        const c = d.mainChar?.[i];
+        if (c) textLine(`주 사용 실험체: ${c.name}${c.role ? ' · ' + c.role : ''}`, 17);
+      }
+      const reasons = a ? (a.items?.[i] || []).map(it => `${it.clause} · ${it.desc} · ${it.pts > 0 ? '+' : ''}${it.pts}점`) : (d.reasons?.[i] || []).map(r => `${r.clause} · ${r.label} · ${r.count}회 · 벌점 ${Math.round(r.pts)}점`);
+      (reasons.length ? reasons : ['벌점·감경 항목 없음']).forEach(reason => textLine(reason, 17));
+    });
   }
-
-  const culprit = d.culpritIdx;
-  const photo = d.mainChar[culprit].key ? await imgToDataUri(ER.charImgUrl(d.mainChar[culprit].key)) : null;
-
-  // 과실 스택바
-  const barX = 90, barW = 820, barY = 236, barH = 46;
-  let x = barX;
-  const segs = d.fault.map((f, i) => {
-    const w = barW * f / 100;
-    const cx = x + w / 2;
-    const s = `
-      <rect x="${x}" y="${barY}" width="${Math.max(w - 2, 2)}" height="${barH}" fill="${PCOLORS[i]}"/>
-      ${w > 90 ? `<text x="${cx}" y="${barY + 29}" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">${esc(d.names[i])} ${d.fault[i]}%</text>`
-                : `<text x="${cx}" y="${barY + barH + 20}" text-anchor="middle" font-size="12.5" fill="${ink}">${esc(d.names[i])} ${d.fault[i]}%</text>`}`;
-    x += w;
-    return s;
-  }).join('');
-
-  // 주과실자 근거 (최대 3줄, 고정 레이아웃)
-  const reasons = (d.reasons[culprit] || []).slice(0, 3).map((r, i) => `
-    <text x="392" y="${466 + i * 28}" font-size="13.5" fill="#777">${esc(r.clause)}</text>
-    <text x="472" y="${466 + i * 28}" font-size="14.5" fill="${ink}">${esc(r.label)}</text>
-    <text x="910" y="${466 + i * 28}" text-anchor="end" font-size="13.5" fill="#777">×${r.count} · 벌점 ${Math.round(r.pts)}</text>`).join('');
-
-  const others = d.names.map((nm, i) => i).filter(i => i !== culprit);
-  const ratioText = d.fault.join(' : ');
-
-  const svg = `
-<svg id="paper-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 707" font-family="${BODY_FONT}">
-  <rect width="1000" height="707" fill="${paper}"/>
-  <rect x="20" y="20" width="960" height="667" fill="none" stroke="${navy}" stroke-width="3.4"/>
-  <rect x="30" y="30" width="940" height="647" fill="none" stroke="${gold}" stroke-width="1"/>
-
-  <text x="90" y="70" font-size="14" letter-spacing="4" fill="#666" font-family="${TITLE_FONT}">루미아 손해보험(주)</text>
-  <text x="910" y="70" text-anchor="end" font-size="13" fill="#777">문서번호 ${d.docNo}</text>
-
-  <text x="500" y="136" text-anchor="middle" font-size="42" letter-spacing="16" fill="${ink}" font-family="${TITLE_FONT}">과실비율 산정서</text>
-  <text x="500" y="164" text-anchor="middle" font-size="11.5" letter-spacing="3" fill="#999">LUMIA MUTUAL · FAULT RATIO ASSESSMENT REPORT</text>
-
-  <text x="90" y="205" font-size="14.5" fill="${ink}">사건 개요 : 함께한 ${d.sharedGames}판 중 사고 <tspan font-weight="bold">${d.accidentCount}건</tspan> (사고율 ${d.accidentRate}%) · 할인할증등급 <tspan font-weight="bold">${d.grade}Z</tspan></text>
-
-  ${segs}
-  <rect x="${barX}" y="${barY}" width="${barW}" height="${barH}" fill="none" stroke="${navy}" stroke-width="1"/>
-
-  <text x="500" y="352" text-anchor="middle" font-size="46" font-weight="bold" fill="${ink}" font-family="${TITLE_FONT}" letter-spacing="4">${ratioText}</text>
-  <line x1="90" y1="384" x2="910" y2="384" stroke="${gold}" stroke-width="0.9"/>
-
-  <!-- 주과실자 -->
-  <rect x="90" y="412" width="180" height="180" fill="#fff" stroke="${navy}" stroke-width="1.6"/>
-  ${photo ? `<image href="${photo}" x="103" y="425" width="154" height="154" preserveAspectRatio="xMidYMid meet"/>` : ''}
-  <g transform="translate(228,430) rotate(-11)">
-    <rect x="-58" y="-20" width="116" height="40" rx="6" fill="${paper}" opacity="0.15"/>
-    <rect x="-58" y="-20" width="116" height="40" rx="6" fill="none" stroke="${red}" stroke-width="2.6"/>
-    <text y="9" text-anchor="middle" font-size="22" font-weight="bold" fill="${red}" letter-spacing="5">주과실자</text>
-  </g>
-  <text x="180" y="618" text-anchor="middle" font-size="17" font-weight="bold" fill="${ink}">${esc(d.names[culprit])}</text>
-  <text x="180" y="640" text-anchor="middle" font-size="12.5" fill="#777">주 사용: ${esc(d.mainChar[culprit].name)}${d.mainChar[culprit].role ? `(${d.mainChar[culprit].role})` : ''} · 구상권 청구 대상</text>
-
-  <!-- 산정 근거 -->
-  <text x="392" y="432" font-size="13" letter-spacing="3" fill="#777">주요 산정 근거 (주과실자)</text>
-  ${reasons}
-  <text x="392" y="556" font-size="12.5" fill="#777">공동 피보험자 : ${others.map(i => `${esc(d.names[i])} ${d.fault[i]}%`).join(' · ')} — 과실 경합 인정</text>
-
-  <line x1="392" y1="572" x2="910" y2="572" stroke="${gold}" stroke-width="0.7" opacity="0.6"/>
-  <text x="392" y="598" font-size="14.5" fill="${ink}">판정 : 위 ${d.accidentCount}건의 사고에 대한 종합 심의 결과, 주 과실은</text>
-  <text x="392" y="622" font-size="14.5" fill="${ink}"><tspan font-weight="bold">${esc(d.names[culprit])}(${d.fault[culprit]}%)</tspan>에게 있음을 판정함. 보험료 ${Math.min(d.grade * 3, 60)}% 할증.</text>
-
-  <text x="392" y="660" font-size="14" fill="${ink}">${dateStr} · <tspan font-family="${TITLE_FONT}" letter-spacing="3">루미아 손해사정법인</tspan></text>
-  <g transform="translate(846,644)">
-    <circle r="30" fill="none" stroke="${red}" stroke-width="2.2" opacity="0.85"/>
-    <circle r="24" fill="none" stroke="${red}" stroke-width="1" opacity="0.85"/>
-    <text y="-3" text-anchor="middle" font-size="13" font-weight="bold" fill="${red}" opacity="0.85">손해</text>
-    <text y="12" text-anchor="middle" font-size="13" font-weight="bold" fill="${red}" opacity="0.85">사정</text>
-  </g>
-  <text x="500" y="701" text-anchor="middle" font-size="9" fill="#aaa">재미로 발급된 문서로 실제 보험·법률 효력이 없음 · 팀워크 보호를 위해 용법·용량을 지켜 사용하세요</text>
-</svg>`;
-  $('#paper').innerHTML = svg;
+  rule();
+  textLine(`${new Date(d.issuedAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })} · 루미아 손해사정법인`, 18);
+  textLine('재미용 문서로 실제 보험·법률 효력이 없습니다. 팀워크가 상하지 않을 만큼만 웃고 넘어가세요.', 15, '#596757');
+  textLine('전적·게임 정보: 이터널 리턴 공식 Open API · 최근 90일 이내 조회 기록 기준 · 닉네임 변경 이전 기록 제외', 15, '#596757');
+  const height = Math.ceil(y + 30);
+  $('#paper').innerHTML = `<svg id="paper-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 ${height}" font-family="${BODY_FONT}"><rect width="1000" height="${height}" fill="#fdfcf8"/>${parts.join('')}</svg>`;
 }
 
 // ---------- 상세 ----------
@@ -179,7 +233,7 @@ function renderDetail(d) {
         <div><div class="nm">${esc(nm)}</div><div class="role">${d.mainChar[i].role ? d.mainChar[i].role + ' · ' : ''}${roleOf(i)}</div></div>
         <div class="pct" style="color:${PCOLORS[i]}">${d.fault[i]}%</div>
       </div>
-      <ul>${(d.reasons[i] || []).map(r => `<li><span class="cl">${esc(r.clause)}</span><span>${esc(r.label)}</span><span class="ct">×${r.count}</span></li>`).join('') || '<li><span>벌점 항목 없음 — 성실 교전</span></li>'}</ul>
+      <ul>${(d.reasons[i] || []).map(r => `<li><span class="cl">${esc(r.clause)}</span><span>${esc(r.label)}</span><span class="ct">×${r.count} · ${Math.round(r.pts)}점</span></li>`).join('') || '<li><span>벌점 항목 없음 — 성실 교전</span></li>'}</ul>
     </div>`).join('');
 
   const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -207,19 +261,21 @@ function renderDetail(d) {
         <ul>${list}</ul>
       </div>`;
     }).join('');
-    return `<tr class="acc-row" data-i="${ai}" title="클릭하면 판별 상세가 열립니다">
-      <td><span class="caret">▸</span> ${t}</td><td>${a.mode}</td><td class="num">${a.rank}위</td>
+    return `<tr class="acc-row" data-i="${ai}">
+      <td><button type="button" class="acc-toggle" aria-expanded="false" aria-controls="acc-detail-${ai}"><span class="caret" aria-hidden="true">▸</span> ${esc(t)}<span class="visually-hidden"> 경기 #${esc(a.gameId)} 상세</span></button></td><td>${esc(a.mode)}</td><td class="num">${a.rank}위</td>
       <td class="num">${rp}</td>
       <td><span class="sev ${sev}">${a.severity}</span></td>
-      <td><div class="mini">${mini}</div></td>
+      <td><div class="mini" aria-hidden="true">${mini}</div><span class="mini-label">${a.fault.map((f,i) => `${esc(a.players[i].name)} ${f}%`).join(' · ')}</span></td>
       <td><span class="culprit-chip">${esc(a.players[a.culprit].name)}</span></td>
     </tr>
-    <tr class="acc-detail" data-for="${ai}" hidden><td colspan="7"><div class="game-grid">${detailCards}</div></td></tr>`;
+    <tr class="acc-detail" id="acc-detail-${ai}" data-for="${ai}" hidden><td colspan="7"><div class="game-grid">${detailCards}</div></td></tr>`;
   }).join('');
 
   $('#detail').innerHTML = `
+    <details><summary>피보험자별 종합 과실 내역</summary>
     <h3>피보험자별 과실 내역</h3>
     <div class="member-grid">${members}</div>
+    </details>
     <h3>사고 일지 (최근 ${d.accidents.length}건) <span class="hint-inline">— 행을 클릭하면 그 판의 상세 과실이 열립니다</span></h3>
     <div class="table-scroll"><table class="acc-table">
       <tr><th>일시</th><th>유형</th><th>순위</th><th>RP</th><th>등급</th><th>과실 배분</th><th>이 판의 범인</th></tr>
@@ -231,6 +287,7 @@ function renderDetail(d) {
       const det = document.querySelector(`.acc-detail[data-for="${tr.dataset.i}"]`);
       det.hidden = !det.hidden;
       tr.querySelector('.caret').textContent = det.hidden ? '▸' : '▾';
+      tr.querySelector('.acc-toggle').setAttribute('aria-expanded', String(!det.hidden));
     });
   });
 }
@@ -241,70 +298,90 @@ async function getEmbeddedFontCss() {
   if (!fontCssPromise) {
     fontCssPromise = (async () => {
       const fonts = [
-        ['GowunBatang', 400, '/fonts/gowun-batang.woff'],
-        ['GowunBatang', 700, '/fonts/gowun-batang-bold.woff'],
-        ['SongMyung', 400, '/fonts/song-myung.woff'],
+        ['GowunBatang', 400, 'fonts/gowun-batang.woff'],
+        ['GowunBatang', 700, 'fonts/gowun-batang-bold.woff'],
+        ['SongMyung', 400, 'fonts/song-myung.woff'],
       ];
       const faces = await Promise.all(fonts.map(async ([fam, wt, url]) => {
         const uri = await imgToDataUri(url);
         return `@font-face{font-family:'${fam}';font-weight:${wt};src:url(${uri}) format('woff')}`;
       }));
       return faces.join('\n');
-    })();
+    })().catch(error => { fontCssPromise = null; throw error; });
   }
   return fontCssPromise;
 }
 async function downloadPng() {
+  if (!lastResult || $('#result-section').hidden || $('#png').disabled) return;
   const btn = $('#png');
+  const filename = `과실비율산정서_${lastResult.names.join('_')}${selectedMatch >= 0 ? '_경기' + lastResult.accidents[selectedMatch].gameId : ''}.png`;
+  let url;
   btn.disabled = true; btn.textContent = '이미지 생성 중…';
   try {
     const svg = $('#paper-svg').cloneNode(true);
+    await document.fonts?.ready;
     const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
     style.textContent = await getEmbeddedFontCss();
     svg.insertBefore(style, svg.firstChild);
     const xml = new XMLSerializer().serializeToString(svg);
-    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
+    url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
     const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('문서 이미지를 만들지 못했습니다. 다시 저장해 주세요.')); img.src = url; });
     const canvas = document.createElement('canvas');
-    canvas.width = 2000; canvas.height = 1414;
-    canvas.getContext('2d').drawImage(img, 0, 0, 2000, 1414);
-    URL.revokeObjectURL(url);
+    const [, , width, height] = svg.getAttribute('viewBox').split(' ').map(Number);
+    canvas.width = width * 2; canvas.height = height * 2;
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/png');
-    a.download = `과실비율산정서_${lastResult.names.join('_')}.png`;
+    a.download = filename;
     a.click();
+    $('#result-status').textContent = '선택한 판정 범위와 근거를 PNG로 저장했습니다.';
+  } catch (error) {
+    $('#result-status').textContent = error.message || 'PNG 저장에 실패했습니다. 다시 시도해 주세요.';
   } finally {
+    if (url) URL.revokeObjectURL(url);
     btn.disabled = false; btn.textContent = '산정서 PNG 저장';
   }
 }
 
 // ---------- 이벤트 ----------
-$('#go').addEventListener('click', run);
+$('#form-section').addEventListener('submit', event => { event.preventDefault(); run(); });
+$('#cancel').addEventListener('click', () => returnToIntake());
+$('#match-choice').addEventListener('change', () => {
+  selectedMatch = Number($('#match-choice').value);
+  renderPaper(lastResult);
+  $('#result-status').textContent = selectedMatch < 0 ? '전체 사고 종합 판정을 표시합니다.' : '선택한 경기의 판정과 근거를 표시합니다. PNG에도 같은 경기가 저장됩니다.';
+});
 $('#png').addEventListener('click', downloadPng);
 $('#link').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(location.href);
-  $('#link').textContent = '복사 완료!';
-  setTimeout(() => { $('#link').textContent = '조회 링크 복사'; }, 1500);
+  try {
+    const url = new URL(location.pathname, location.origin);
+    url.search = resultQuery;
+    await navigator.clipboard.writeText(url.href);
+    $('#result-status').textContent = '조회 링크를 복사했습니다. 링크를 열면 같은 조건으로 전체 결과를 다시 조회합니다.';
+  } catch (error) {
+    $('#result-status').textContent = '조회 링크를 복사하지 못했습니다. 주소 표시줄의 링크를 복사해 주세요.';
+  }
 });
-$('#again').addEventListener('click', () => {
-  $('#result-section').hidden = true;
-  $('#form-section').hidden = false;
-  $('#form-error').hidden = true;
-  window.scrollTo({ top: 0 });
-});
+$('#again').addEventListener('click', () => returnToIntake());
 
 (async function init() {
-  await loadSeasons();
   const p = new URLSearchParams(location.search);
-  if (p.get('me')) $('#me').value = p.get('me');
+  if (p.get('me')) { $('#me').value = p.get('me'); selfEditing = false; }
   const mates = (p.get('mates') || '').split(',').filter(Boolean);
   if (mates[0]) $('#mate1').value = mates[0];
   if (mates[1]) $('#mate2').value = mates[1];
-  if (p.get('season')) $('#season').value = p.get('season');
-  if (p.get('mode')) $('#mode').value = p.get('mode');
-  if (p.get('pages')) $('#pages').value = p.get('pages');
+  syncSelfSummary();
+  if (['all', 'squad', 'cobalt'].includes(p.get('mode'))) $('#mode').value = p.get('mode');
+  if (['2', '3', '5'].includes(p.get('pages'))) $('#pages').value = p.get('pages');
+  updateConditions();
   updateBtn();
+  try { await loadSeasons(); } catch (error) {
+    $('#form-error').textContent = '시즌 목록을 불러오지 못했습니다. 자동 시즌으로 다시 조회할 수 있습니다.';
+    $('#form-error').hidden = false;
+  }
+  if ([...$('#season').options].some(option => option.value === p.get('season'))) $('#season').value = p.get('season');
+  updateConditions();
   if (p.get('me') && mates.length) run();
 })().catch(error => {
   $('#form-error').textContent = error.message;

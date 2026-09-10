@@ -1,0 +1,51 @@
+/* The certificate keeps its two original document templates inside the shared desk. */
+body[data-lumia-document="license"] { background:#0c161c; color:#e5eae9; }
+[data-lumia-document="license"] .lc-work main { padding:0; max-width:none; }
+[data-lumia-document="license"] .panel { background:transparent; border:0; border-top:1px solid #c1d2d02e; border-radius:0; margin-top:18px; padding:22px 0; }
+[data-lumia-document="license"] #form-section { border-top:0; margin-top:0; }
+[data-lumia-document="license"] h1 { font-family:inherit; line-height:1.4; font-size:24px; font-weight:500; letter-spacing:-.5px; }
+[data-lumia-document="license"] #cert-heading { font-size:22px; font-weight:500; }
+[data-lumia-document="license"] .intake-lead { color:#a6babc; margin:12px 0 25px; line-height:1.7; font-size:13px; }
+[data-lumia-document="license"] .field label { color:#b6c6c6; letter-spacing:0; }
+[data-lumia-document="license"] .field-help { color:#a6babc; font-size:12px; line-height:1.7; margin:10px 0; }
+[data-lumia-document="license"] input { min-width:0; width:100%; min-height:48px; background:#0c171e; border:1px solid #c1d2d033; border-radius:0; color:#e5eae9; padding:12px 14px; font:inherit; font-size:16px; }
+[data-lumia-document="license"] input:focus { border-color:#cfdbd3; }
+[data-lumia-document="license"] button { min-height:44px; max-width:100%; border-radius:0; background:#cfdbd3; color:#172726; font-family:inherit; font-size:13px; font-weight:500; letter-spacing:0; padding:11px 16px; }
+[data-lumia-document="license"] :focus-visible { outline:2px solid #cfdbd3; outline-offset:3px; }
+[data-lumia-document="license"] [hidden] { display:none !important; }
+[data-lumia-document="license"] .error { color:#e4ae9d; font-size:13px; line-height:1.7; }
+[data-lumia-document="license"] #picked-label { color:#cfdbd3; font-weight:400; }
+[data-lumia-document="license"] .selected-character { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+[data-lumia-document="license"] .selected-character img { width:48px; height:48px; background:#17282d; object-fit:cover; }
+[data-lumia-document="license"] #character-toggle { background:transparent; border:1px solid #c1d2d033; color:#e5eae9; }
+[data-lumia-document="license"] #character-picker { padding-top:18px; }
+[data-lumia-document="license"] .picker-label { font-size:12px; }
+[data-lumia-document="license"] .char-grid { grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); background:#0c171e; border:1px solid #c1d2d026; border-radius:0; gap:6px; padding:8px; }
+[data-lumia-document="license"] .char-cell,[data-lumia-document="license"] .skin-cell { min-width:0; background:transparent; color:#e5eae9; border:1px solid transparent; border-radius:0; padding:8px 3px; }
+[data-lumia-document="license"] .char-cell:hover,[data-lumia-document="license"] .skin-cell:hover { background:#1a2c31; }
+[data-lumia-document="license"] .char-cell.selected,[data-lumia-document="license"] .skin-cell.selected { background:#1a2c31; border-color:#b2c7bc; }
+[data-lumia-document="license"] .char-cell img,[data-lumia-document="license"] .skin-cell img { border-radius:0; background:#17282d; }
+[data-lumia-document="license"] .char-cell .nm,[data-lumia-document="license"] .skin-cell .nm { color:#d2deda; font-size:12px; }
+[data-lumia-document="license"] .skin-row { background:transparent; border-radius:0; border-color:#c1d2d026; max-width:100%; }
+[data-lumia-document="license"] .skin-cell .gd { color:#a6babc; font-size:11px; }
+[data-lumia-document="license"] .style-row { gap:8px; }
+[data-lumia-document="license"] .style-cell { min-width:130px; background:transparent; text-align:left; border:1px solid #c1d2d033; border-radius:0; padding:12px; }
+[data-lumia-document="license"] .style-cell.selected { background:#1a2c31; border-color:#b2c7bc; }
+[data-lumia-document="license"] .style-cell .tt { font-size:13px; color:#e5eae9; font-weight:500; }
+[data-lumia-document="license"] .style-cell .dd { color:#a6babc; font-size:11px; }
+[data-lumia-document="license"] #issue-btn { letter-spacing:0; }
+[data-lumia-document="license"] #cert-wrap { margin-top:18px; }
+[data-lumia-document="license"] #cert-wrap svg { border-radius:0; box-shadow:none; }
+[data-lumia-document="license"] #again-btn,[data-lumia-document="license"] #cancel-btn { background:transparent; color:#cfdbd3; border:1px solid #c1d2d033; }
+[data-lumia-document="license"] .evidence summary { cursor:pointer; min-height:44px; padding:10px 0; color:#cfdbd3; font-size:13px; }
+[data-lumia-document="license"] #season-detail h3 { color:#cfdbd3; letter-spacing:0; font-weight:500; }
+[data-lumia-document="license"] .mode-cards { display:block; }
+[data-lumia-document="license"] .mode-card { border:0; border-bottom:1px solid #c1d2d026; border-radius:0; background:transparent; padding:12px 0; }
+[data-lumia-document="license"] .mode-card .mk,[data-lumia-document="license"] .mode-card.cobalt .mk,[data-lumia-document="license"] .mode-card .ms { color:#a6babc; }
+[data-lumia-document="license"] .mode-card .mv { font-size:18px; font-variant-numeric:tabular-nums; }
+[data-lumia-document="license"] .season-table th,[data-lumia-document="license"] .season-table td { border-color:#c1d2d026; }
+[data-lumia-document="license"] .season-table th { color:#a6babc; }
+@media(max-width:720px) { [data-lumia-document="license"] .lc-work { min-width:0; } [data-lumia-document="license"] .panel { padding:18px 0; } [data-lumia-document="license"] .field { margin-bottom:22px; } }
+@media(prefers-reduced-motion:reduce) { [data-lumia-document="license"] *,[data-lumia-document="license"] *::before,[data-lumia-document="license"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+@media print { [data-lumia-document="license"] #form-section,[data-lumia-document="license"] .cert-actions,[data-lumia-document="license"] .cert-style-actions,[data-lumia-document="license"] .field-help,[data-lumia-document="license"] #cert-heading { display:none !important; } [data-lumia-document="license"] .panel { color:#172726; } [data-lumia-document="license"] #cert-wrap { margin:0; } }
+[data-lumia-document="license"] .style-cell{color:#e5eae9}

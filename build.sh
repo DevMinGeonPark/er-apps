@@ -7,7 +7,10 @@ cd "$(dirname "$0")"
 rm -rf dist
 mkdir -p dist
 
-cp hub/index.html dist/index.html
+cp -R hub/. dist/
+mkdir -p dist/shared dist/assets
+cp shared/lumia-documents.js shared/night-clerk.js shared/night-clerk.css dist/shared/
+cp docs/lumia-night-clerk-2026-09-10/assets/lumia-art.jpg dist/assets/lumia-art.jpg
 
 for pair in er-cert:cert er-death:death er-fault:fault er-enemy:enemy er-credit:credit er-payroll:payroll; do
   src="${pair%%:*}"; slug="${pair##*:}"
@@ -27,9 +30,11 @@ for app in ('cert', 'credit', 'death', 'fault', 'enemy', 'payroll'):
     Path('dist', app, 'er-config.js').write_text('globalThis.ER_API_BASE_URL ||= ' + json.dumps(origin) + ';\n')
 PY
 
-# er-map 은 원래 정적 — 자체 완결된 dist.html 하나가 산출물이다
+# 제외된 상황판의 이전 주소는 문서국으로 안내한다. 원본 지도 소스는 보존한다.
 mkdir -p dist/map
-cp er-map/dist.html dist/map/index.html
+cat > dist/map/index.html <<'HTML'
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=/"><title>루미아 문서국</title><a href="/">루미아 문서국으로 이동</a></html>
+HTML
 
 # 커스텀 도메인을 쓸 때만 존재 — Cloudflare DNS에 CNAME er -> devmingeonpark.github.io 를
 # 먼저 넣고, 루트에 CNAME 파일(내용: er.dev-heptivision.com)을 만들면 자동으로 실린다

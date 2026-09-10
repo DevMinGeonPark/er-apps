@@ -82,18 +82,20 @@
   }
 
   // ---------- 복수의 사슬 ----------
-  async function buildChain(startNick, gameId, meta, myPlayTime) {
+  async function buildChain(startNick, gameId, meta, myPlayTime, signal) {
     const steps = [];
     const visited = new Set();
     let nick = startNick;
     let prevTime = myPlayTime || 0;
     for (let depth = 0; depth < 8; depth++) {
+      signal?.throwIfAborted();
       if (visited.has(nick)) {
         steps.push({ nickname: nick, missing: true, reason: '부활로 기록이 순환하여 추적을 마칩니다.' });
         break;
       }
       visited.add(nick);
       const m = await findGameRecord(nick, gameId);
+      signal?.throwIfAborted();
       if (!m) {
         steps.push({ nickname: nick, missing: true });
         break;
@@ -165,16 +167,19 @@
     if (bad > 0) notes.push(`7위 이하 광탈 ${bad}회`);
     if (lastSeenMs) {
       const h = Math.floor((Date.now() - lastSeenMs) / 3600000);
-      notes.push(h < 1 ? '마지막 관측: 1시간 이내 (현재 활동 중 추정)' : h < 24 ? `마지막 관측: ${h}시간 전` : `마지막 관측: ${Math.floor(h / 24)}일 전`);
+      notes.push(h < 1 ? '마지막 경기 기록: 1시간 이내' : h < 24 ? `마지막 경기 기록: ${h}시간 전` : `마지막 경기 기록: ${Math.floor(h / 24)}일 전`);
     }
     return { tone, text, total, notes };
   }
 
   // ---------- API ----------
   // 내 킬러 집계
-  async function buildKillers(name) {
+  async function buildKillers(name, signal) {
+    signal?.throwIfAborted();
     const meta = await getMeta();
+    signal?.throwIfAborted();
     const matches = await getMatches(name, 3);
+    signal?.throwIfAborted();
     const byNick = new Map();
     let beastDeaths = 0, zoneDeaths = 0;
     for (const m of matches) {
@@ -211,10 +216,14 @@
   }
 
   // 관측
-  async function buildObservation(enemy, me, gameId) {
+  async function buildObservation(enemy, me, gameId, signal) {
+    signal?.throwIfAborted();
     const meta = await getMeta();
+    signal?.throwIfAborted();
     const profile = await ERCore.getProfile(enemy);
+    signal?.throwIfAborted();
     const matches = (await getMatches(enemy, 2)).sort((a, b) => a.gameId - b.gameId);
+    signal?.throwIfAborted();
 
     // 대상 프로필 카드
     const lastMatch = matches[matches.length - 1];
@@ -233,6 +242,7 @@
     let chain = null, myDeath = null, verdict = null;
     if (gameId && me) {
       const myRec = await findGameRecord(me, gameId);
+      signal?.throwIfAborted();
       if (myRec) {
         const myDeaths = extractDeaths(myRec, meta);
         const final = myDeaths.length ? myDeaths[myDeaths.length - 1] : null;
@@ -244,7 +254,8 @@
           startDtm: myRec.startDtm,
           cause: final.cause, placeName: final.placeName, byNickname: final.byNickname,
         } : null;
-        chain = await buildChain(enemy, gameId, meta, myRec.playTime || 0);
+        chain = await buildChain(enemy, gameId, meta, myRec.playTime || 0, signal);
+        signal?.throwIfAborted();
         verdict = chainVerdict(chain, myDeath);
       }
     }
@@ -269,7 +280,9 @@
     // 그날 이후 랭크 기록이 없으면, 다른 모드로 도피했는지까지 확인
     if (!afterGames.length && gameId) {
       try {
+        signal?.throwIfAborted();
         const others = (await getMatchesPage(enemy, 1, null)).filter(m => m.gameId > gameId && m.matchingMode !== 3);
+        signal?.throwIfAborted();
         if (others.length) {
           fate.tone = 'hiding';
           fate.text = `MMR 변동 관측 불가 — 그날 이후 랭크 참가 기록이 없습니다. 일반·코발트로 도피 중인 것으로 확인됐습니다 (${others.length}판 목격).`;
@@ -277,6 +290,7 @@
       } catch (e) { /* 확인 실패 시 기본 잠적 판정 유지 */ }
     }
 
+    signal?.throwIfAborted();
     return { target, myDeath, chain, verdict, afterGames, fate, baseline: gameId || null };
   }
 
@@ -287,15 +301,15 @@
     }
     throw e;
   }
-  async function killers(name) {
+  async function killers(name, { signal } = {}) {
     name = (name || '').trim();
     if (!name) throw new Error('닉네임을 입력하세요.');
-    try { return await buildKillers(name); } catch (e) { rethrow(e); }
+    try { return await buildKillers(name, signal); } catch (e) { rethrow(e); }
   }
-  async function observe(enemy, me, gameId) {
+  async function observe(enemy, me, gameId, { signal } = {}) {
     enemy = (enemy || '').trim();
     if (!enemy) throw new Error('원수의 닉네임을 입력하세요.');
-    try { return await buildObservation(enemy, (me || '').trim() || null, gameId || null); } catch (e) { rethrow(e); }
+    try { return await buildObservation(enemy, (me || '').trim() || null, gameId || null, signal); } catch (e) { rethrow(e); }
   }
 
   window.ER = { getCharacters, charImgUrl, killers, observe };

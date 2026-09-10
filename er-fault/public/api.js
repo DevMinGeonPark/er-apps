@@ -17,7 +17,15 @@
 
   // ---------- 매치 수집 ----------
   async function fetchMatches(name, seasonKey, pages) {
-    return ERCore.getMatches(name, { pages: pages * 2, season: seasonKey });
+    try {
+      return await ERCore.getMatches(name, { pages: pages * 2, season: seasonKey });
+    } catch (cause) {
+      const error = new Error(cause?.message || '경기 기록을 불러오지 못했습니다.');
+      error.status = cause?.status;
+      error.participant = name;
+      error.cause = cause;
+      throw error;
+    }
   }
 
   // ---------- 과실 산정 ----------
@@ -311,7 +319,14 @@
         result = await assess(names, season, pages, mode, demo);
       }
     } catch (e) {
-      if (e.status === 404) throw new Error('플레이어를 찾을 수 없습니다. 닉네임을 확인해주세요.');
+      if (e.status === 404) {
+        const subject = e.participant ? `${e.participant === me ? '본인' : '팀원'} '${e.participant}' 조회 실패: ` : '';
+        const error = new Error(`${subject}플레이어를 찾을 수 없습니다. 닉네임을 확인해주세요.`);
+        error.status = e.status;
+        error.participant = e.participant;
+        error.cause = e;
+        throw error;
+      }
       throw e;
     }
     if (!result || !result.sharedGames) throw new Error('최근 시즌에서 함께한 게임을 찾지 못했습니다. 닉네임을 확인하거나 시즌을 직접 선택해보세요.');

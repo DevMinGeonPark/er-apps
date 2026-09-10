@@ -1,119 +1,70 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>루미아 문서국 — 이터널리턴 전적 재해석</title>
-<meta name="description" content="이터널리턴 전적을 자격증·진단서·산정서·신용평가·급여명세서로 번역하는 사이트 모음.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗂️</text></svg>">
-<style>
-  :root {
-    --bg: #0e1014;
-    --panel: #161a21;
-    --line: #262c36;
-    --ink: #e6e8ec;
-    --dim: #8a93a2;
-    --accent: #c8a96a;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 64px 20px 80px; }
-
-  header { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 36px; }
-  .seal {
-    display: inline-block; font-size: 11px; letter-spacing: 3px; color: var(--accent);
-    border: 1px solid var(--accent); padding: 3px 10px; border-radius: 2px; margin-bottom: 16px;
-  }
-  h1 { font-size: 30px; margin: 0 0 10px; letter-spacing: -0.5px; }
-  header p { margin: 0; color: var(--dim); font-size: 15px; }
-
-  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-  a.card {
-    display: block; text-decoration: none; color: inherit;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-    padding: 20px 22px; transition: border-color .15s, transform .15s;
-  }
-  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .card .no { font-size: 11px; letter-spacing: 2px; color: var(--dim); }
-  .card .wip {
-    float: right; font-size: 10px; letter-spacing: 1px; color: #e0a03a;
-    border: 1px solid #e0a03a; border-radius: 2px; padding: 1px 6px; line-height: 1.5;
-  }
-  a.card.wip-card { opacity: .72; }
-  a.card.wip-card:hover { opacity: 1; }
-  .card h2 { font-size: 18px; margin: 6px 0 8px; }
-  .card p { margin: 0; font-size: 13.5px; color: var(--dim); }
-
-  footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12.5px; }
-  footer p { margin: 0 0 8px; }
-  footer a { color: var(--dim); }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>루미아 문서국 — 야간 접수</title>
+  <meta name="description" content="이터널 리턴의 기록으로 자격증·사망진단서·과실비율·신용평가·급여명세서를 발급하는 비공식 문서국.">
+  <meta name="theme-color" content="#0c161c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🗂️%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/lobby.css">
+  <link rel="preload" as="image" href="/assets/lumia-art.jpg">
+  <script defer src="/shared/lumia-documents.js"></script>
+  <script defer src="/lobby.js"></script>
 </head>
 <body>
-<div class="wrap">
-
-<header>
-  <div class="seal">LUMIA ARCHIVES</div>
-  <h1>루미아 문서국</h1>
-  <p>이터널리턴 전적을 다른 제도의 언어로 번역합니다. 닉네임 하나면 됩니다.</p>
-</header>
-
-<div class="grid">
-  <a class="card" href="cert/">
-    <div class="no">제 1 과 · 기술자격</div>
-    <h2>실험체 자격증</h2>
-    <p>전 시즌 누적 전적으로 기능사부터 명장까지 등급을 산정해 자격증을 발급합니다.</p>
-  </a>
-
-  <a class="card" href="death/">
-    <div class="no">제 2 과 · 검시</div>
-    <h2>사망진단서</h2>
-    <p>마지막 판의 사인을 선행사인부터 직접사인까지 역추적해 진단서로 씁니다.</p>
-  </a>
-
-  <a class="card" href="fault/">
-    <div class="no">제 3 과 · 손해사정</div>
-    <h2>과실비율 산정서</h2>
-    <p>듀오·트리오가 함께 진 판을 조인해 누구 탓이 몇 퍼센트인지 산정합니다.</p>
-  </a>
-
-  <a class="card" href="enemy/">
-    <div class="no">제 4 과 · 관측</div>
-    <h2>원수 관측소</h2>
-    <p>나를 죽인 놈을 색출하고, 그 뒤 그놈이 어떻게 됐는지 추적합니다.</p>
-  </a>
-
-  <a class="card" href="credit/">
-    <div class="no">제 5 과 · 신용평가</div>
-    <h2>루미아 신용정보원</h2>
-    <p>실험체별 성적을 신용등급으로 환산합니다. Thin File과 연체 이력까지.</p>
-  </a>
-
-  <a class="card" href="payroll/">
-    <div class="no"><span class="wip">NEW</span>제 6 과 · 근로정산</div>
-    <h2>루미아 노동청</h2>
-    <p>오늘도 일했는데 통장이 줄었다. 랭크 RP를 급여로 정산하고 당신의 시급을 공개합니다.</p>
-  </a>
-
-  <a class="card wip-card" href="map/">
-    <div class="no"><span class="wip">개발중</span>부록 · 지형</div>
-    <h2>루미아섬 상황판</h2>
-    <p>21개 지역과 34개 경계를 격자로 재구성한 지도.</p>
-  </a>
-</div>
-
-<footer>
-  <p>이 사이트는 팬 제작물이며 님블뉴런과 무관합니다.</p>
-  <p>모든 문서는 재미로 발급되며 아무런 효력이 없습니다. 최근 전적은 공식 Open API, 전 시즌 상세 누적은 DAK.GG 자료를 사용합니다.</p>
-</footer>
-
+<div id="lam" data-view="home" aria-label="루미아 문서국 야간 접수">
+  <img class="am-art" src="/assets/lumia-art.jpg" alt="서류를 든 은발 기록관이 야간 연구실에서 기다리고 있다" fetchpriority="high">
+  <div class="am-veil" aria-hidden="true"></div>
+  <header class="am-top">
+    <div class="am-logo">루미아 문서국<small>LUMIA ARCHIVES</small></div>
+    <span class="am-night">야간 접수</span>
+  </header>
+  <main class="am-main">
+    <section class="am-character" aria-label="기록관">
+      <div class="am-dialogue">
+        <div class="am-speaker">기록관</div>
+        <p class="am-quote" id="am-quote" aria-hidden="true">하… 또 왔네.
+이번엔 무슨 서류인데?</p>
+        <span class="am-sr" id="am-dialogue-live" role="status" aria-atomic="true">하… 또 왔네. 이번엔 무슨 서류인데?</span>
+        <p class="am-aside" id="am-aside">필요한 것만 골라. 오래 걸리니까.</p>
+      </div>
+    </section>
+    <section class="am-panel" aria-label="문서 접수대">
+      <div id="am-home" class="am-section">
+        <div class="am-home-head"><h1 class="am-heading" id="am-home-title" tabindex="-1">무슨 일로 왔어?</h1><p>필요한 서류를 골라주세요.</p></div>
+        <div class="am-subhead"><span id="am-recent-label">바로 찾기</span><span id="am-total"></span></div>
+        <div class="am-recent" id="am-recent"></div>
+        <button type="button" class="am-more" id="am-open" aria-expanded="false" aria-controls="am-catalog"><span>다른 서류 찾기</span><span aria-hidden="true">↗</span></button>
+        <p class="am-home-note" id="am-home-note">문서를 선택하면 이곳에 최근 목록이 남습니다.</p>
+      </div>
+      <div id="am-catalog" class="am-section" hidden>
+        <div class="am-catalog-heading"><h2 class="am-heading" id="am-catalog-title" tabindex="-1">전체 서류</h2><button class="am-back" type="button" id="am-catalog-back">접수대로 돌아가기 ↗</button></div>
+        <div class="am-search"><label for="am-query">문서 검색</label><input id="am-query" type="search" placeholder="이름이나 내용으로 찾기" autocomplete="off" aria-controls="am-results"><button type="button" class="am-clear" id="am-clear" hidden>지우기</button></div>
+        <div class="am-filters" id="am-filters" role="group" aria-label="문서 분류"></div>
+        <div class="am-results" id="am-results"></div>
+        <p class="am-empty" id="am-empty" hidden>찾는 서류가 없습니다.<br>다른 검색어나 분류를 선택해주세요.</p>
+        <div class="am-pagebar"><span id="am-result-count" role="status" aria-atomic="true"></span><div class="am-page-buttons" id="am-page-buttons"><button type="button" id="am-prev" aria-label="이전 문서 페이지">← 이전</button><span id="am-page-number"></span><button type="button" id="am-next" aria-label="다음 문서 페이지">다음 →</button></div></div>
+      </div>
+      <div id="am-detail" class="am-section" hidden>
+        <button type="button" class="am-back" id="am-detail-back">← 다른 서류 고르기</button>
+        <p class="am-kind" id="am-kind"></p>
+        <h2 class="am-heading" id="am-document-title" tabindex="-1"></h2>
+        <p class="am-description" id="am-description"></p>
+        <dl class="am-meta-list"><div><dt>분석 대상</dt><dd id="am-target"></dd></div></dl>
+        <form class="am-form" id="am-form" novalidate>
+          <label for="am-nickname">게임 닉네임 <span class="am-muted">(선택)</span></label>
+          <input id="am-nickname" name="nickname" placeholder="여기에 이름 적어." maxlength="100" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="am-form-hint am-error">
+          <p class="am-error" id="am-error" role="alert" hidden></p>
+          <button type="submit" class="am-primary" id="am-submit"><span id="am-submit-label">접수대 열기</span><span aria-hidden="true">↗</span></button>
+          <p class="am-hint" id="am-form-hint"></p>
+          <p class="am-hint">이름은 이 브라우저에 기억합니다. 조회는 각 접수대에서 신청합니다.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <noscript><nav class="am-noscript" aria-label="문서 바로가기">문서 접수대를 선택해주세요.<br><a href="/cert/">실험체 자격증</a><a href="/death/">사망진단서</a><a href="/fault/">과실비율 산정서</a><a href="/enemy/">원수 관측소</a><a href="/credit/">루미아 신용정보원</a><a href="/payroll/">루미아 노동청</a></nav></noscript>
+  <footer class="am-footer"><span>비공식 팬 제작물 · 모든 문서는 재미로 발급되며 실제 효력이 없습니다.</span></footer>
 </div>
 </body>
 </html>

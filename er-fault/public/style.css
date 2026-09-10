@@ -1,6 +1,6 @@
-@font-face { font-family: 'GowunBatang'; src: url('/fonts/gowun-batang.woff') format('woff'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'GowunBatang'; src: url('/fonts/gowun-batang-bold.woff') format('woff'); font-weight: 700; font-display: swap; }
-@font-face { font-family: 'SongMyung'; src: url('/fonts/song-myung.woff') format('woff'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'GowunBatang'; src: url('fonts/gowun-batang.woff') format('woff'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'GowunBatang'; src: url('fonts/gowun-batang-bold.woff') format('woff'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'SongMyung'; src: url('fonts/song-myung.woff') format('woff'); font-weight: 400; font-display: swap; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -101,3 +101,105 @@ button.ghost { background: #2c466e; color: #e8edf5; }
 
 footer { text-align: center; color: #64768f; font-size: 12px; padding: 22px 18px 36px; line-height: 1.8; }
 footer a { color: #93a3ba; }
+
+/* Night-clerk intake and readable, selected-match assessment. */
+body[data-lumia-document="liability"] { display:block; background:#0c161c; color:#e5eae9; }
+body[data-lumia-document="liability"] [hidden] { display:none!important; }
+body[data-lumia-document="liability"] .lc-work > main { padding:0; }
+body[data-lumia-document="liability"] .panel { background:transparent; border:0; border-radius:0; padding:0; margin:0; }
+body[data-lumia-document="liability"] .intake-title { font-size:26px; font-weight:500; line-height:1.4; margin:0 0 13px; letter-spacing:-1px; }
+body[data-lumia-document="liability"] .lc-title ~ main .intake-title { display:none; }
+body[data-lumia-document="liability"] .intake-deck { font-size:13px; color:#a6babc; line-height:1.9; margin-bottom:24px; }
+body[data-lumia-document="liability"] #form-section > .row3 { grid-template-columns:1fr 1fr; }
+body[data-lumia-document="liability"] #form-section > .row3 > .field:first-child { grid-column:1/-1; }
+body[data-lumia-document="liability"] .field { min-width:0; }
+body[data-lumia-document="liability"] .field label { color:#b6c6c6; font-size:13px; letter-spacing:0; }
+body[data-lumia-document="liability"] .self-summary { display:flex; justify-content:space-between; align-items:center; gap:14px; min-height:48px; border-bottom:1px solid #c1d2d033; padding:4px 0; }
+body[data-lumia-document="liability"] #self-nickname { min-width:0; overflow-wrap:anywhere; font-size:16px; color:#e5eae9; }
+body[data-lumia-document="liability"] #edit-self { flex-shrink:0; border:0; color:#b6c6c6; padding:10px 12px; }
+body[data-lumia-document="liability"] input[type=text], body[data-lumia-document="liability"] select { border-radius:0; border-color:#c1d2d033; background:#101d23; color:#e5eae9; font-size:16px; min-height:48px; }
+body[data-lumia-document="liability"] select { appearance:auto; }
+body[data-lumia-document="liability"] input::placeholder { color:#91a9aa; }
+body[data-lumia-document="liability"] button { background:#cfdbd3; color:#172726; border:0; border-radius:0; font-size:13px; font-weight:500; min-height:44px; padding:12px 16px; }
+body[data-lumia-document="liability"] button.ghost { border:1px solid #c1d2d033; background:transparent; color:#b6c6c6; }
+body[data-lumia-document="liability"] #go { letter-spacing:0; margin-top:20px; min-height:48px; }
+body[data-lumia-document="liability"] .query-conditions { border-top:1px solid #c1d2d033; border-bottom:1px solid #c1d2d033; padding:6px 0; margin-top:22px; }
+body[data-lumia-document="liability"] summary { min-height:44px; cursor:pointer; color:#cbdcd3; font-size:13px; padding:10px 0; }
+body[data-lumia-document="liability"] #conditions-summary { display:block; font-size:12px; color:#91a9aa; margin-top:6px; }
+body[data-lumia-document="liability"] .query-conditions .row3 { grid-template-columns:1fr; margin-top:18px; }
+body[data-lumia-document="liability"] .intake-note, body[data-lumia-document="liability"] .terms-link { font-size:12px; color:#91a9aa; text-align:left; margin-top:10px; line-height:1.8; }
+body[data-lumia-document="liability"] a { color:#b6c6c6; }
+body[data-lumia-document="liability"] .field-error, body[data-lumia-document="liability"] .error { color:#e4ae9d; font-size:12px; margin-top:8px; }
+body[data-lumia-document="liability"] #loading-section { border-block:1px solid #c1d2d033; padding:24px 0; color:#b6c6c6; }
+body[data-lumia-document="liability"] #cancel { margin-top:20px; }
+body[data-lumia-document="liability"] .match-select { margin:0 0 20px; }
+body[data-lumia-document="liability"] .assessment { background:#e0e3d9; color:#293429; padding:28px 26px; overflow-wrap:anywhere; }
+body[data-lumia-document="liability"] .assessment-meta { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11px; color:#53654d; border-bottom:1px solid #a6b29d; padding-bottom:12px; }
+body[data-lumia-document="liability"] #assessment-title { font-family:'SongMyung',serif; font-size:29px; font-weight:400; text-align:center; margin:24px 0 18px; letter-spacing:1px; }
+body[data-lumia-document="liability"] .assessment-scope { font-size:12px; line-height:1.8; color:#53654d; }
+body[data-lumia-document="liability"] .fault-bar { display:flex; width:100%; min-height:58px; margin:22px 0 12px; }
+body[data-lumia-document="liability"] .fault-bar > span { display:flex; align-items:center; justify-content:center; min-width:0; color:#fff; text-align:center; padding:4px 0; }
+body[data-lumia-document="liability"] .fault-bar > span > span { padding:0 6px; font-size:12px; overflow-wrap:anywhere; }
+body[data-lumia-document="liability"] .fault-bar b { display:block; font-size:15px; font-variant-numeric:tabular-nums; }
+body[data-lumia-document="liability"] .fault-legend { display:flex; gap:10px 22px; flex-wrap:wrap; list-style:none; font-size:12px; margin-bottom:24px; }
+body[data-lumia-document="liability"] .fault-legend li { display:flex; gap:7px; align-items:center; }
+body[data-lumia-document="liability"] .fault-legend i { width:10px; height:10px; flex-shrink:0; }
+body[data-lumia-document="liability"] .selected-context { font-size:12px; margin-bottom:10px; }
+body[data-lumia-document="liability"] .selected-stats { border-collapse:collapse; width:100%; font-size:12px; }
+body[data-lumia-document="liability"] .selected-stats th, body[data-lumia-document="liability"] .selected-stats td { padding:10px 6px; border-bottom:1px solid #b4bfa9; text-align:left; }
+body[data-lumia-document="liability"] .selected-stats td { font-variant-numeric:tabular-nums; white-space:nowrap; }
+body[data-lumia-document="liability"] .selected-stats th { font-weight:500; }
+body[data-lumia-document="liability"] .selected-stats small { display:block; color:#53654d; margin-top:4px; font-size:11px; }
+body[data-lumia-document="liability"] .verdict { font-size:15px; padding:20px 0 8px; }
+body[data-lumia-document="liability"] .verdict span, body[data-lumia-document="liability"] .rounding-note { font-size:11px; color:#53654d; line-height:1.8; }
+body[data-lumia-document="liability"] .judgement-evidence { border-top:1px solid #a6b29d; margin-top:20px; font-size:12px; }
+body[data-lumia-document="liability"] .judgement-evidence summary { color:#35432f; }
+body[data-lumia-document="liability"] .judgement-evidence section { padding:12px 0; border-bottom:1px solid #b4bfa9; }
+body[data-lumia-document="liability"] .judgement-evidence h3 { font-size:13px; margin-bottom:8px; }
+body[data-lumia-document="liability"] .judgement-evidence ul { padding-left:18px; line-height:1.9; }
+body[data-lumia-document="liability"] .judgement-evidence a { display:inline-flex; align-items:center; min-height:44px; color:#3e5945; }
+body[data-lumia-document="liability"] .assessment-foot { display:flex; justify-content:space-between; gap:10px; align-items:center; border-top:1px solid #a6b29d; margin-top:20px; padding-top:16px; font-size:12px; }
+body[data-lumia-document="liability"] .document-seal { color:#944a40; border:2px solid #944a40; padding:4px 6px; line-height:1.4; text-align:center; flex-shrink:0; }
+body[data-lumia-document="liability"] .document-disclaimer { color:#53654d; font-size:11px; margin-top:15px; line-height:1.8; }
+body[data-lumia-document="liability"] .no-accident { margin:28px 0; font-size:14px; line-height:2; }
+body[data-lumia-document="liability"] .actions { gap:10px; }
+body[data-lumia-document="liability"] .actions button { min-width:130px; }
+body[data-lumia-document="liability"] #result-status { font-size:12px; color:#b6c6c6; margin:12px 0 22px; }
+body[data-lumia-document="liability"] #detail { border-top:1px solid #c1d2d033; padding-top:12px; }
+body[data-lumia-document="liability"] #detail h3 { color:#cbdcd3; letter-spacing:0; font-weight:500; }
+body[data-lumia-document="liability"] .member-grid, body[data-lumia-document="liability"] .game-grid { grid-template-columns:1fr; gap:0; }
+body[data-lumia-document="liability"] .member, body[data-lumia-document="liability"] .game-member { border:0; border-bottom:1px solid #c1d2d033; border-radius:0; background:transparent; padding:14px 0; }
+body[data-lumia-document="liability"] .member :is(.role,li,.cl,.ct), body[data-lumia-document="liability"] .game-member :is(.gm-stat,.cl,.none) { color:#a6babc; }
+body[data-lumia-document="liability"] .member .pct, body[data-lumia-document="liability"] .gm-head b { color:#cfdbd3!important; }
+body[data-lumia-document="liability"] .member .nm { font-weight:500; overflow-wrap:anywhere; }
+body[data-lumia-document="liability"] .member .head > div:nth-child(2) { min-width:0; }
+body[data-lumia-document="liability"] .member li { flex-wrap:wrap; }
+body[data-lumia-document="liability"] .acc-table th, body[data-lumia-document="liability"] .acc-table td { border-color:#c1d2d026; }
+body[data-lumia-document="liability"] .acc-table th { color:#b6c6c6; }
+body[data-lumia-document="liability"] .acc-detail td { background:#101d23; }
+body[data-lumia-document="liability"] .mini, body[data-lumia-document="liability"] .culprit-chip, body[data-lumia-document="liability"] .sev, body[data-lumia-document="liability"] .head img { border-radius:0; }
+body[data-lumia-document="liability"] .mini-label { display:block; max-width:260px; white-space:normal; font-size:11px; margin-top:5px; }
+body[data-lumia-document="liability"] .acc-toggle { background:transparent; color:#b6c6c6; padding:6px 0; font-size:12px; text-align:left; }
+body[data-lumia-document="liability"] .caret { color:#cfdbd3; }
+body[data-lumia-document="liability"] .hint-inline { display:block; margin-top:7px; color:#91a9aa; }
+body[data-lumia-document="liability"] .table-scroll { max-width:100%; }
+body[data-lumia-document="liability"] .visually-hidden { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap; }
+@media (max-width:860px) {
+  body[data-lumia-document="liability"] #form-section > .row3 { grid-template-columns:1fr; }
+}
+@media (max-width:480px) {
+  body[data-lumia-document="liability"] .assessment { padding:22px 16px; }
+  body[data-lumia-document="liability"] #assessment-title { font-size:26px; }
+  body[data-lumia-document="liability"] .fault-bar > span > span { font-size:11px; }
+  body[data-lumia-document="liability"] .fault-legend { display:block; }
+  body[data-lumia-document="liability"] .fault-legend li { margin:5px 0; }
+  body[data-lumia-document="liability"] .game-member li { flex-wrap:wrap; }
+  body[data-lumia-document="liability"] .game-member li .pt { margin-left:0; }
+}
+@media print {
+  body[data-lumia-document="liability"] #form-section, body[data-lumia-document="liability"] #loading-section, body[data-lumia-document="liability"] .match-select, body[data-lumia-document="liability"] .actions, body[data-lumia-document="liability"] #result-status, body[data-lumia-document="liability"] #detail, body[data-lumia-document="liability"] .source-note { display:none!important; }
+  body[data-lumia-document="liability"] .assessment { background:#fff; color:#293429; padding:10mm; }
+  body[data-lumia-document="liability"] .judgement-evidence > :not(summary) { display:block!important; }
+  body[data-lumia-document="liability"] .judgement-evidence section { break-inside:avoid; }
+  body[data-lumia-document="liability"] .fault-bar { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}

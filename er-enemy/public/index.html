@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>루미아섬 원수 관측소</title>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=night-clerk-20260910">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
+<link rel="stylesheet" href="/shared/night-clerk.css?v=20260910">
 </head>
-<body>
+<body data-lumia-document="tracking">
 
 <header class="masthead">
   <div class="masthead-inner">
@@ -23,17 +24,17 @@
 <main>
   <section class="console" id="searchConsole">
     <form id="meForm" autocomplete="off">
-      <label for="meInput" class="visually-hidden">내 닉네임</label>
-      <input id="meInput" type="text" placeholder="내 닉네임 — 최근 전적에서 원수를 색출합니다" required>
+      <label for="meInput">내 닉네임</label>
+      <input id="meInput" maxlength="100" aria-describedby="hint" type="text" placeholder="내 닉네임 — 최근 전적에서 원수를 색출합니다" required>
       <button type="submit" id="meBtn">원수 색출</button>
     </form>
-    <button type="button" class="linklike" id="directToggle">원수의 닉네임을 이미 아는 경우 →</button>
+    <button type="button" class="linklike" id="directToggle" aria-expanded="false" aria-controls="directForm">상대 이름을 알고 있어요</button>
     <form id="directForm" autocomplete="off" hidden>
-      <label for="enemyInput" class="visually-hidden">원수 닉네임</label>
-      <input id="enemyInput" type="text" placeholder="원수 닉네임 — 근황만 관측합니다">
+      <label for="enemyInput">상대 닉네임</label>
+      <input id="enemyInput" maxlength="100" required aria-describedby="hint" type="text" placeholder="원수 닉네임 — 근황만 관측합니다">
       <button type="submit">관측 개시</button>
     </form>
-    <p class="hint" id="hint">본 시설은 팬메이드 유머 시설이며 실제 감시 기능이 없습니다.</p>
+    <p class="hint" id="hint" role="status" aria-live="polite">본 시설은 팬메이드 유머 시설이며 실제 감시 기능이 없습니다.</p>
   </section>
 
   <section class="killers" id="killersSec" hidden>
@@ -52,13 +53,15 @@
 </main>
 
 <footer class="pagefoot">
-  루미아섬 3부작 — <a href="https://er-cert.dev-heptivision.com">자격증</a> ·
-  <a href="https://er-death.dev-heptivision.com">사망진단서</a> · 원수 관측소
+  관련 문서 — <a href="/cert/">자격증</a> ·
+  <a href="/death/">사망진단서</a> · 원수 관측소
 </footer>
 
 <script src="er-config.js?v=1"></script>
 <script src="er-core.js?v=1"></script>
-<script src="api.js?v=1"></script>
-<script src="app.js?v=official-1"></script>
+<script src="api.js?v=night-clerk-20260910"></script>
+<script src="/shared/lumia-documents.js?v=20260910"></script>
+<script src="/shared/night-clerk.js?v=20260910"></script>
+<script src="app.js?v=night-clerk-20260910"></script>
 </body>
 </html>

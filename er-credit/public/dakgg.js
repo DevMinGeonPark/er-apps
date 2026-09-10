@@ -295,7 +295,11 @@
     let d;
     try { d = await buildDossier(name); } catch (e) { rethrow(e); }
     if (!d.seasonsPlayed || !(d.overall.play > 0)) {
-      throw new Error(`'${d.player.name}'님의 거래 이력이 없습니다. 전적이 있는 닉네임으로 조회하십시오.`);
+      const error = new Error(d.failedSeasons
+        ? `${d.failedSeasons}개 시즌을 불러오지 못했으며 확인된 거래 이력이 없습니다. 잠시 후 다시 조회해주세요.`
+        : `'${d.player.name}'님의 거래 이력이 없습니다. 전적이 있는 닉네임으로 조회하십시오.`);
+      error.code = d.failedSeasons ? 'INCOMPLETE_RECORDS' : 'NO_RECORDS';
+      throw error;
     }
     const totalSeasons = d.seasonsPlayed;
     const rows = [];
@@ -349,6 +353,7 @@
     const inquiries = recordInquiry(name, characterId);
     return {
       player: d.player, bestMmr: d.bestMmr, seasonsPlayed: d.seasonsPlayed,
+      failedSeasons: d.failedSeasons,
       reportNo: reportNo(name, characterId), issuedAt: Date.now(),
       inquiries, ...ev,
     };

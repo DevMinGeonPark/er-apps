@@ -1,6 +1,6 @@
-@font-face { font-family: 'Gowun Batang'; src: url('/fonts/gowun-batang.woff') format('woff'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'Gowun Batang'; src: url('/fonts/gowun-batang-bold.woff') format('woff'); font-weight: 700; font-display: swap; }
-@font-face { font-family: 'Song Myung'; src: url('/fonts/song-myung.woff') format('woff'); font-display: swap; }
+@font-face { font-family: 'Gowun Batang'; src: url('fonts/gowun-batang.woff') format('woff'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Gowun Batang'; src: url('fonts/gowun-batang-bold.woff') format('woff'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Song Myung'; src: url('fonts/song-myung.woff') format('woff'); font-display: swap; }
 
 :root {
   --ink: #16181d; --sub: #5b6472; --line: #d8dce3; --line2: #eceff4;

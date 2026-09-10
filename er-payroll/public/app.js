@@ -5,7 +5,18 @@
   const duration = seconds => seconds === null ? '기록 미제공' : `${Math.floor(seconds / 3600)}시간 ${Math.floor(seconds % 3600 / 60)}분`;
   const rp = value => value === null ? '미제공' : `${Payroll.signed(value)} RP`;
   const tone = value => value === null || value === 0 ? '' : value < 0 ? 'negative' : 'positive';
-  let current = null, isSample = true;
+  let current = null, isSample = true, requestId = 0, loadingTimer;
+  LumiaClerk.bindNickname($('nickname'));
+  document.addEventListener('lumia:cancel', event => {
+    requestId++; clearInterval(loadingTimer);
+    $('loading').hidden = true; $('results').hidden = event.cancelable || !current;
+    for (const id of ['submit', 'demo', 'nickname', 'count']) $(id).disabled = false;
+    $('save').disabled = !current; $('share').disabled = !current || isSample;
+    buttonBusy('submit', false, '급여 정산하기');
+    $('results').setAttribute('aria-busy', 'false');
+    $('status').textContent = '접수 내용을 확인한 뒤 다시 정산할 수 있습니다.';
+    if (!event.cancelable) LumiaClerk.setState(current ? 'result' : 'intake');
+  });
 
   function buttonBusy(id, busy, label) {
     $(id).setAttribute('aria-busy', String(busy));
@@ -35,6 +46,8 @@
 
   function render(report, sample = false) {
     current = report; isSample = sample;
+    $('results').hidden = false;
+    LumiaClerk.setState('result', sample ? '가상 기록 예시 · 실제 전적이 아닙니다' : '급여명세서 열람');
     const stampDate = date(Date.now());
     const line = (label, detail, value, extra = '') => `<div class="slip-line ${extra}"><dt>${label}<small>${detail}</small></dt><dd class="${tone(value)}">${rp(value)}</dd></div>`;
     $('payslip').innerHTML = `<div class="slip-top"><span>루미아 노동청 · 급여 정산과</span><span class="${sample ? 'sample-label' : ''}">${sample ? 'SAMPLE / 가상 예시' : `LL-${escape(report.rows[0].gameId)}`}</span></div>
@@ -52,22 +65,31 @@
     $('ledger-count').textContent = `${report.count}판${sample ? ' · 가상 예시' : ''}`;
     $('ledger-body').innerHTML = report.rows.map(m => `<tr><td>${date(m.startDtm, true)}<br><small>${sample ? '가상 경기' : '#' + escape(m.gameId)}</small></td><td>${Number.isFinite(m.gameRank) ? m.gameRank + '위' : '미제공'}</td><td>${Number.isFinite(m.playTime) && m.playTime > 0 ? Math.floor(m.playTime / 60) + '분 ' + m.playTime % 60 + '초' : '미제공'}</td><td>${rp(m.gross)}</td><td>${rp(m.entry)}</td><td>${rp(m.adjustment)}</td><td class="${tone(m.net)}"><strong>${rp(m.net)}</strong></td></tr>`).join('');
     $('share').disabled = sample;
+    $('save').disabled = false;
     $('share').title = sample ? '닉네임으로 실제 명세서를 발급하면 공유할 수 있습니다.' : '';
     $('action-status').textContent = sample ? '예시 명세서입니다. 위에서 내 닉네임으로 발급해보세요.' : report.count < report.requested ? `조회 범위에 랭크 기록이 ${report.count}판 있어 해당 경기만 정산했습니다.` : '공유 링크는 접속 시점의 최신 전적으로 다시 정산됩니다.';
+    const heading = $('results').querySelector('h2'); heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
   }
 
   async function issue() {
     if ($('submit').disabled) return;
     const nickname = $('nickname').value.trim();
+    $('nickname').setAttribute('aria-invalid', String(!nickname));
+    $('nickname-error').hidden = !!nickname;
     if (!nickname) { $('nickname').focus(); return; }
+    const operation = ++requestId;
+    LumiaContext.setNickname(nickname);
+    LumiaClerk.setState('loading');
     const count = Number($('count').value);
     $('submit').disabled = true; $('demo').disabled = true; $('nickname').disabled = true; $('count').disabled = true;
     $('save').disabled = true; $('share').disabled = true;
     $('results').setAttribute('aria-busy', 'true');
     $('status').className = ''; $('status').textContent = '공식 출퇴근 기록을 확인하고 있습니다. 최대 100경기를 조회해요…';
-    const loadingTimer = startLoading(nickname);
+    loadingTimer = startLoading(nickname);
     try {
       const matches = await ERCore.getMatches(nickname, { pages: 10, mode: 3 });
+      if (operation !== requestId) return;
       const report = Payroll.calculate(matches, count);
       render(report);
       $('nickname').value = report.nickname;
@@ -75,21 +97,29 @@
       history.replaceState(null, '', url);
       $('status').textContent = `${report.nickname} 님의 랭크 ${report.count}판 정산 완료.${report.count < count ? ' 조회 범위에서 확인된 경기만 정산했습니다.' : ''}`;
     } catch (error) {
+      if (operation !== requestId) return;
+      LumiaClerk.setState('error');
       $('status').className = 'error';
-      $('status').textContent = (error.name === 'TimeoutError' ? '공식 전적 조회가 지연되고 있습니다. 잠시 후 다시 정산해주세요.' : error.message || '전적 조회에 실패했습니다.') + ' 아래 명세서는 이전 결과입니다.';
+      $('status').textContent = (error.name === 'TimeoutError' ? '공식 전적 조회가 지연되고 있습니다. 잠시 후 다시 정산해주세요.' : error.message || '전적 조회에 실패했습니다.') + (current ? ' 아래 명세서는 이전 결과입니다.' : ' 입력값을 확인한 뒤 다시 시도해 주세요.');
+      $('status').tabIndex = -1; $('status').focus({ preventScroll: true });
     } finally {
+      if (operation !== requestId) return;
       clearInterval(loadingTimer);
       $('loading').hidden = true;
-      $('results').hidden = false;
+      $('results').hidden = !current;
       buttonBusy('submit', false, '급여 정산하기');
-      for (const id of ['submit', 'demo', 'nickname', 'count', 'save']) $(id).disabled = false;
-      $('share').disabled = isSample;
+      for (const id of ['submit', 'demo', 'nickname', 'count']) $(id).disabled = false;
+      $('save').disabled = !current;
+      $('share').disabled = !current || isSample;
       $('results').setAttribute('aria-busy', 'false');
     }
   }
 
   $('payroll-form').addEventListener('submit', event => { event.preventDefault(); issue(); });
+  $('nickname').addEventListener('invalid', () => { $('nickname-error').hidden = false; $('nickname').setAttribute('aria-invalid', 'true'); });
+  $('nickname').addEventListener('input', () => { $('nickname-error').hidden = true; $('nickname').removeAttribute('aria-invalid'); });
   $('demo').addEventListener('click', () => {
+    requestId++;
     render(Payroll.demo(), true);
     history.replaceState(null, '', location.pathname);
     $('status').className = ''; $('status').textContent = '가상 기록의 발급 예시입니다. 닉네임을 입력하면 실제 전적으로 정산합니다.';
@@ -121,7 +151,7 @@
     }
   });
 
-  render(Payroll.demo(), true);
+  $('save').disabled = true; $('share').disabled = true;
   const params = new URLSearchParams(location.search), name = params.get('name');
   if (name) { $('nickname').value = name.slice(0, 100); if ([10, 20, 30].includes(Number(params.get('count')))) $('count').value = params.get('count'); issue(); }
 })();

@@ -7,6 +7,39 @@ let selectedChar = null;
 let selectedSkin = null; // { id, name, grade, imageName }
 let selectedStyle = 'aglaia'; // 'aglaia' | 'classic'
 let lastCert = null;
+let operationId = 0;
+let issuing = false;
+let renderId = 0;
+let portraitReady = Promise.resolve();
+const issuedCertificates = new Map();
+const clerkState = (state, message) => window.LumiaClerk?.setState(state, message);
+const focusHeading = selector => $(selector)?.focus({ preventScroll: true });
+
+function setFormError(message, field) {
+  const error = $('#form-error');
+  error.textContent = message || '';
+  error.hidden = !message;
+  $('#nickname').removeAttribute('aria-invalid');
+  $('#nickname-error').hidden = true;
+  if (field === 'nickname') {
+    $('#nickname').setAttribute('aria-invalid', 'true');
+    $('#nickname-error').textContent = message;
+    $('#nickname-error').hidden = false;
+  }
+}
+
+function withTimeout(promise, ms = 90000) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('조회 시간이 초과되었습니다. 입력한 정보로 다시 신청해주세요.')), ms);
+  })]).finally(() => clearTimeout(timer));
+}
+
+function setPickerOpen(open) {
+  $('#character-picker').hidden = !open;
+  $('#character-toggle').setAttribute('aria-expanded', String(open));
+  if (open) $('#char-search').focus();
+}
 
 const GRADE_LABEL = { 1: '기본', 2: '레어', 3: '에픽', 4: '레전더리', 5: '이터니티' };
 
@@ -42,20 +75,35 @@ function buildOpinion(d) {
 
 // ---------- 캐릭터 그리드 ----------
 async function loadCharacters() {
-  characters = await DAK.getCharacters();
-  characters.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-  renderGrid('');
+  $('#characters-retry').hidden = true;
+  $('#character-error').hidden = true;
+  $('#char-grid').textContent = '실험체 목록 불러오는 중…';
+  try {
+    characters = await withTimeout(DAK.getCharacters(), 25000);
+    characters.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    renderGrid($('#char-search').value.trim());
+    return true;
+  } catch (error) {
+    $('#char-grid').textContent = '실험체 목록을 불러오지 못했습니다.';
+    $('#character-error').textContent = '실험체 목록을 불러오지 못했습니다. 아래 버튼으로 다시 시도해주세요.';
+    $('#character-error').hidden = false;
+    $('#characters-retry').hidden = false;
+    return false;
+  }
 }
 
 function renderGrid(filter) {
   const grid = $('#char-grid');
   grid.innerHTML = '';
   const list = characters.filter(c => !filter || c.name.includes(filter) || c.key.toLowerCase().includes(filter.toLowerCase()));
+  $('#character-count').textContent = `${list.length}개 실험체`;
   if (!list.length) { grid.innerHTML = '<div class="grid-loading">검색 결과 없음</div>'; return; }
   for (const c of list) {
-    const cell = document.createElement('div');
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.setAttribute('aria-pressed', String(selectedChar?.id === c.id));
     cell.className = 'char-cell' + (selectedChar?.id === c.id ? ' selected' : '');
-    cell.innerHTML = `<img src="${DAK.charImgUrl(c.key)}" crossorigin="anonymous" loading="lazy" alt="${c.name}"><div class="nm">${c.name}</div>`;
+    cell.innerHTML = `<img src="${escapeXml(DAK.charImgUrl(c.key))}" crossorigin="anonymous" loading="lazy" alt=""><div class="nm">${escapeXml(c.name)}</div>`;
     cell.onclick = () => selectCharacter(c, cell);
     grid.appendChild(cell);
   }
@@ -64,8 +112,17 @@ function renderGrid(filter) {
 function selectCharacter(c, cell) {
   selectedChar = c;
   $('#picked-label').textContent = `— ${c.name}`;
-  document.querySelectorAll('.char-cell.selected').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.char-cell').forEach(el => { el.classList.remove('selected'); el.setAttribute('aria-pressed', 'false'); });
   if (cell) cell.classList.add('selected');
+  if (cell) cell.setAttribute('aria-pressed', 'true');
+  const summary = $('#selected-character');
+  summary.hidden = false;
+  summary.innerHTML = `<img src="${escapeXml(DAK.charImgUrl(c.key))}" alt=""><span>${escapeXml(c.name)}</span>`;
+  $('#character-toggle').textContent = '실험체 변경';
+  $('#character-toggle').removeAttribute('aria-invalid');
+  $('#character-error').hidden = true;
+  setPickerOpen(false);
+  if (cell) $('#character-toggle').focus();
   selectedSkin = c.skins[0] || { imageName: `${c.key}_S000`, name: c.name, grade: 1 };
   renderSkinRow();
   updateIssueBtn();
@@ -80,15 +137,18 @@ function renderSkinRow() {
   $('#skin-label').textContent = `— ${selectedSkin.name}`;
   row.innerHTML = '';
   for (const s of selectedChar.skins) {
-    const cell = document.createElement('div');
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.setAttribute('aria-pressed', String(selectedSkin?.imageName === s.imageName));
     cell.className = 'skin-cell' + (selectedSkin?.imageName === s.imageName ? ' selected' : '');
-    cell.innerHTML = `<img src="${DAK.skinImgUrl(s.imageName)}" crossorigin="anonymous" loading="lazy" alt="${s.name}">
-      <div class="nm">${s.name}</div><div class="gd">${GRADE_LABEL[s.grade] || ''}</div>`;
+    cell.innerHTML = `<img src="${escapeXml(DAK.skinImgUrl(s.imageName))}" crossorigin="anonymous" loading="lazy" alt="">
+      <div class="nm">${escapeXml(s.name)}</div><div class="gd">${GRADE_LABEL[s.grade] || ''}</div>`;
     cell.onclick = () => {
       selectedSkin = s;
       $('#skin-label').textContent = `— ${s.name}`;
-      row.querySelectorAll('.skin-cell.selected').forEach(el => el.classList.remove('selected'));
+      row.querySelectorAll('.skin-cell').forEach(el => { el.classList.remove('selected'); el.setAttribute('aria-pressed', 'false'); });
       cell.classList.add('selected');
+      cell.setAttribute('aria-pressed', 'true');
       if (lastCert && !$('#cert-section').hidden) rerenderCert();
     };
     row.appendChild(cell);
@@ -101,7 +161,9 @@ async function rerenderCert() {
 }
 
 function updateIssueBtn() {
-  $('#issue-btn').disabled = !($('#nickname').value.trim() && selectedChar);
+  const hasName = Boolean($('#nickname').value.trim());
+  $('#issue-btn').disabled = issuing || !(hasName && selectedChar);
+  $('#issue-help').textContent = !hasName && !selectedChar ? '닉네임과 운용 실험체를 선택해주세요.' : !hasName ? '피검정자 닉네임을 입력해주세요.' : !selectedChar ? '운용 실험체를 선택해주세요.' : '입력이 준비되었습니다. 선택한 실험체의 기록을 확인합니다.';
 }
 
 function syncUrl(push) {
@@ -116,63 +178,107 @@ function syncUrl(push) {
 }
 
 function showForm() {
+  operationId++;
+  renderId++;
+  issuing = false;
   $('#cert-section').hidden = true;
   $('#loading-section').hidden = true;
   $('#form-section').hidden = false;
   $('#form-error').hidden = true;
+  updateIssueBtn();
+  clerkState('intake');
+  focusHeading('#form-section h1');
   window.scrollTo({ top: 0 });
 }
 
 window.addEventListener('popstate', () => {
+  operationId++;
+  issuing = false;
+  $('#loading-section').hidden = true;
   const p = new URLSearchParams(location.search);
-  if (p.get('name') && p.get('char') && lastCert) {
+  const cached = issuedCertificates.get(`${p.get('name')}|${Number(p.get('char'))}`);
+  if (cached) {
+    lastCert = cached;
+    const character = characters.find(item => item.id === cached.character.id);
+    if (character) {
+      selectCharacter(character);
+      const skin = character.skins.find(item => item.imageName === p.get('skin'));
+      if (skin) { selectedSkin = skin; renderSkinRow(); }
+    }
+    selectedStyle = p.get('style') === 'classic' ? 'classic' : 'aglaia';
+    document.querySelectorAll('.style-cell').forEach(element => {
+      element.classList.toggle('selected', element.dataset.style === selectedStyle);
+      element.setAttribute('aria-pressed', String(element.dataset.style === selectedStyle));
+    });
+    $('#nickname').value = cached.player.name;
+    renderCertificate(cached);
+    renderSeasonTable(cached);
     $('#form-section').hidden = true;
     $('#cert-section').hidden = false;
+    clerkState('result');
+    focusHeading('#cert-heading');
   } else {
     showForm();
   }
 });
 
 // ---------- 발급 ----------
-const LOADING_MSGS = [
-  '아글라이아 중앙 서버 접속 중…',
-  '루미아 섬 실험 로그 수집 중… (오프닝 → 미들게임 → 엔드게임)',
-  '전 시즌 VF 잔류 반응 측정 중… (랭크 · 일반 · 코발트 프로토콜)',
-  'Dr. 안젤리카 검토 의견 수신 중…',
-  '연구소장 에녹 하그리브스 결재 대기 중…',
-];
-let loadingTimer = null;
-
 async function issue(name, charId) {
+  if (issuing) return;
+  if (!name || !charId) { setFormError('닉네임과 운용 실험체를 선택해주세요.', !name ? 'nickname' : undefined); return; }
+  const requestId = ++operationId;
+  issuing = true;
+  updateIssueBtn();
+  setFormError('');
+  window.LumiaContext?.setNickname(name);
+  window.LumiaContext?.remember('license');
+  clerkState('loading');
   $('#form-section').hidden = true;
   $('#cert-section').hidden = true;
   $('#loading-section').hidden = false;
-  let i = 0;
-  $('#loading-msg').textContent = LOADING_MSGS[0];
-  loadingTimer = setInterval(() => { $('#loading-msg').textContent = LOADING_MSGS[++i % LOADING_MSGS.length]; }, 1400);
+  $('#loading-msg').textContent = '전 시즌 기록 확인 중… 랭크 · 일반 · 코발트 프로토콜';
 
   try {
-    const data = await DAK.issueCertificate(name, charId);
+    const data = await withTimeout(DAK.issueCertificate(name, charId));
+    if (requestId !== operationId) return;
+    if (!(data.charStats?.play > 0)) {
+      const error = new Error('자료 부족: 선택한 실험체의 유효한 플레이 기록이 없어 자격 등급을 발급할 수 없습니다.');
+      error.code = 'NO_RECORDS';
+      throw error;
+    }
     lastCert = data;
-    await renderCertificate(data);
+    issuedCertificates.set(`${data.player.name}|${data.character.id}`, data);
+    renderCertificate(data);
     renderSeasonTable(data);
     $('#cert-section').hidden = false;
     syncUrl(true);
+    clerkState('result');
+    focusHeading('#cert-heading');
   } catch (e) {
+    if (requestId !== operationId) return;
     $('#form-section').hidden = false;
-    const err = $('#form-error');
-    err.textContent = e.message;
-    err.hidden = false;
+    setFormError(e.code === 'NO_RECORDS' ? `자료 부족 · ${e.message} 자격 등급은 발급되지 않았습니다.` : e.message, /닉네임을 확인|플레이어를 찾을/.test(e.message) ? 'nickname' : undefined);
+    $('#issue-btn').textContent = '같은 조건으로 다시 신청';
+    clerkState('error', e.code === 'NO_RECORDS' ? '자료가 부족합니다.' : undefined);
   } finally {
-    clearInterval(loadingTimer);
-    $('#loading-section').hidden = true;
+    if (requestId === operationId) {
+      issuing = false;
+      $('#loading-section').hidden = true;
+      updateIssueBtn();
+    }
   }
 }
 
 // ---------- 자격증 SVG ----------
 async function imgToDataUri(url) {
-  const blob = await (await fetch(url)).blob();
-  return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error('이미지를 불러오지 못했습니다.');
+    const blob = await response.blob();
+    return await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(blob); });
+  } finally { clearTimeout(timeout); }
 }
 
 function escapeXml(s) {
@@ -182,9 +288,10 @@ function escapeXml(s) {
 const BODY_FONT = `GowunBatang, AppleMyungjo, Batang, serif`;
 const TITLE_FONT = `SongMyung, GowunBatang, AppleMyungjo, serif`;
 
-async function renderCertificate(d) {
+function renderCertificate(d) {
+  const version = ++renderId;
   const skinImage = selectedSkin ? DAK.skinImgUrl(selectedSkin.imageName) : DAK.charImgUrl(d.character.key);
-  const photo = await imgToDataUri(skinImage);
+  const photo = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 178 178"><rect width="178" height="178" fill="#d7dfd7"/><text x="89" y="90" text-anchor="middle" fill="#314943" font-size="18">${escapeXml(d.character.name)}</text></svg>`);
   const issued = new Date(d.issuedAt);
   const ctx = {
     d,
@@ -201,6 +308,15 @@ async function renderCertificate(d) {
     ],
   };
   $('#cert-wrap').innerHTML = selectedStyle === 'classic' ? classicSvg(ctx) : aglaiaSvg(ctx);
+  $('#portrait-notice').hidden = true;
+  portraitReady = imgToDataUri(skinImage).then(uri => {
+    if (version !== renderId) return;
+    $('#cert-svg image')?.setAttribute('href', uri);
+  }).catch(() => {
+    if (version !== renderId) return;
+    $('#portrait-notice').textContent = '증명사진을 불러오지 못해 실험체 이름으로 표시했습니다. 검정 결과는 정상적으로 발급되었습니다.';
+    $('#portrait-notice').hidden = false;
+  });
 }
 
 // ===== 검정원 표준 양식 (클래식 종이 증서) =====
@@ -246,8 +362,8 @@ function classicSvg({ d, photo, dateStr, isDefaultSkin, skinName, statRows }) {
   ${isDefaultSkin ? '' : `<text x="195" y="526" text-anchor="middle" font-size="12.5" fill="#8a7340">지정 스킨 : ${escapeXml(skinName)}</text>`}
 
   <text x="356" y="288" font-size="18" fill="#6d6d6d">성 명</text>
-  <text x="470" y="288" font-size="22" font-weight="bold" fill="${ink}">${escapeXml(d.player.name)}</text>
-  <text x="910" y="288" text-anchor="end" font-size="14" fill="#8a8a8a">계정 Lv. ${d.player.accountLevel} · 활동 ${d.seasonsPlayed}개 시즌</text>
+  <text x="470" y="288" font-size="${Math.min(22, Math.max(14, Math.floor(400 / Array.from(d.player.name).length)))}" ${Array.from(d.player.name).length > 18 ? 'textLength="400" lengthAdjust="spacingAndGlyphs"' : ''} font-weight="bold" fill="${ink}">${escapeXml(d.player.name)}</text>
+  <text x="910" y="308" text-anchor="end" font-size="14" fill="#8a8a8a">계정 Lv. ${d.player.accountLevel} · 활동 ${d.seasonsPlayed}개 시즌</text>
 
   <text x="356" y="332" font-size="18" fill="#6d6d6d">자격 등급</text>
   <text x="470" y="335" font-size="27" font-weight="bold" fill="#8c1f1f">${d.character.name} 운용 ${d.grade}</text>
@@ -273,21 +389,13 @@ function classicSvg({ d, photo, dateStr, isDefaultSkin, skinName, statRows }) {
 // ===== 아글라이아 양식 (다크 기밀 연구 문서) =====
 function aglaiaSvg({ d, photo, dateStr, isDefaultSkin, skinName, subjects, statRows }) {
   const body = BODY_FONT, title = TITLE_FONT;
-  const teal = '#3fd8c7', line = '#24434f', txt = '#e6f2f0', mut = '#8fa9a6', dim = '#5f7d7a', red = '#e0554a', gold = '#d4b46a';
+  const teal = '#b2c7bc', line = '#344b51', txt = '#e5eae9', mut = '#a6babc', dim = '#91a9aa', red = '#bd8578', gold = '#b4bc9e';
 
   // 육각형 꼭짓점 좌표 (pointy-top)
   const hex = (cx, cy, r) => Array.from({ length: 6 }, (_, i) => {
     const a = Math.PI / 180 * (60 * i - 90);
     return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
   }).join(' ');
-
-  // 배경 장식: 격자 + 동심 육각형
-  const grid = [
-    ...Array.from({ length: 19 }, (_, i) => `M ${50 + i * 50} 16 V 691`),
-    ...Array.from({ length: 13 }, (_, i) => `M 16 ${50 + i * 50} H 984`),
-  ].join(' ');
-  const hexRings = Array.from({ length: 8 }, (_, i) =>
-    `<polygon points="${hex(500, 353, 90 + i * 52)}" fill="none"/>`).join('');
 
   // 관리 바코드: 증서번호 문자로 막대 폭 결정
   let bx = 90;
@@ -315,12 +423,10 @@ function aglaiaSvg({ d, photo, dateStr, isDefaultSkin, skinName, subjects, statR
 <svg id="cert-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 707" font-family="${body}">
   <defs>
     <linearGradient id="agbg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0c1a26"/><stop offset="1" stop-color="#0a2028"/>
+    <stop offset="0" stop-color="#101d23"/><stop offset="1" stop-color="#101d23"/>
     </linearGradient>
   </defs>
   <rect width="1000" height="707" fill="url(#agbg)"/>
-  <path d="${grid}" stroke="${teal}" stroke-width="0.5" opacity="0.045" fill="none"/>
-  <g stroke="${teal}" opacity="0.05">${hexRings}</g>
 
   <!-- 프레임 -->
   <rect x="16" y="16" width="968" height="675" fill="none" stroke="${line}" stroke-width="1.4"/>
@@ -363,8 +469,8 @@ function aglaiaSvg({ d, photo, dateStr, isDefaultSkin, skinName, subjects, statR
 
   <!-- 인적 사항 -->
   <text x="356" y="288" font-size="17" fill="${mut}">성 명</text>
-  <text x="470" y="288" font-size="22" font-weight="bold" fill="${txt}">${escapeXml(d.player.name)}</text>
-  <text x="910" y="288" text-anchor="end" font-size="13.5" fill="${dim}">계정 Lv. ${d.player.accountLevel} · 활동 ${d.seasonsPlayed}개 시즌</text>
+  <text x="470" y="288" font-size="${Math.min(22, Math.max(14, Math.floor(400 / Array.from(d.player.name).length)))}" ${Array.from(d.player.name).length > 18 ? 'textLength="400" lengthAdjust="spacingAndGlyphs"' : ''} font-weight="bold" fill="${txt}">${escapeXml(d.player.name)}</text>
+  <text x="910" y="308" text-anchor="end" font-size="13.5" fill="${dim}">계정 Lv. ${d.player.accountLevel} · 활동 ${d.seasonsPlayed}개 시즌</text>
 
   <text x="356" y="332" font-size="17" fill="${mut}">자격 등급</text>
   <text x="470" y="335" font-size="27" font-weight="bold" fill="${teal}">${d.character.name} 운용 ${d.grade}</text>
@@ -413,13 +519,13 @@ function renderSeasonTable(d) {
   }).join('');
 
   const rows = d.perSeason.map(s => `
-    <tr><td>${s.seasonName}</td><td>${fmt(s.play)}</td><td>${fmt(s.win)}</td>
+    <tr><td>${escapeXml(s.seasonName)}</td><td>${fmt(s.play)}</td><td>${fmt(s.win)}</td>
     <td>${s.play ? (s.win / s.play * 100).toFixed(1) : 0}%</td><td>${fmt(s.top3)}</td>
     <td>${s.play ? Math.round(s.damageToPlayer / s.play).toLocaleString('ko-KR') : 0}</td></tr>`).join('');
   $('#season-detail').innerHTML = `
-    <h3>${d.character.name} 모드별 관측 기록</h3>
+    <h3>${escapeXml(d.character.name)} 모드별 관측 기록</h3>
     <div class="mode-cards">${modeCards}</div>
-    <h3>${d.character.name} 시즌별 관측 기록${d.failedSeasons ? ` (일부 시즌 ${d.failedSeasons}건 조회 실패)` : ''}</h3>
+    <h3>${escapeXml(d.character.name)} 시즌별 관측 기록${d.failedSeasons ? ` (일부 시즌 ${d.failedSeasons}건 조회 실패)` : ''}</h3>
     <div class="table-scroll"><table class="season-table">
       <tr><th>시즌</th><th>판수</th><th>우승</th><th>승률</th><th>TOP3</th><th>평균 대미지</th></tr>
       ${rows}
@@ -432,16 +538,16 @@ async function getEmbeddedFontCss() {
   if (!fontCssPromise) {
     fontCssPromise = (async () => {
       const fonts = [
-        ['GowunBatang', 400, '/fonts/gowun-batang.woff'],
-        ['GowunBatang', 700, '/fonts/gowun-batang-bold.woff'],
-        ['SongMyung', 400, '/fonts/song-myung.woff'],
+        ['GowunBatang', 400, 'fonts/gowun-batang.woff'],
+        ['GowunBatang', 700, 'fonts/gowun-batang-bold.woff'],
+        ['SongMyung', 400, 'fonts/song-myung.woff'],
       ];
       const faces = await Promise.all(fonts.map(async ([fam, wt, url]) => {
         const uri = await imgToDataUri(url);
         return `@font-face{font-family:'${fam}';font-weight:${wt};src:url(${uri}) format('woff')}`;
       }));
       return faces.join('\n');
-    })();
+    })().catch(error => { fontCssPromise = null; throw error; });
   }
   return fontCssPromise;
 }
@@ -450,7 +556,17 @@ async function downloadPng() {
   const btn = $('#download-btn');
   btn.disabled = true; btn.textContent = '이미지 생성 중…';
   try {
+    await portraitReady;
+    await document.fonts.ready;
     const svg = $('#cert-svg').cloneNode(true);
+    // Retain the selected form and every field; use a light paper palette for export.
+    if (selectedStyle === 'aglaia') {
+      const palette = { '#101d23':'#faf9f3', '#10222e':'#e8ece3', '#e5eae9':'#253a35', '#b2c7bc':'#446353', '#a6babc':'#52645d', '#91a9aa':'#63766b', '#344b51':'#a8b8ad', '#bd8578':'#963e32', '#b4bc9e':'#636d48', '#9fc4bf':'#52645d', '#cfe0dd':'#253a35' };
+      svg.querySelectorAll('*').forEach(node => ['fill', 'stroke', 'stop-color'].forEach(attr => {
+        const value = node.getAttribute(attr);
+        if (palette[value]) node.setAttribute(attr, palette[value]);
+      }));
+    }
     const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
     style.textContent = await getEmbeddedFontCss();
     svg.insertBefore(style, svg.firstChild);
@@ -468,6 +584,11 @@ async function downloadPng() {
     a.href = canvas.toDataURL('image/png');
     a.download = `ER자격증_${lastCert.player.name}_${lastCert.character.name}.png`;
     a.click();
+    $('#export-status').textContent = '자격증 PNG를 저장했습니다.';
+    $('#export-status').hidden = false;
+  } catch (error) {
+    $('#export-status').textContent = '이미지를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
+    $('#export-status').hidden = false;
   } finally {
     btn.disabled = false; btn.textContent = 'PNG로 저장';
   }
@@ -477,36 +598,66 @@ async function downloadPng() {
 document.querySelectorAll('.style-cell').forEach(cell => {
   cell.addEventListener('click', () => {
     selectedStyle = cell.dataset.style;
-    document.querySelectorAll('.style-cell.selected').forEach(el => el.classList.remove('selected'));
-    cell.classList.add('selected');
+    document.querySelectorAll('.style-cell').forEach(el => {
+      el.classList.toggle('selected', el.dataset.style === selectedStyle);
+      el.setAttribute('aria-pressed', String(el.dataset.style === selectedStyle));
+    });
+    $('#style-preview').textContent = selectedStyle === 'classic' ? '표준 양식: 밝은 종이와 직인으로 구성한 가로 증서.' : '연구소 양식: 대외비 표식과 연구소장 소견을 담은 가로 증서.';
     if (lastCert && !$('#cert-section').hidden) rerenderCert();
   });
 });
-$('#nickname').addEventListener('input', updateIssueBtn);
+$('#nickname').addEventListener('input', () => { updateIssueBtn(); setFormError(''); });
+$('#nickname').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && !$('#issue-btn').disabled) { event.preventDefault(); issue($('#nickname').value.trim(), selectedChar.id); }
+});
+$('#character-toggle').addEventListener('click', () => setPickerOpen($('#character-picker').hidden));
+$('#characters-retry').addEventListener('click', loadCharacters);
+$('#character-picker').addEventListener('keydown', event => {
+  if (event.key === 'Escape') { event.stopPropagation(); setPickerOpen(false); $('#character-toggle').focus(); }
+});
 $('#char-search').addEventListener('input', e => renderGrid(e.target.value.trim()));
 $('#issue-btn').addEventListener('click', () => issue($('#nickname').value.trim(), selectedChar.id));
 $('#download-btn').addEventListener('click', downloadPng);
 $('#copy-link-btn').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(location.href);
-  $('#copy-link-btn').textContent = '복사 완료!';
-  setTimeout(() => { $('#copy-link-btn').textContent = '발급 링크 복사'; }, 1500);
+  try {
+    await navigator.clipboard.writeText(location.href);
+    $('#export-status').textContent = '발급 링크를 복사했습니다.';
+  } catch {
+    $('#export-status').textContent = `링크를 복사하지 못했습니다. 주소 표시줄의 링크를 복사해주세요: ${location.href}`;
+  }
+  $('#export-status').hidden = false;
 });
 $('#again-btn').addEventListener('click', () => {
   history.pushState({ view: 'form' }, '', location.pathname);
   showForm();
 });
+$('#cancel-btn').addEventListener('click', showForm);
+document.addEventListener('lumia:cancel', event => {
+  if (!event.cancelable) { operationId++; renderId++; issuing = false; return; }
+  event.preventDefault();
+  if (!$('#cert-section').hidden) history.pushState({ view: 'form' }, '', location.pathname);
+  showForm();
+});
+window.addEventListener('pagehide', () => { operationId++; renderId++; issuing = false; });
 
 // ---------- 초기화 ----------
 (async function init() {
-  await loadCharacters();
+  window.LumiaClerk?.bindNickname($('#nickname'));
+  const initialOperation = operationId;
   const p = new URLSearchParams(location.search);
   const name = p.get('name'), charId = parseInt(p.get('char'), 10), skinName = p.get('skin');
   if (p.get('style') === 'classic') {
     selectedStyle = 'classic';
-    document.querySelectorAll('.style-cell').forEach(el =>
-      el.classList.toggle('selected', el.dataset.style === 'classic'));
+    document.querySelectorAll('.style-cell').forEach(el => {
+      el.classList.toggle('selected', el.dataset.style === 'classic');
+      el.setAttribute('aria-pressed', String(el.dataset.style === 'classic'));
+    });
+    $('#style-preview').textContent = '표준 양식: 밝은 종이와 직인으로 구성한 가로 증서.';
   }
   if (name) $('#nickname').value = name;
+  updateIssueBtn();
+  if (!await loadCharacters()) return;
+  if (initialOperation !== operationId) return;
   if (charId) {
     const c = characters.find(x => x.id === charId);
     if (c) {

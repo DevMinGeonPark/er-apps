@@ -1,0 +1,507 @@
+{
+  "note": "합성 브라우저 검증 자료. 실제 플레이어 기록이 아님.",
+  "characters": [
+    {
+      "id": 1,
+      "key": "Jackie",
+      "name": "재키",
+      "skins": [
+        {
+          "id": 101,
+          "name": "재키",
+          "grade": 1,
+          "imageName": "Jackie_S000"
+        },
+        {
+          "id": 102,
+          "name": "시험용 스킨",
+          "grade": 2,
+          "imageName": "Jackie_S001"
+        }
+      ],
+      "masteries": [
+        "Axe"
+      ],
+      "archeTypes": [
+        "Warrior"
+      ]
+    },
+    {
+      "id": 2,
+      "key": "Aya",
+      "name": "아야",
+      "skins": [
+        {
+          "id": 201,
+          "name": "아야",
+          "grade": 1,
+          "imageName": "Aya_S000"
+        }
+      ],
+      "masteries": [
+        "Pistol"
+      ],
+      "archeTypes": [
+        "Marksman"
+      ]
+    },
+    {
+      "id": 3,
+      "key": "Rio",
+      "name": "리오",
+      "skins": [],
+      "masteries": [
+        "Bow"
+      ],
+      "archeTypes": [
+        "Marksman"
+      ]
+    }
+  ],
+  "certificate": {
+    "player": {
+      "name": "문서검증용닉네임",
+      "accountLevel": 85,
+      "syncedAt": "2026-09-10T00:00:00Z"
+    },
+    "character": {
+      "id": 1,
+      "key": "Jackie",
+      "name": "재키",
+      "skins": [
+        {
+          "id": 101,
+          "name": "재키",
+          "grade": 1,
+          "imageName": "Jackie_S000"
+        },
+        {
+          "id": 102,
+          "name": "시험용 스킨",
+          "grade": 2,
+          "imageName": "Jackie_S001"
+        }
+      ],
+      "masteries": [
+        "Axe"
+      ],
+      "archeTypes": [
+        "Warrior"
+      ]
+    },
+    "grade": "산업기사",
+    "gradeEn": "INDUSTRIAL ENGINEER",
+    "score": 45,
+    "certNo": "AGL-2026-001-12345",
+    "issuedAt": "2026-09-10T00:00:00Z",
+    "seasonsPlayed": 2,
+    "seasonsTotal": 3,
+    "bestMmr": {
+      "mmr": 2450,
+      "season": "시즌 8"
+    },
+    "charStats": {
+      "play": 120,
+      "win": 18,
+      "winRate": 15,
+      "top3": 50,
+      "top3Rate": 41.7,
+      "avgPlace": 3.4,
+      "avgKill": 3.5,
+      "avgAssist": 5.2,
+      "avgDamage": 15400,
+      "playHours": 32,
+      "totalGainVFCredit": 12345
+    },
+    "overallStats": {
+      "play": 120,
+      "win": 18,
+      "winRate": 15,
+      "top3": 50,
+      "top3Rate": 41.7,
+      "avgPlace": 3.4,
+      "avgKill": 3.5,
+      "avgAssist": 5.2,
+      "avgDamage": 15400,
+      "playHours": 32,
+      "totalGainVFCredit": 12345
+    },
+    "modeStats": {
+      "rank": {
+        "play": 120,
+        "win": 18,
+        "winRate": 15,
+        "top3": 50,
+        "top3Rate": 41.7,
+        "avgPlace": 3.4,
+        "avgKill": 3.5,
+        "avgAssist": 5.2,
+        "avgDamage": 15400,
+        "playHours": 32,
+        "totalGainVFCredit": 12345
+      },
+      "normal": {
+        "play": 20,
+        "win": 18,
+        "winRate": 15,
+        "top3": 50,
+        "top3Rate": 41.7,
+        "avgPlace": 3.4,
+        "avgKill": 3.5,
+        "avgAssist": 5.2,
+        "avgDamage": 15400,
+        "playHours": 32,
+        "totalGainVFCredit": 12345
+      },
+      "cobalt": {
+        "play": 5,
+        "win": 18,
+        "winRate": 15,
+        "top3": 50,
+        "top3Rate": 41.7,
+        "avgPlace": 3.4,
+        "avgKill": 3.5,
+        "avgAssist": 5.2,
+        "avgDamage": 15400,
+        "playHours": 32,
+        "totalGainVFCredit": 12345
+      }
+    },
+    "perSeason": [
+      {
+        "seasonName": "시즌 8",
+        "seasonId": 8,
+        "play": 90,
+        "win": 14,
+        "top3": 40,
+        "damageToPlayer": 1386000
+      },
+      {
+        "seasonName": "시즌 7",
+        "seasonId": 7,
+        "play": 30,
+        "win": 4,
+        "top3": 10,
+        "damageToPlayer": 462000
+      }
+    ],
+    "failedSeasons": 1
+  },
+  "creditTable": {
+    "player": {
+      "name": "문서검증용닉네임",
+      "accountLevel": 85,
+      "syncedAt": "2026-09-10T00:00:00Z"
+    },
+    "bestMmr": {
+      "mmr": 2450,
+      "season": "시즌 8"
+    },
+    "seasonsPlayed": 2,
+    "overall": {
+      "play": 173,
+      "winRate": 13,
+      "avgPlace": 4.1,
+      "avgDamage": 13400
+    },
+    "rows": [
+      {
+        "characterId": 1,
+        "name": "재키",
+        "key": "Jackie",
+        "play": 120,
+        "winRate": 15,
+        "avgPlace": 3.4,
+        "score": 840,
+        "grade": 2,
+        "thinFile": false,
+        "inquiries": 2
+      },
+      {
+        "characterId": 2,
+        "name": "아야",
+        "key": "Aya",
+        "play": 50,
+        "winRate": 8,
+        "avgPlace": 5.3,
+        "score": 350,
+        "grade": 8,
+        "thinFile": false,
+        "inquiries": 1
+      },
+      {
+        "characterId": 3,
+        "name": "리오",
+        "key": "Rio",
+        "play": 3,
+        "winRate": 0,
+        "avgPlace": 4,
+        "score": null,
+        "grade": null,
+        "thinFile": true,
+        "inquiries": 0
+      }
+    ],
+    "summary": {
+      "evaluated": 2,
+      "thinFile": 1,
+      "best": {
+        "characterId": 1,
+        "name": "재키",
+        "key": "Jackie",
+        "play": 120,
+        "winRate": 15,
+        "avgPlace": 3.4,
+        "score": 840,
+        "grade": 2,
+        "thinFile": false,
+        "inquiries": 2
+      },
+      "worst": {
+        "characterId": 2,
+        "name": "아야",
+        "key": "Aya",
+        "play": 50,
+        "winRate": 8,
+        "avgPlace": 5.3,
+        "score": 350,
+        "grade": 8,
+        "thinFile": false,
+        "inquiries": 1
+      },
+      "spread": 6
+    },
+    "failedSeasons": 1
+  },
+  "creditReport": {
+    "player": {
+      "name": "문서검증용닉네임",
+      "accountLevel": 85,
+      "syncedAt": "2026-09-10T00:00:00Z"
+    },
+    "bestMmr": {
+      "mmr": 2450,
+      "season": "시즌 8"
+    },
+    "seasonsPlayed": 2,
+    "failedSeasons": 1,
+    "reportNo": "LCB-20260910-001-123456",
+    "issuedAt": "2026-09-10T00:00:00Z",
+    "inquiries": 3,
+    "characterId": 1,
+    "character": {
+      "id": 1,
+      "key": "Jackie",
+      "name": "재키",
+      "skins": [
+        {
+          "id": 101,
+          "name": "재키",
+          "grade": 1,
+          "imageName": "Jackie_S000"
+        },
+        {
+          "id": 102,
+          "name": "시험용 스킨",
+          "grade": 2,
+          "imageName": "Jackie_S001"
+        }
+      ],
+      "masteries": [
+        "Axe"
+      ],
+      "archeTypes": [
+        "Warrior"
+      ]
+    },
+    "thinFile": false,
+    "score": 840,
+    "grade": 2,
+    "limit": [
+      "제한 없음",
+      "3인팟 자동 승인 · 보증인 불요"
+    ],
+    "factors": {
+      "repayment": 90,
+      "debt": 80,
+      "term": 85,
+      "form": 80,
+      "fresh": 70
+    },
+    "weights": {
+      "repayment": 0.35,
+      "debt": 0.25,
+      "term": 0.2,
+      "form": 0.1,
+      "fresh": 0.1
+    },
+    "stats": {
+      "play": 120,
+      "win": 18,
+      "winRate": 15,
+      "top3": 50,
+      "top3Rate": 41.7,
+      "avgPlace": 3.4,
+      "avgKill": 3.5,
+      "avgAssist": 5.2,
+      "avgDamage": 15400,
+      "playHours": 32,
+      "totalGainVFCredit": 12345,
+      "avgDeaths": 0.7,
+      "mmrGain": 100
+    },
+    "baseline": {
+      "play": 173,
+      "winRate": 13,
+      "avgPlace": 4.1,
+      "avgDamage": 13400,
+      "avgDeaths": 0.8
+    },
+    "seasons": [
+      {
+        "seasonName": "시즌 8",
+        "seasonId": 8,
+        "play": 90,
+        "win": 14,
+        "top3": 40,
+        "damageToPlayer": 1386000
+      },
+      {
+        "seasonName": "시즌 7",
+        "seasonId": 7,
+        "play": 30,
+        "win": 4,
+        "top3": 10,
+        "damageToPlayer": 462000
+      }
+    ],
+    "seasonsWith": 2,
+    "modes": [
+      "rank",
+      "normal"
+    ],
+    "delinquencies": [
+      {
+        "seasonName": "시즌 7",
+        "play": 30,
+        "avgPlace": 5.1,
+        "baseAvgPlace": 4.1,
+        "delta": 1,
+        "label": "단기 연체",
+        "severity": "minor"
+      }
+    ],
+    "defaulted": false,
+    "latestShare": 75
+  },
+  "thinFileReport": {
+    "player": {
+      "name": "문서검증용닉네임",
+      "accountLevel": 85,
+      "syncedAt": "2026-09-10T00:00:00Z"
+    },
+    "bestMmr": {
+      "mmr": 2450,
+      "season": "시즌 8"
+    },
+    "seasonsPlayed": 2,
+    "failedSeasons": 1,
+    "reportNo": "LCB-20260910-003-123456",
+    "issuedAt": "2026-09-10T00:00:00Z",
+    "inquiries": 3,
+    "characterId": 3,
+    "character": {
+      "id": 3,
+      "key": "Rio",
+      "name": "리오",
+      "skins": [],
+      "masteries": [
+        "Bow"
+      ],
+      "archeTypes": [
+        "Marksman"
+      ]
+    },
+    "thinFile": true,
+    "score": null,
+    "grade": null,
+    "limit": [
+      "제한 없음",
+      "3인팟 자동 승인 · 보증인 불요"
+    ],
+    "factors": {
+      "repayment": 90,
+      "debt": 80,
+      "term": 85,
+      "form": 80,
+      "fresh": 70
+    },
+    "weights": {
+      "repayment": 0.35,
+      "debt": 0.25,
+      "term": 0.2,
+      "form": 0.1,
+      "fresh": 0.1
+    },
+    "stats": {
+      "play": 3,
+      "win": 18,
+      "winRate": 15,
+      "top3": 50,
+      "top3Rate": 41.7,
+      "avgPlace": 3.4,
+      "avgKill": 3.5,
+      "avgAssist": 5.2,
+      "avgDamage": 15400,
+      "playHours": 32,
+      "totalGainVFCredit": 12345,
+      "avgDeaths": 0.7,
+      "mmrGain": 100
+    },
+    "baseline": {
+      "play": 173,
+      "winRate": 13,
+      "avgPlace": 4.1,
+      "avgDamage": 13400,
+      "avgDeaths": 0.8
+    },
+    "seasons": [
+      {
+        "seasonName": "시즌 8",
+        "seasonId": 8,
+        "play": 90,
+        "win": 14,
+        "top3": 40,
+        "damageToPlayer": 1386000
+      },
+      {
+        "seasonName": "시즌 7",
+        "seasonId": 7,
+        "play": 30,
+        "win": 4,
+        "top3": 10,
+        "damageToPlayer": 462000
+      }
+    ],
+    "seasonsWith": 2,
+    "modes": [
+      "rank",
+      "normal"
+    ],
+    "delinquencies": [
+      {
+        "seasonName": "시즌 7",
+        "play": 30,
+        "avgPlace": 5.1,
+        "baseAvgPlace": 4.1,
+        "delta": 1,
+        "label": "단기 연체",
+        "severity": "minor"
+      }
+    ],
+    "defaulted": false,
+    "latestShare": 75,
+    "headline": "신용정보 부족 (Thin File)",
+    "note": "거래 이력 3건으로 평가에 필요한 최소 기준(10건) 미달. 신규 거래 시 보증인 필요."
+  }
+}

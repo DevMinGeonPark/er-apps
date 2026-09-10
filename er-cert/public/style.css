@@ -1,16 +1,16 @@
 @font-face {
   font-family: 'GowunBatang';
-  src: url('/fonts/gowun-batang.woff') format('woff');
+  src: url('fonts/gowun-batang.woff') format('woff');
   font-weight: 400; font-display: swap;
 }
 @font-face {
   font-family: 'GowunBatang';
-  src: url('/fonts/gowun-batang-bold.woff') format('woff');
+  src: url('fonts/gowun-batang-bold.woff') format('woff');
   font-weight: 700; font-display: swap;
 }
 @font-face {
   font-family: 'SongMyung';
-  src: url('/fonts/song-myung.woff') format('woff');
+  src: url('fonts/song-myung.woff') format('woff');
   font-weight: 400; font-display: swap;
 }
 

@@ -11,3 +11,47 @@
 .loading-panel{margin:30px 0;background:var(--paper);border:1px solid var(--line);border-top:3px solid var(--ink);padding:25px 30px 20px}.loading-topline{display:flex;justify-content:space-between;gap:15px;font-size:10px;letter-spacing:.5px;color:var(--muted)}#loading-elapsed{font-variant-numeric:tabular-nums;white-space:nowrap}.loading-content{display:flex;align-items:center;gap:22px;padding:33px 0 30px}.loading-spinner{flex-shrink:0;width:43px;height:43px;border:3px solid #e1e8d7;border-top-color:var(--ink);border-right-color:#92b767;border-radius:50%;animation:loading-spin 1s linear infinite}.loading-content h2{font-family:Gowun,serif;font-size:22px;line-height:1.6;margin:0 0 6px;overflow-wrap:anywhere}.loading-content p{font-size:12px;color:var(--muted);line-height:1.8;margin:0;max-width:570px}.loading-track{height:3px;background:#e8eddf;overflow:hidden}.loading-track span{display:block;width:35%;height:100%;background:#8eae66;animation:loading-travel 1.8s ease-in-out infinite}.loading-foot{font-size:10px;color:var(--muted);margin:12px 0 0}@keyframes loading-spin{to{transform:rotate(360deg)}}@keyframes loading-travel{from{transform:translateX(-105%)}to{transform:translateX(390%)}}
 @media(max-width:760px){.loading-panel{padding:20px;margin:25px 0}.loading-content{gap:15px;padding:27px 0;align-items:flex-start}.loading-spinner{width:32px;height:32px;margin-top:5px}.loading-content h2{font-size:18px}.loading-content p{font-size:11px}.loading-foot{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.loading-spinner,button[aria-busy="true"] .button-icon,.loading-track span{animation:none}.loading-track span{width:100%;opacity:.5}}
+
+/* 야간 기록관 · 급여 접수와 밝은 저장 문서 */
+body[data-lumia-document] .lc-payroll-deck{color:#a6babc;font-size:13px;margin:0 0 24px}
+body[data-lumia-document] .application{border-top:0;padding-top:0;border-color:#c1d2d02e}
+body[data-lumia-document] #payroll-form{display:grid;grid-template-columns:minmax(0,1fr) 170px;align-items:end;gap:16px}
+body[data-lumia-document] #payroll-form .primary{grid-column:1/-1}
+body[data-lumia-document] label{font-size:12px;font-weight:400;color:#a6babc}
+body[data-lumia-document] .primary{background:#cfdbd3;color:#172726;border:0;border-radius:0;font-weight:500}
+body[data-lumia-document] .primary:hover{background:#e1e9e2}
+body[data-lumia-document] .secondary{border:1px solid #69817e;border-radius:0;color:#cfdbd3;background:transparent}
+body[data-lumia-document] .secondary:hover{background:#1a2d31}
+body[data-lumia-document] .form-foot{flex-wrap:wrap;align-items:center}
+body[data-lumia-document] .form-foot p,body[data-lumia-document] .fine,body[data-lumia-document] .text-button{font-size:12px}
+body[data-lumia-document] .field-error,body[data-lumia-document] #status.error{color:#e4ae9d;font-size:12px}
+body[data-lumia-document] .result-heading{margin:28px 0 16px;flex-wrap:wrap}
+body[data-lumia-document] .result-heading>span{border-radius:0;font-size:11px}
+body[data-lumia-document] .result-grid{grid-template-columns:minmax(0,1fr)}
+body[data-lumia-document] .payslip{color:#193a32;--ink:#193a32;--muted:#5b6c62;--red:#b7412d;--paper:#fffef9;border-radius:0;box-shadow:none;padding:30px 32px 24px}
+body[data-lumia-document] .payslip .slip-bottom{margin:0 -32px;padding-left:32px;padding-right:32px}
+body[data-lumia-document] .payslip .slip-source{font-size:10px}
+body[data-lumia-document] .payslip .slip-line dt small{font-size:10px}
+body[data-lumia-document] .analysis{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+body[data-lumia-document] .hourly-card{background:transparent;border:0;border-top:1px solid #c1d2d02e;padding:20px 0}
+body[data-lumia-document] .hourly-value{color:#cfdbd3;font-size:30px}
+body[data-lumia-document] .hourly-card .eyebrow{color:#a6babc}
+body[data-lumia-document] .hourly-card .verdict{font-family:inherit;font-size:15px}
+body[data-lumia-document] .stats-card{border:0;border-top:1px solid #c1d2d02e;padding:20px 0}
+body[data-lumia-document] .actions{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+body[data-lumia-document] .actions button{flex:1}
+body[data-lumia-document] #action-status{grid-column:1/-1}
+body[data-lumia-document] th{background:#15262d;color:#b6c6c6}
+body[data-lumia-document] .method{border-color:#c1d2d02e;margin-top:38px}
+body[data-lumia-document] .method h2{font-size:16px;color:#e5eae9}
+body[data-lumia-document] .method-grid{gap:14px}
+body[data-lumia-document] .method-grid span{color:#a6babc}
+body[data-lumia-document] .method p{color:#a6babc;font-size:12px}
+body[data-lumia-document] .loading-panel{background:#101d23;border:1px solid #c1d2d02e;padding:22px}
+body[data-lumia-document] .loading-content{padding:22px 0}
+body[data-lumia-document] .loading-content h2{font-family:inherit;font-size:20px}
+body[data-lumia-document] .loading-spinner{border-color:#526c70;border-top-color:#cfdbd3}
+body[data-lumia-document] .loading-foot{font-size:11px}
+@media(max-width:860px){body[data-lumia-document] #payroll-form{grid-template-columns:1fr}body[data-lumia-document] .analysis{grid-template-columns:1fr}}
+@media(max-width:500px){body[data-lumia-document] .payslip{padding:22px 18px}body[data-lumia-document] .payslip .slip-bottom{margin:0 -18px;padding-left:18px;padding-right:18px}.slip-title h3{font-size:26px;letter-spacing:5px}.slip-top{font-size:9px;letter-spacing:0}.net-amount{font-size:40px}.net-box{padding:18px}.employee{gap:15px}.stamp{font-size:17px}.method-grid{grid-template-columns:1fr}body[data-lumia-document] .analysis{gap:10px}}
+@media print{body[data-lumia-document] .analysis,body[data-lumia-document] .lc-payroll-deck{display:none!important}body[data-lumia-document] .payslip{max-width:none;border:0;padding:20px}body[data-lumia-document] .result-grid{display:block}}

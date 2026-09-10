@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>아글라이아 연구소 — 실험체 운용 자격 검정</title>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=night-clerk-20260910">
+<link rel="stylesheet" href="/shared/night-clerk.css?v=20260910">
+<link rel="stylesheet" href="night-clerk-cert.css?v=night-clerk-20260910">
 </head>
-<body>
+<body data-lumia-document="license">
 <header class="site-header">
   <div class="emblem">
     <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
@@ -22,16 +24,27 @@
 
 <main>
   <section id="form-section" class="panel">
+    <h1 tabindex="-1">실험체 운용 자격 검정</h1>
+    <p class="intake-lead">전 시즌 · 랭크/일반/코발트 프로토콜 통합 기록으로 검정합니다.</p>
     <div class="field">
       <label for="nickname">피검정자 닉네임</label>
       <div class="row">
-        <input id="nickname" type="text" placeholder="예: 마르코프체인" autocomplete="off">
+        <input id="nickname" type="text" placeholder="피검정자 닉네임" autocomplete="off" maxlength="24" aria-describedby="nickname-error" required>
       </div>
+      <p id="nickname-error" class="error" hidden></p>
     </div>
     <div class="field">
-      <label>운용 실험체 선택 <span id="picked-label"></span></label>
-      <input id="char-search" type="text" placeholder="실험체 검색…" autocomplete="off">
-      <div id="char-grid" class="char-grid"><div class="grid-loading">실험체 목록 불러오는 중…</div></div>
+      <label for="character-toggle">운용 실험체 <span id="picked-label"></span></label>
+      <div id="selected-character" class="selected-character" hidden></div>
+      <button id="character-toggle" type="button" aria-expanded="false" aria-controls="character-picker" aria-describedby="character-error">실험체 선택</button>
+      <div id="character-picker" hidden>
+        <label for="char-search" class="picker-label">실험체 이름 검색</label>
+        <input id="char-search" type="search" placeholder="실험체 검색…" autocomplete="off">
+        <p id="character-count" class="field-help" role="status"></p>
+        <div id="char-grid" class="char-grid"><div class="grid-loading">실험체 목록 불러오는 중…</div></div>
+      </div>
+      <p id="character-error" class="error" role="alert" hidden></p>
+      <button id="characters-retry" type="button" hidden>실험체 목록 다시 불러오기</button>
     </div>
     <div class="field" id="skin-field">
       <label>증명사진 스킨 선택 <span id="skin-label"></span></label>
@@ -40,33 +53,43 @@
     <div class="field">
       <label>증서 양식</label>
       <div class="style-row">
-        <div class="style-cell selected" data-style="aglaia">
+        <button type="button" class="style-cell selected" data-style="aglaia" aria-pressed="true">
           <div class="tt">아글라이아 연구소</div>
           <div class="dd">세계관 컨셉 · 대외비 표식 · 연구소장 소견</div>
-        </div>
-        <div class="style-cell" data-style="classic">
+        </button>
+        <button type="button" class="style-cell" data-style="classic" aria-pressed="false">
           <div class="tt">검정원 표준</div>
           <div class="dd">클래식 자격증 양식</div>
-        </div>
+        </button>
       </div>
+      <p id="style-preview" class="field-help">연구소 양식: 대외비 표식과 연구소장 소견을 담은 가로 증서.</p>
     </div>
-    <button id="issue-btn" disabled>운용 능력 검정 신청</button>
-    <p id="form-error" class="error" hidden></p>
+    <button id="issue-btn" aria-describedby="issue-help" disabled>운용 능력 검정 신청</button>
+    <p id="issue-help" class="field-help">닉네임과 운용 실험체를 선택해주세요.</p>
+    <p id="form-error" class="error" role="alert" hidden></p>
   </section>
 
-  <section id="loading-section" class="panel" hidden>
-    <div class="spinner"></div>
-    <p id="loading-msg">루미아 섬 관제탑에 전적 조회 중…</p>
+  <section id="loading-section" class="panel" aria-busy="true" hidden>
+    <p id="loading-msg" role="status">전 시즌 기록 확인 중…</p>
+    <p class="field-help">시즌 수에 따라 시간이 걸릴 수 있습니다.</p>
+    <button id="cancel-btn" type="button">입력으로 돌아가기</button>
   </section>
 
   <section id="cert-section" hidden>
+    <h2 id="cert-heading" tabindex="-1">운용 자격증</h2>
+    <div class="style-row cert-style-actions" aria-label="증서 양식 변경">
+      <button type="button" class="style-cell selected" data-style="aglaia" aria-pressed="true">연구소 양식</button>
+      <button type="button" class="style-cell" data-style="classic" aria-pressed="false">표준 양식</button>
+    </div>
     <div id="cert-wrap"></div>
+    <p id="portrait-notice" class="field-help" role="status" hidden></p>
     <div class="cert-actions">
       <button id="download-btn">PNG로 저장</button>
       <button id="copy-link-btn">발급 링크 복사</button>
-      <button id="again-btn">다시 발급하기</button>
+      <button id="again-btn">다른 실험체 검정</button>
     </div>
-    <div id="season-detail" class="panel"></div>
+    <p id="export-status" class="field-help" role="status" hidden></p>
+    <details class="panel evidence"><summary>검정 근거 · 모드별 / 시즌별 기록</summary><div id="season-detail"></div></details>
   </section>
 </main>
 
@@ -79,7 +102,9 @@
 <script src="er-config.js?v=1"></script>
 <script src="er-core.js?v=1"></script>
 <script src="dakgg-core.js?v=official-1"></script>
-<script src="dakgg.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="dakgg.js?v=night-clerk-20260910"></script>
+<script src="/shared/lumia-documents.js?v=20260910"></script>
+<script src="/shared/night-clerk.js?v=20260910"></script>
+<script src="app.js?v=night-clerk-20260910"></script>
 </body>
 </html>

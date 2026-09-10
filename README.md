@@ -26,7 +26,7 @@
 | `/enemy/` | `er-enemy/public/` | 원수 관측소 |
 | `/credit/` | `er-credit/public/` | 루미아 신용정보원 |
 | `/payroll/` | `er-payroll/public/` | 루미아 노동청 · RP 급여명세서 |
-| `/map/` | `er-map/dist.html` | 루미아섬 상황판 (개발중) |
+| `/map/` | 빌드 시 안내 페이지 | 문서국 `/`으로 이동 |
 
 **구 주소(`er-cert.dev-heptivision.com` 등 4개)는 2026-08-28에 제거했다** — PM2 프로세스,
 cloudflared ingress, Cloudflare DNS 레코드 전부. 포트 레지스트리도 더 이상 필요 없다
@@ -61,6 +61,16 @@ python3 -m http.server 8099 --directory dist
 서버 변경은 별도로 기존 `er-ps-api` 프로세스를 재시작해 반영한다. 단위 테스트와 로컬 브라우저 검증은 운영 프로세스를 변경하지 않는다.
 
 ### 검증
+
+야간 기록관 UI는 운영 API를 호출하지 않는 브라우저 검증을 제공합니다. 모든 외부 요청을 가로채고 합성 전적을 사용하며, 별도 API 서버나 키가 필요하지 않습니다.
+
+```bash
+./build.sh
+node --test test/lumia-*.test.cjs er-payroll/test/*.test.cjs
+LUMIA_EXTRA_CHECKS=1 node scripts/check-night-clerk.mjs
+```
+
+결과 보고서, 화면 캡처와 PNG/PDF는 `.cache/night-clerk/`에 저장합니다. 로컬 화면은 `python3 -m http.server 8099 --bind 127.0.0.1 --directory dist`로 확인합니다. 로비·문서 이동은 닉네임을 브라우저에 보존하며 자동 조회를 시작하지 않습니다. 기존 공유 URL로 직접 접속하면 해당 문서의 기존 조회 규칙을 따릅니다.
 
 Node 24와 Chrome, 브라우저 검증용 `er-agent/map`의 `puppeteer-core`가 필요하다.
 

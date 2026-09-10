@@ -16,6 +16,24 @@ const backBtn = $('#backBtn');
 
 let myName = null;
 let hadKillers = false;
+let operationId = 0, busy = false, lookupController;
+LumiaClerk.bindNickname(meInput);
+function setBusy(value) {
+  busy = value;
+  meBtn.disabled = value;
+  directForm.querySelector('button').disabled = value;
+  document.querySelector('#searchConsole').setAttribute('aria-busy', String(value));
+}
+function cancelLookup() { lookupController?.abort(); operationId++; setBusy(false); stopScan('접수 내용을 확인한 뒤 다시 조회할 수 있습니다.'); }
+document.addEventListener('lumia:cancel', event => {
+  cancelLookup();
+  if (event.cancelable) {
+    if (!obsSec.hidden && hadKillers) {
+      event.preventDefault(); obsSec.hidden = true; killersSec.hidden = false;
+      LumiaClerk.setState('result', '원수 후보 명단'); killerGrid.querySelector('button')?.focus();
+    } else { obsSec.hidden = true; killersSec.hidden = true; }
+  } else LumiaClerk.setState(!obsSec.hidden || !killersSec.hidden ? 'result' : 'intake');
+});
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -32,13 +50,12 @@ function fmtDate(iso) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-const SCAN_MSGS = ['위성 위치 조정 중…', '관전 기록 입수 중…', '원한 데이터 대조 중…', '표적 프로필 복원 중…'];
 let scanTimer = null;
 function startScan() {
-  let i = 0;
+  clearInterval(scanTimer);
   hint.classList.remove('error');
-  hint.textContent = SCAN_MSGS[0];
-  scanTimer = setInterval(() => { hint.textContent = SCAN_MSGS[++i % SCAN_MSGS.length]; }, 1100);
+  hint.textContent = '공개 경기 기록을 확인하고 있습니다.';
+  LumiaClerk.setState('loading');
 }
 function stopScan(msg, isError) {
   clearInterval(scanTimer);
@@ -47,41 +64,62 @@ function stopScan(msg, isError) {
 }
 
 directToggle.addEventListener('click', () => {
+  cancelLookup();
   directForm.hidden = !directForm.hidden;
-  if (!directForm.hidden) enemyInput.focus();
+  meForm.hidden = !directForm.hidden;
+  directToggle.setAttribute('aria-expanded', String(!directForm.hidden));
+  directToggle.textContent = directForm.hidden ? '상대 이름을 알고 있어요' : '내 닉네임으로 후보 찾기';
+  (directForm.hidden ? meInput : enemyInput).focus();
+  LumiaClerk.setState('intake');
 });
+for (const input of [meInput, enemyInput]) {
+  input.addEventListener('invalid', () => { input.setAttribute('aria-invalid', 'true'); stopScan('닉네임을 입력해 주세요.', true); });
+  input.addEventListener('input', () => input.removeAttribute('aria-invalid'));
+}
 
 meForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (busy) return;
   const name = meInput.value.trim();
-  if (!name) return;
-  meBtn.disabled = true;
+  if (!name) { meInput.setAttribute('aria-invalid', 'true'); stopScan('내 닉네임을 입력해 주세요.', true); meInput.focus(); return; }
+  const operation = ++operationId;
+  lookupController = new AbortController();
+  LumiaContext.setNickname(name);
+  setBusy(true);
+  killersSec.hidden = true; obsSec.hidden = true;
   startScan();
   try {
-    const data = await ER.killers(name);
+    const data = await ER.killers(name, { signal: lookupController.signal });
+    if (operation !== operationId) return;
     myName = data.me;
     hadKillers = true;
     renderKillers(data);
+    LumiaClerk.setState('result', '원수 후보 명단');
     stopScan(`색출 완료 — 최근 랭크 ${data.scanned}판에서 원수 ${data.killers.length}명을 특정했습니다.`);
   } catch (err) {
+    if (operation !== operationId) return;
+    LumiaClerk.setState('error');
     stopScan(err.message, true);
     killersSec.hidden = true;
     obsSec.hidden = true;
   } finally {
-    meBtn.disabled = false;
+    if (operation === operationId) setBusy(false);
   }
 });
 
 directForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const enemy = enemyInput.value.trim();
-  if (!enemy) return;
+  if (!enemy) { enemyInput.setAttribute('aria-invalid', 'true'); stopScan('상대 닉네임을 입력해 주세요.', true); enemyInput.focus(); return; }
   observe({ enemy });
 });
 
 backBtn.addEventListener('click', () => {
+  cancelLookup();
   obsSec.hidden = true;
   if (hadKillers) killersSec.hidden = false;
+  LumiaClerk.setState(hadKillers ? 'result' : 'intake', hadKillers ? '원수 후보 명단' : '접수');
+  (hadKillers ? killerGrid.querySelector('button') : (directForm.hidden ? meInput : enemyInput))?.focus();
   window.scrollTo({ top: 0 });
 });
 
@@ -107,17 +145,29 @@ function renderKillers(data) {
     btn.addEventListener('click', () => observe({ enemy: k.nickname, me: myName, gameId: k.last.gameId }));
     killerGrid.appendChild(btn);
   }
-  killersSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  killersSec.tabIndex = -1; killersSec.focus({ preventScroll: true });
+  killersSec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
 }
 
 async function observe({ enemy, me, gameId }) {
+  if (busy) return;
+  const operation = ++operationId;
+  lookupController = new AbortController();
+  setBusy(true);
+  obsSec.hidden = true;
   startScan();
   try {
-    const data = await ER.observe(enemy, me, gameId);
+    const data = await ER.observe(enemy, me, gameId, { signal: lookupController.signal });
+    if (operation !== operationId) return;
     renderObservation(data);
+    LumiaClerk.setState('result', '공개 경기 관측 기록');
     stopScan('관측 완료.');
   } catch (err) {
+    if (operation !== operationId) return;
+    LumiaClerk.setState('error');
     stopScan(err.message, true);
+  } finally {
+    if (operation === operationId) setBusy(false);
   }
 }
 
@@ -129,6 +179,22 @@ function chainItem(cls, node, when, who, whoSmall, how) {
       <div class="who">${who}${whoSmall ? ` <small>${whoSmall}</small>` : ''}</div>
       ${how ? `<div class="how">${how}</div>` : ''}
     </li>`;
+}
+
+function cumulativeChart(games) {
+  const known = games.filter(game => Number.isFinite(game.cum));
+  if (!known.length) return '';
+  const low = Math.min(0, ...known.map(game => game.cum));
+  const high = Math.max(0, ...known.map(game => game.cum));
+  const range = high - low || 1;
+  const y = value => 110 - (value - low) / range * 90;
+  let points = [], segments = [];
+  games.forEach((game, index) => {
+    if (!Number.isFinite(game.cum)) { if (points.length) segments.push(points.join(' ')); points = []; return; }
+    points.push(`${20 + index / Math.max(1, games.length - 1) * 460},${y(game.cum)}`);
+  });
+  if (points.length) segments.push(points.join(' '));
+  return `<figure class="cumulative-chart"><figcaption>이후 경기 누적 MMR 추이</figcaption><svg viewBox="0 0 500 140" role="img" aria-label="확인된 ${known.length}경기의 누적 MMR: ${known.map(game => fmtSigned(game.cum)).join(', ')}. 일부 누락 기록은 연결하지 않습니다."><line x1="20" y1="${y(0)}" x2="480" y2="${y(0)}" stroke="#536970" stroke-dasharray="3 4"/>${segments.map(segment => `<polyline points="${segment}" fill="none" stroke="#b7ccc5" stroke-width="2"/>`).join('')}<text x="20" y="134" fill="#a6babc" font-size="11">첫 경기</text><text x="480" y="134" text-anchor="end" fill="#a6babc" font-size="11">최근 경기</text></svg></figure>`;
 }
 
 function renderObservation(data) {
@@ -143,7 +209,7 @@ function renderObservation(data) {
       ${t.characterKey ? `<img src="${ER.charImgUrl(t.characterKey)}" crossorigin="anonymous" alt="">` : ''}
     </div>
     <div class="who">
-      <div class="label">TARGET — 요주의 인물</div>
+      <div class="label">관측 대상 · 공개 경기 기록</div>
       <div class="nick">${esc(t.nickname)}</div>
       <div class="charline">최근 목격 실험체: ${esc(t.characterName || '불상')}</div>
     </div>
@@ -151,7 +217,7 @@ function renderObservation(data) {
       <span>계정 레벨 <b>${esc(t.accountLevel ?? '—')}</b></span>
       <span>시즌 랭크 참가 <b>${esc(t.seasonPlays ?? '—')}</b></span>
       <span>시즌 평균 킬 <b>${t.averageKills == null ? '—' : esc(t.averageKills)}</b></span>
-      <span>현재 MMR <b>${t.mmr ? t.mmr.toLocaleString('ko-KR') : '—'}</b></span>
+      <span>현재 MMR <b>${t.mmr != null ? t.mmr.toLocaleString('ko-KR') : '—'}</b></span>
     </div>
   </div>`;
 
@@ -222,6 +288,7 @@ function renderObservation(data) {
     </div>
     ${f.notes && f.notes.length ? `<div class="fate-notes">${f.notes.map(esc).join(' · ')}</div>` : ''}
     <div class="verdict ${esc(f.tone)}">${esc(f.text)}</div>
+    ${cumulativeChart(data.afterGames)}
     ${data.afterGames.length ? `
       <div class="mmr-rows">${rows}</div>
       <div class="chart-legend">
@@ -231,12 +298,19 @@ function renderObservation(data) {
   </div>`;
 
   obsRoot.innerHTML = html;
-  obsSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const checked = document.createElement('p'); checked.className = 'hint';
+  checked.textContent = '조회 확인: ' + new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' }).format(new Date()) + ' (한국 시간) · 공개된 경기 기록 기준';
+  obsRoot.prepend(checked);
+  obsSec.tabIndex = -1; obsSec.focus({ preventScroll: true });
+  obsSec.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
 }
 
 // URL로 바로: /?me=닉 (색출) · /?enemy=닉 (근황) · /?enemy=닉&me=닉&gameId=ID (사슬 포함 관측)
 const params = new URLSearchParams(location.search);
 if (params.get('enemy')) {
+  enemyInput.value = params.get('enemy');
+  directForm.hidden = false; meForm.hidden = true;
+  directToggle.textContent = '내 닉네임으로 후보 찾기'; directToggle.setAttribute('aria-expanded', 'true');
   observe({
     enemy: params.get('enemy'),
     me: params.get('me') || undefined,

@@ -1,16 +1,16 @@
 @font-face {
   font-family: 'GowunBatang';
-  src: url('/fonts/gowun-batang.woff') format('woff');
+  src: url('fonts/gowun-batang.woff') format('woff');
   font-weight: 400; font-display: swap;
 }
 @font-face {
   font-family: 'GowunBatang';
-  src: url('/fonts/gowun-batang-bold.woff') format('woff');
+  src: url('fonts/gowun-batang-bold.woff') format('woff');
   font-weight: 700; font-display: swap;
 }
 @font-face {
   font-family: 'SongMyung';
-  src: url('/fonts/song-myung.woff') format('woff');
+  src: url('fonts/song-myung.woff') format('woff');
   font-weight: 400; font-display: swap;
 }
 
@@ -385,3 +385,79 @@ html.shot .stamp { animation: none; }
   .paper { box-shadow: none; margin: 0 auto; max-width: none; }
   .stamp { animation: none; }
 }
+
+/* Approved night-clerk intake; the issued certificate stays a complete paper document. */
+body[data-lumia-document="autopsy"] { --pen:#573f3c; --stamp:#9b4f44; --desk-text:#a6babc; background:#0c161c; padding:0; color:#e5eae9; font-family:var(--gothic); }
+body[data-lumia-document="autopsy"] [hidden] { display:none!important; }
+body[data-lumia-document="autopsy"] .issue-panel { max-width:680px; margin:0 auto; }
+.intake-title { font-size:26px; line-height:1.4; font-weight:500; margin:0 0 13px; letter-spacing:-1px; }
+.intake-deck { color:#a6babc; font-size:13px; line-height:1.9; margin:0 0 24px; }
+body[data-lumia-document="autopsy"] #issueForm { display:flex; flex-direction:column; gap:8px; }
+#issueForm label { color:#b6c6c6; font-size:13px; }
+#issueForm label span { margin-left:8px; color:#91a9aa; font-size:12px; }
+body[data-lumia-document="autopsy"] #nick { width:100%; min-width:0; min-height:48px; font-family:var(--gothic); background:#101d23; color:#e5eae9; border:1px solid #c1d2d033; }
+body[data-lumia-document="autopsy"] #nick::placeholder { color:#91a9aa; }
+body[data-lumia-document="autopsy"] #issueBtn { min-height:48px; margin-top:12px; font-family:var(--gothic); font-weight:500; font-size:14px; background:#cfdbd3; color:#172726; letter-spacing:0; text-indent:0; }
+body[data-lumia-document="autopsy"] .hint { font-size:12px; line-height:1.8; margin-top:12px; }
+body[data-lumia-document="autopsy"] .error, .field-error { color:#e4ae9d; font:12px/1.7 var(--gothic); margin:0; }
+#cancelIssue { padding:10px 0; min-height:44px; color:#b6c6c6; background:transparent; border:0; border-bottom:1px solid #c1d2d033; cursor:pointer; font:13px var(--gothic); }
+body[data-lumia-document="autopsy"] .picker { max-width:680px; }
+body[data-lumia-document="autopsy"] .picker-title { font-size:12px; letter-spacing:0; font-weight:500; }
+body[data-lumia-document="autopsy"] .picker-list { gap:0; }
+body[data-lumia-document="autopsy"] .picker-item { min-height:48px; background:transparent; border:0; border-bottom:1px solid #c1d2d026; color:#b6c6c6; }
+body[data-lumia-document="autopsy"] .picker-item.active { background:#14252a; box-shadow:inset 2px 0 #cfdbd3; color:#e5eae9; }
+body[data-lumia-document="autopsy"] .result-summary { max-width:680px; margin:24px auto 0; color:#b6c6c6; font-size:13px; line-height:1.8; overflow-wrap:anywhere; }
+body[data-lumia-document="autopsy"] #certRoot { width:100%; max-width:680px; padding:0; margin:0 auto; }
+body[data-lumia-document="autopsy"] .paper { max-width:680px; padding:34px 30px; font-family:var(--serif); box-shadow:none; overflow-wrap:anywhere; }
+body[data-lumia-document="autopsy"] .paper h1 { font-size:28px; letter-spacing:.22em; text-indent:.22em; }
+body[data-lumia-document="autopsy"] .paper .v { color:#433f3a; }
+body[data-lumia-document="autopsy"] .chain .v { color:#8c483d; }
+body[data-lumia-document="autopsy"] .stamp { width:65px; height:65px; right:28px; bottom:132px; font-size:14px; animation:thump 200ms ease-out; }
+.cause-direction { margin:0 0 10px; color:#8c483d; font:12px/1.7 var(--gothic); }
+.document-disclaimer { border-top:1px solid var(--rule-soft); padding-top:12px; margin:18px 0 0; color:#5c6068; font:11px/1.8 var(--gothic); }
+body[data-lumia-document="autopsy"] .actions { max-width:680px; flex-wrap:wrap; }
+body[data-lumia-document="autopsy"] .actions button { min-height:44px; padding:12px 18px; font:13px var(--gothic); letter-spacing:0; border-radius:0; }
+body[data-lumia-document="autopsy"] #pngBtn { background:#cfdbd3; color:#172726; }
+body[data-lumia-document="autopsy"] .pagefoot { font-size:12px; margin-bottom:20px; }
+body[data-lumia-document="autopsy"] :is(button,input):focus-visible { outline:2px solid #cfdbd3; outline-offset:3px; }
+@media (max-width:900px) {
+  body[data-lumia-document="autopsy"] .victim-layout { display:block; }
+  body[data-lumia-document="autopsy"] .portrait-cell { border-right:0; border-bottom:1px solid var(--rule-soft); }
+  body[data-lumia-document="autopsy"] .formtable { table-layout:fixed; }
+  body[data-lumia-document="autopsy"] .formtable th { width:auto; white-space:normal; }
+  body[data-lumia-document="autopsy"] .formtable th, body[data-lumia-document="autopsy"] .formtable td { padding:8px 6px; }
+  body[data-lumia-document="autopsy"] .killer-head { flex-wrap:wrap; }
+  body[data-lumia-document="autopsy"] .killer-body { display:block; }
+  body[data-lumia-document="autopsy"] .mugshot { display:flex; border-right:0; border-bottom:1px solid var(--rule-soft); }
+  body[data-lumia-document="autopsy"] .killer-body table { table-layout:fixed; }
+  body[data-lumia-document="autopsy"] .killer-body th { width:78px; white-space:normal; }
+}
+@media (max-width:480px) {
+  body[data-lumia-document="autopsy"] .paper { padding:25px 14px; }
+  body[data-lumia-document="autopsy"] .paper h1 { font-size:25px; }
+  body[data-lumia-document="autopsy"] .form-no { font-size:11px; }
+  body[data-lumia-document="autopsy"] .chain td:first-child { width:70px; }
+  body[data-lumia-document="autopsy"] .chain .dur { width:53px; }
+  body[data-lumia-document="autopsy"] .sec-title .q { display:block; margin-top:5px; }
+  body[data-lumia-document="autopsy"] .checks { gap:12px; }
+  body[data-lumia-document="autopsy"] .issuer { padding-bottom:60px; font-size:14px; letter-spacing:0; }
+  body[data-lumia-document="autopsy"] .stamp { position:static; margin:-50px 14px 10px auto; }
+  body[data-lumia-document="autopsy"] .attest .date { letter-spacing:.08em; }
+  body[data-lumia-document="autopsy"] .actions { justify-content:stretch; }
+  body[data-lumia-document="autopsy"] .actions button { flex:1; }
+}
+@media (prefers-reduced-motion:reduce) {
+  body[data-lumia-document="autopsy"] *, body[data-lumia-document="autopsy"] *::before, body[data-lumia-document="autopsy"] *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+}
+html.shot body[data-lumia-document="autopsy"] .lc-header, html.shot body[data-lumia-document="autopsy"] .lc-clerk, html.shot body[data-lumia-document="autopsy"] .lc-title, html.shot body[data-lumia-document="autopsy"] .lc-skip, html.shot body[data-lumia-document="autopsy"] .result-summary { display:none!important; }
+html.shot body[data-lumia-document="autopsy"] .lc-layout, html.shot body[data-lumia-document="autopsy"] .lc-work { display:block!important; padding:0!important; }
+html.shot body[data-lumia-document="autopsy"] .paper { width:720px; height:auto; min-height:1460px; overflow:visible; }
+@media print {
+  body[data-lumia-document="autopsy"] { background:#fff!important; color:#232323; }
+  body[data-lumia-document="autopsy"] .result-summary { display:none!important; }
+  body[data-lumia-document="autopsy"] .paper { max-width:none; padding:12mm; margin:0; }
+  body[data-lumia-document="autopsy"] .stamp { animation:none; }
+  body[data-lumia-document="autopsy"] .sec { break-inside:avoid; }
+}
+body[data-lumia-document="autopsy"] .paper { --ink:#232323; --muted:#5c6068; }
+body[data-lumia-document="autopsy"] .lc-title ~ .issue-panel .intake-title { display:none; }

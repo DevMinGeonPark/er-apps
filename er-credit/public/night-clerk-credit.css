@@ -1,0 +1,72 @@
+body[data-lumia-document="credit"] { background:#0c161c; color:#e5eae9; }
+[data-lumia-document="credit"] .lc-work { --ink:#e5eae9; --sub:#a6babc; --line:#c1d2d033; --line2:#c1d2d026; --paper:#101d23; --navy:#b2c7bc; --g-good:#adcbbd; --g-fair:#a9c3c1; --g-mid:#b6bec1; --g-warn:#d0bc99; --g-bad:#e4ae9d; }
+[data-lumia-document="credit"] .lc-work main.wrap { padding:0; max-width:none; }
+[data-lumia-document="credit"] h1,[data-lumia-document="credit"] h2,[data-lumia-document="credit"] h3 { font-family:inherit; font-weight:500; }
+[data-lumia-document="credit"] .search-card { background:transparent; border:0; padding:0 0 24px; margin:0 0 20px; border-bottom:1px solid var(--line); }
+[data-lumia-document="credit"] .search-card h1 { font-size:24px; }
+[data-lumia-document="credit"] .search-card .lead { font-size:13px; margin:12px 0 24px; }
+[data-lumia-document="credit"] .search-card label { display:block; font-size:13px; color:#b6c6c6; margin-bottom:8px; }
+[data-lumia-document="credit"] #form input { min-width:0; min-height:48px; width:100%; border-radius:0; background:#0c171e; color:#e5eae9; border-color:#c1d2d033; }
+[data-lumia-document="credit"] button,[data-lumia-document="credit"] #form button { min-height:44px; border-radius:0; font-family:inherit; font-weight:500; line-height:1.5; font-size:13px; background:#cfdbd3; color:#172726; border:1px solid #cfdbd3; padding:10px 15px; cursor:pointer; }
+[data-lumia-document="credit"] button:disabled { opacity:.5; cursor:wait; }
+[data-lumia-document="credit"] :focus-visible { outline:2px solid #cfdbd3; outline-offset:3px; }
+[data-lumia-document="credit"] [hidden] { display:none !important; }
+[data-lumia-document="credit"] .notice { font-size:12px; color:#a6babc; }
+[data-lumia-document="credit"] .field-error,[data-lumia-document="credit"] .status.error { color:#e4ae9d; }
+[data-lumia-document="credit"] .status { background:transparent; border:0; border-left:2px solid #a6babc; text-align:left; padding:12px 16px; margin:16px 0; }
+[data-lumia-document="credit"] #request-actions { display:flex; gap:10px; flex-wrap:wrap; margin:0 0 20px; }
+[data-lumia-document="credit"] .doc { background:transparent; border:0; padding:0; margin-bottom:28px; }
+[data-lumia-document="credit"] .doc-head { border-bottom:1px solid var(--line); text-align:left; }
+[data-lumia-document="credit"] .doc-head h2 { font-size:22px; letter-spacing:0; }
+[data-lumia-document="credit"] .doc-head .meta { font-size:12px; letter-spacing:0; }
+[data-lumia-document="credit"] .subject-bar { background:transparent; padding:0 0 16px; border:0; border-bottom:1px solid var(--line); gap:10px 20px; }
+[data-lumia-document="credit"] .subject-bar b { font-size:13px; overflow-wrap:anywhere; }
+[data-lumia-document="credit"] .callout,[data-lumia-document="credit"] .callout.warn { background:#132329; border-left:2px solid #a6babc; padding:12px 14px; font-size:13px; }
+[data-lumia-document="credit"] .ledger-tools { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin:18px 0 12px; }
+[data-lumia-document="credit"] .ledger-tools span { font-size:12px; color:#a6babc; }
+[data-lumia-document="credit"] .ledger-tools button,[data-lumia-document="credit"] .btn-back { background:transparent; border-color:#c1d2d033; color:#cfdbd3; }
+[data-lumia-document="credit"] .ledger-tools button[aria-pressed="true"] { border-color:#cfdbd3; border-left-width:2px; }
+[data-lumia-document="credit"] .table-scroll { max-width:100%; overflow-x:auto; }
+[data-lumia-document="credit"] table { font-size:12px; }
+[data-lumia-document="credit"] th,[data-lumia-document="credit"] td { padding:12px 8px; }
+[data-lumia-document="credit"] thead th { background:transparent; font-size:12px; white-space:nowrap; }
+[data-lumia-document="credit"] .ledger-table { min-width:440px; }
+[data-lumia-document="credit"] .ledger-character { display:flex; gap:10px; align-items:center; }
+[data-lumia-document="credit"] .ledger-character img { width:40px; height:40px; object-fit:cover; background:#1c3036; flex-shrink:0; }
+[data-lumia-document="credit"] .ledger-character button { background:transparent; border:0; padding:0 4px; color:#e5eae9; text-align:left; white-space:nowrap; }
+[data-lumia-document="credit"] .grade-badge { background:transparent; color:inherit; border:1px solid currentColor; border-radius:0; padding:3px 6px; font-weight:500; min-width:50px; font-size:12px; white-space:nowrap; }
+[data-lumia-document="credit"] .g1,[data-lumia-document="credit"] .g2 { color:var(--g-good); }
+[data-lumia-document="credit"] .g9,[data-lumia-document="credit"] .g10 { color:var(--g-bad); }
+[data-lumia-document="credit"] .g-thin { border-style:dashed; color:#a6babc; }
+[data-lumia-document="credit"] .thin-row td { color:#a6babc; }
+[data-lumia-document="credit"] tr.row-link:hover td { background:#182a30; }
+[data-lumia-document="credit"] .sample-note { display:block; font-size:11px; color:#a6babc; margin-top:4px; }
+[data-lumia-document="credit"] .verdict { gap:18px; padding-top:5px; }
+[data-lumia-document="credit"] .portrait { background:#172a30; width:76px; height:76px; }
+[data-lumia-document="credit"] .verdict-main { min-width:0; flex-basis:220px; }
+[data-lumia-document="credit"] .verdict-main .who { overflow-wrap:anywhere; }
+[data-lumia-document="credit"] .big-grade { font-family:inherit; font-size:34px; line-height:1.5; }
+[data-lumia-document="credit"] .big-grade small { display:block; margin:0; font-size:13px; }
+[data-lumia-document="credit"] .limit-box { min-width:0; flex:1 1 200px; border:0; border-left:1px solid var(--line); }
+[data-lumia-document="credit"] details.evidence { border-top:1px solid var(--line); margin-top:22px; }
+[data-lumia-document="credit"] details.evidence>summary { min-height:44px; padding:12px 0; cursor:pointer; font-size:13px; color:#cfdbd3; }
+[data-lumia-document="credit"] .factor { font-size:12px; gap:8px; }
+[data-lumia-document="credit"] .report-actions { display:flex; gap:10px; flex-wrap:wrap; margin:20px 0; }
+[data-lumia-document="credit"] .stamp { transform:none; border:1px solid var(--g-bad); font-size:17px; letter-spacing:1px; }
+[data-lumia-document="credit"] .doc-foot { line-height:1.8; }
+[data-lumia-document="credit"] .hide-sm { display:table-cell; }
+@media(max-width:720px) { [data-lumia-document="credit"] #form { flex-direction:column; } [data-lumia-document="credit"] .ledger-table { min-width:570px; } [data-lumia-document="credit"] .table-scroll { overflow:auto; } [data-lumia-document="credit"] .factor { grid-template-columns:90px 1fr 30px 30px; } [data-lumia-document="credit"] .factor .w { display:block; } }
+@media(prefers-reduced-motion:reduce) { [data-lumia-document="credit"] *,[data-lumia-document="credit"] *::before,[data-lumia-document="credit"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+@media print {
+  [data-lumia-document="credit"] .lc-work { --ink:#172726; --sub:#46595b; --line:#c8d1cc; --line2:#dce2df; --paper:#fff; --navy:#465d54; --g-good:#36564a; --g-fair:#365b5a; --g-mid:#505b61; --g-warn:#785e35; --g-bad:#8c3930; color:#172726; background:#fff; }
+  [data-lumia-document="credit"] .search-card,[data-lumia-document="credit"] #status,[data-lumia-document="credit"] #request-actions,[data-lumia-document="credit"] .btn-back,[data-lumia-document="credit"] .report-actions,[data-lumia-document="credit"] #report-action-status,[data-lumia-document="credit"] .ledger-tools { display:none !important; }
+  [data-lumia-document="credit"] .doc { background:#fff; color:#172726; }
+  [data-lumia-document="credit"] .callout,[data-lumia-document="credit"] .callout.warn { background:#f4f5f0; }
+  [data-lumia-document="credit"] .verdict,[data-lumia-document="credit"] tr,[data-lumia-document="credit"] .factor { break-inside:avoid; }
+  [data-lumia-document="credit"] .table-scroll { overflow:visible; }
+  [data-lumia-document="credit"] table { min-width:0; }
+  [data-lumia-document="credit"] .big-grade,[data-lumia-document="credit"] .limit-box dd { color:#172726 !important; }
+  [data-lumia-document="credit"] .ledger-character button,[data-lumia-document="credit"] .thin-row td,[data-lumia-document="credit"] .sample-note,[data-lumia-document="credit"] .g-thin { color:#46595b; }
+  [data-lumia-document="credit"] details.evidence>summary { color:#172726; }
+  [data-lumia-document="credit"] thead { display:table-header-group; }
+}

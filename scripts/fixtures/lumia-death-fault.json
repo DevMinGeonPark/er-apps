@@ -1,0 +1,404 @@
+{
+  "notice": "Synthetic offline fixtures. Never query real player records for these names.",
+  "death": {
+    "certNo": "TEST-2026-990001",
+    "issuedAt": "2026년 9월 10일",
+    "victim": {
+      "nickname": "가상검증본인",
+      "accountLevel": 123,
+      "characterName": "재키",
+      "characterLevel": 15,
+      "weaponName": "양손검",
+      "weaponLevel": 14,
+      "mmrGain": -20,
+      "portrait": null
+    },
+    "death": {
+      "gameId": 990001,
+      "dateTime": "2026년 9월 10일 01시 20분",
+      "elapsed": "실험 개시 후 12분",
+      "placeName": "병원",
+      "gameRank": 8,
+      "manner": "homicide",
+      "priorDeaths": 1,
+      "priorDeathsDetail": [
+        {
+          "nth": 1,
+          "by": "가상처형자 (아야)",
+          "placeName": "골목길"
+        }
+      ]
+    },
+    "causeChain": [
+      {
+        "label": "(가) 직접 사인",
+        "text": "검증용 직접 사인",
+        "dur": "약 1.2초"
+      },
+      {
+        "label": "(나) (가)의 원인",
+        "text": "검증용 선행 사인",
+        "dur": "12초"
+      },
+      {
+        "label": "(다) (나)의 원인",
+        "text": "검증용 원인 3",
+        "dur": "만성"
+      },
+      {
+        "label": "(라) (다)의 원인",
+        "text": "검증용 원인 4",
+        "dur": "시즌 내내"
+      }
+    ],
+    "killer": {
+      "kind": "player",
+      "nickname": "가상처형자",
+      "characterName": "아야",
+      "mugshot": null,
+      "weaponName": "권총",
+      "cause": "권총",
+      "motive": "검증용 동기",
+      "record": {
+        "averageKills": 3.2,
+        "seasonPlays": 20
+      }
+    },
+    "opinions": [
+      "검증용 검시관 소견 1",
+      "검증용 검시관 소견 2"
+    ],
+    "recentDeaths": [
+      {
+        "gameId": 990001,
+        "startDtm": "2026-09-09T16:08:00Z",
+        "characterName": "재키",
+        "killerLabel": "가상처형자",
+        "gameRank": 8
+      },
+      {
+        "gameId": 990002,
+        "startDtm": "2026-09-09T15:00:00Z",
+        "characterName": "아야",
+        "killerLabel": "금지구역",
+        "gameRank": 5
+      }
+    ]
+  },
+  "fault": {
+    "names": [
+      "가상검증본인",
+      "가상팀원1",
+      "가상팀원2"
+    ],
+    "seasonKey": "s8",
+    "sharedGames": 12,
+    "accidents": [
+      {
+        "gameId": 990101,
+        "startDtm": "2026-09-09T16:00:00Z",
+        "mode": "랭크",
+        "rank": 8,
+        "rpDelta": -24,
+        "severity": "전손",
+        "fault": [
+          45,
+          35,
+          20
+        ],
+        "culprit": 0,
+        "players": [
+          {
+            "name": "가상검증본인",
+            "character": "재키",
+            "charKey": null,
+            "role": "전사",
+            "damage": 8420,
+            "kill": 1,
+            "assist": 2,
+            "deaths": 2,
+            "playTime": 700,
+            "giveUp": true
+          },
+          {
+            "name": "가상팀원1",
+            "character": "아야",
+            "charKey": null,
+            "role": "사수",
+            "damage": 12680,
+            "kill": 2,
+            "assist": 3,
+            "deaths": 2,
+            "playTime": 730,
+            "giveUp": false
+          },
+          {
+            "name": "가상팀원2",
+            "character": "현우",
+            "charKey": null,
+            "role": "탱커",
+            "damage": 10120,
+            "kill": 3,
+            "assist": 4,
+            "deaths": 2,
+            "playTime": 760,
+            "giveUp": false
+          }
+        ],
+        "items": [
+          [
+            {
+              "pts": 22,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ],
+          [
+            {
+              "pts": 19,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ],
+          [
+            {
+              "pts": 16,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ]
+        ]
+      },
+      {
+        "gameId": 990102,
+        "startDtm": "2026-09-09T15:00:00Z",
+        "mode": "일반",
+        "rank": 6,
+        "rpDelta": null,
+        "severity": "중대",
+        "fault": [
+          33,
+          33,
+          33
+        ],
+        "culprit": 0,
+        "players": [
+          {
+            "name": "가상검증본인",
+            "character": "재키",
+            "charKey": null,
+            "role": "전사",
+            "damage": 8420,
+            "kill": 1,
+            "assist": 2,
+            "deaths": 2,
+            "playTime": 700,
+            "giveUp": true
+          },
+          {
+            "name": "가상팀원1",
+            "character": "아야",
+            "charKey": null,
+            "role": "사수",
+            "damage": 12680,
+            "kill": 2,
+            "assist": 3,
+            "deaths": 2,
+            "playTime": 730,
+            "giveUp": false
+          },
+          {
+            "name": "가상팀원2",
+            "character": "현우",
+            "charKey": null,
+            "role": "탱커",
+            "damage": 10120,
+            "kill": 3,
+            "assist": 4,
+            "deaths": 2,
+            "playTime": 760,
+            "giveUp": false
+          }
+        ],
+        "items": [
+          [
+            {
+              "pts": 22,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ],
+          [
+            {
+              "pts": 19,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ],
+          [
+            {
+              "pts": 16,
+              "clause": "제3조 1항",
+              "desc": "검증용 조기 이탈"
+            },
+            {
+              "pts": -8,
+              "clause": "감경 2호",
+              "desc": "검증용 팀원 구호"
+            }
+          ]
+        ]
+      }
+    ],
+    "accidentCount": 2,
+    "accidentRate": 16.7,
+    "fault": [
+      39,
+      34,
+      27
+    ],
+    "culpritIdx": 0,
+    "grade": 6,
+    "mainChar": [
+      {
+        "key": null,
+        "name": "재키",
+        "role": "전사"
+      },
+      {
+        "key": null,
+        "name": "아야",
+        "role": "사수"
+      },
+      {
+        "key": null,
+        "name": "현우",
+        "role": "탱커"
+      }
+    ],
+    "reasons": [
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ],
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ],
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ]
+    ],
+    "docNo": "TEST-LMI-2026-9901",
+    "issuedAt": 1788973200000
+  },
+  "faultNoAccident": {
+    "names": [
+      "가상검증본인",
+      "가상팀원1",
+      "가상팀원2"
+    ],
+    "seasonKey": "s8",
+    "sharedGames": 12,
+    "accidents": [],
+    "accidentCount": 0,
+    "accidentRate": 0,
+    "fault": [
+      39,
+      34,
+      27
+    ],
+    "culpritIdx": 0,
+    "grade": 1,
+    "mainChar": [
+      {
+        "key": null,
+        "name": "재키",
+        "role": "전사"
+      },
+      {
+        "key": null,
+        "name": "아야",
+        "role": "사수"
+      },
+      {
+        "key": null,
+        "name": "현우",
+        "role": "탱커"
+      }
+    ],
+    "reasons": [
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ],
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ],
+      [
+        {
+          "clause": "제3조 1항",
+          "label": "검증용 조기 이탈",
+          "count": 2,
+          "pts": 44
+        }
+      ]
+    ],
+    "docNo": "TEST-LMI-2026-9901",
+    "issuedAt": 1788973200000,
+    "noAccident": true
+  },
+  "seasons": [
+    {
+      "key": "s8",
+      "name": "검증 시즌"
+    }
+  ]
+}
