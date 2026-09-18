@@ -53,6 +53,7 @@
     const nickname = q('#exam-nickname').value.trim();
     q('#exam-person').textContent = nickname ? `응시자 ${nickname}` : '';
     q('#exam-result-title').textContent = result.label;
+    q('#exam-emblem').src = `tier/${result.tier.id}.png`;
     q('#exam-result-title').style.setProperty('--tier', result.tier.color);
     q('#exam-score').textContent = `가중 득점 ${result.earned} / ${result.max}점 · ${result.percent}%`;
     q('#exam-comment').textContent = result.tier.comment;
@@ -60,7 +61,9 @@
       ? `${result.next.name}까지 ${Math.ceil((result.next.min / 100 * result.max - result.earned) * 2) / 2}점`
       : '이 시험의 최고 티어입니다. 그 위는 순위로 증명하세요.';
     q('#exam-ladder').replaceChildren(...model.tiers.map(tier => {
-      const step = el('span', tier.id === result.tier.id ? 'is-current' : '', tier.name);
+      const step = el('span', tier.id === result.tier.id ? 'is-current' : '');
+      const icon = el('img'); icon.src = `tier/${tier.id}.png`; icon.alt = ''; icon.loading = 'lazy';
+      step.append(icon, tier.name);
       step.style.setProperty('--tier', tier.color);
       return step;
     }));

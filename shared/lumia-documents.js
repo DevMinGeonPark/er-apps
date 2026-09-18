@@ -93,7 +93,7 @@
       featured: true, searchKeywords: ['운영', '시험', '퀴즈', '티어', '테스트', '미스릴', '방법론', '모의고사'],
       inputSchema: [{ name: 'nickname', label: '응시자 닉네임', required: false }],
       inputHint: '25문항 · 약 5분. 닉네임 없이도 응시할 수 있어요. 전적 조회 없이 고른 답만으로 채점합니다.',
-      dialogue: { quote: '운영은 자신 있다고?\n…그럼 시험 쳐 봐.', aside: '답안지는 미스릴이 썼어. 나한테 따지지 마.' },
+      dialogue: { quote: '운영은 자신 있다고?\n…그럼 시험 쳐 봐.', aside: '답안지는 무려 "닌니즈"님이 작성했어. 나한테 따지지마.' },
     },
   ];
 
