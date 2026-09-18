@@ -7,6 +7,8 @@
 
 **[이리 팀원 유형 검사](https://er.dev-heptivision.com/type/)**: 12가지 게임 상황으로 16가지 플레이 성향을 찾는다. 유형별 SD 캐릭터와 네 가지 원형 그래프, 결과 링크·PNG 카드·동일한 PDF, 기기 공유 메뉴와 2~3인 팀 사용설명서를 제공한다. 전적 조회나 외부 API 없이 브라우저에서 동작한다. [일러스트와 생성 프롬프트](docs/lumia-type-art-2026-09-10/README.md)
 
+**[운영방법론 모의고사](https://er.dev-heptivision.com/exam/)**: 미스릴 유저 닌황의 운영 방법론을 답안지로 25문항을 가중 채점해 아이언~미스릴 티어로 판정한다. 영역별 득점과 원문 인용 오답 노트를 제공한다. 전적 조회 없이 브라우저에서 동작한다. [출처·개념화·채점 설계](docs/lumia-exam-2026-09-18/README.md)
+
 2026-09-09 공식 API 전환 범위·제약·검증은 [전환 기록](docs/official-api-migration.md)에 정리했다.
 
 새 전적 서비스 [루미아섬 CCTV](er-ps/README.md)는 `er-ps/`에서 개발한다.
@@ -29,6 +31,7 @@
 | `/credit/` | `er-credit/public/` | 루미아 신용정보원 |
 | `/payroll/` | `er-payroll/public/` | 루미아 노동청 · RP 급여명세서 |
 | `/type/` | `er-type/public/` | 12문항 · 16유형 플레이 성향 검사 |
+| `/exam/` | `er-exam/public/` | 운영방법론 모의고사 · 25문항 티어 판정 |
 | `/map/` | 빌드 시 안내 페이지 | 문서국 `/`으로 이동 |
 
 **구 주소(`er-cert.dev-heptivision.com` 등 4개)는 2026-08-28에 제거했다** — PM2 프로세스,

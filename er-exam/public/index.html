@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0c161c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230c161c'/%3E%3Cpath d='M19 12h26v40H19zM25 23h14M25 31h14M25 39h9' fill='none' stroke='%23cfdbd3' stroke-width='3'/%3E%3C/svg%3E">
+<meta name="description" content="미스릴 유저의 이터널 리턴 운영 방법론으로 출제한 25문항 모의고사. 1일차 낮부터 위클라인 이후까지, 내 운영 지식은 어느 티어일까.">
+<title>운영방법론 모의고사 · 루미아 문서국</title>
+<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="/shared/night-clerk.css?v=night-clerk-20260910">
+</head>
+<body data-lumia-document="exam">
+<main id="exam-desk">
+  <section id="exam-intro" aria-labelledby="exam-intro-title">
+    <p class="exam-eyebrow">루미아 문서국 · 운영 능력 평가</p>
+    <h2 id="exam-intro-title" class="exam-title" tabindex="-1">손은 다이아인데,<br>운영은 몇 티어일까.</h2>
+    <p class="exam-deck">1일차 낮의 합류부터 위클라인 이후까지.<br>미스릴 유저의 운영 방법론이 답안지입니다.</p>
+    <div class="exam-facts" aria-label="시험 안내"><span><b>25</b>문항</span><span>약 <b>5</b>분</span><span><b>7</b>개 영역</span><span>최고 <b>미스릴</b></span></div>
+    <p class="exam-copy">문항마다 난이도 배점(1~3점)이 다르고, 차선의 답에는 부분 점수가 있습니다. 가중 득점률을 아이언부터 미스릴까지의 티어로 환산합니다.</p>
+    <label class="exam-label" for="exam-nickname">응시자 닉네임 <span>선택</span></label>
+    <input id="exam-nickname" type="text" maxlength="100" autocomplete="off" placeholder="비워 두어도 응시할 수 있어요.">
+    <button id="exam-start" type="button" class="exam-primary">시험 시작 <span aria-hidden="true">↗</span></button>
+    <p class="exam-small">출제 기준: <b id="exam-source"></b>의 운영 방법론. 전적 조회 없이 브라우저에서만 채점합니다.</p>
+  </section>
+
+  <form id="exam-quiz" hidden aria-labelledby="exam-question-title">
+    <div class="exam-top"><p id="exam-progress" role="status" aria-live="polite"></p><p id="exam-meta"></p></div>
+    <progress id="exam-progress-bar" value="0" aria-label="답변한 문항 수"></progress>
+    <fieldset id="exam-fieldset">
+      <legend id="exam-question-title" tabindex="-1"></legend>
+      <div id="exam-choices" class="exam-choices"></div>
+    </fieldset>
+    <div class="exam-actions"><button id="exam-prev" type="button" class="exam-secondary">이전 문항</button><button id="exam-next" type="submit" class="exam-primary" disabled>다음 문항 <span aria-hidden="true">→</span></button></div>
+  </form>
+
+  <section id="exam-result" hidden aria-labelledby="exam-result-title">
+    <article class="exam-sheet">
+      <div class="exam-sheet-meta"><span>루미아 문서국 · 운영방법론 모의고사</span><span id="exam-person"></span></div>
+      <p class="exam-sheet-label">판정 티어</p>
+      <h2 id="exam-result-title" tabindex="-1"></h2>
+      <p id="exam-score" class="exam-score"></p>
+      <p id="exam-comment" class="exam-comment"></p>
+      <p id="exam-next-tier" class="exam-next-tier"></p>
+      <div id="exam-ladder" class="exam-ladder" aria-hidden="true"></div>
+      <h3>영역별 득점</h3>
+      <div id="exam-domains" class="exam-domains"></div>
+      <div class="exam-advice"><span id="exam-advice-title"></span><p id="exam-advice"></p></div>
+      <div class="exam-sheet-foot"><span>답안 기준 · <b id="exam-source-foot"></b> 운영 방법론</span><span class="exam-seal" aria-hidden="true">채점<br>완료</span></div>
+    </article>
+    <div class="exam-result-actions"><button id="exam-copy" type="button" class="exam-primary">결과 복사</button><button id="exam-restart" type="button" class="exam-secondary">다시 응시</button></div>
+    <p id="exam-status" class="exam-small" role="status" aria-live="polite"></p>
+    <section aria-labelledby="exam-review-title"><h3 id="exam-review-title" class="exam-review-title">오답 노트</h3><p class="exam-small">근거는 방법론 원문 그대로 옮겼습니다.</p><ol id="exam-review" class="exam-review"></ol></section>
+  </section>
+</main>
+<footer class="exam-footer">미스릴 티어 유저의 운영 방법론 한 편을 답안으로 삼은 팬메이드 모의고사입니다. 패치와 메타에 따라 정답은 달라질 수 있고, 실제 랭크 티어를 보증하지 않습니다.<br>데미갓·이터니티는 점수가 아닌 순위로 정해지는 티어라 판정하지 않습니다.</footer>
+<script src="/shared/lumia-documents.js?v=exam-20260918"></script>
+<script src="/shared/night-clerk.js?v=night-clerk-20260910"></script>
+<script src="exam-model.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>

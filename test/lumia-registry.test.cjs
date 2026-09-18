@@ -23,7 +23,7 @@ test('existing routes retain their input contracts and the local playstyle test 
   assert.deepEqual(plain(docs.map(item => [item.id, item.href])), [
     ['license', '/cert/'], ['autopsy', '/death/'], ['liability', '/fault/'],
     ['tracking', '/enemy/'], ['credit', '/credit/'], ['payroll', '/payroll/'],
-    ['playstyle', '/type/'],
+    ['playstyle', '/type/'], ['exam', '/exam/'],
   ]);
   for (const item of docs) {
     assert.equal(item.status, 'active');

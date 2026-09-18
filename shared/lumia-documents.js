@@ -85,6 +85,16 @@
       inputHint: '12문항 · 약 2분. 닉네임 없이도 할 수 있어요. 실제 전적 조회 없이 선택한 답으로 결과를 만듭니다.',
       dialogue: { quote: '네가 어떤 팀원인지?\n…팀원한테 물으면 되잖아.', aside: '직접 알고 싶으면, 솔직하게 골라.' },
     },
+    {
+      id: 'exam', name: '운영방법론 모의고사', category: '증명·평가',
+      short: '미스릴의 운영 방법론으로 보는 25문항 · 티어 판정',
+      description: '1일차 낮의 합류부터 위클라인 이후까지. 미스릴 유저의 운영 방법론을 답안지로 25문항을 채점해 아이언부터 미스릴까지 티어로 판정합니다.',
+      target: '25개 운영 상황에서 고른 답', href: '/exam/', status: 'active',
+      featured: true, searchKeywords: ['운영', '시험', '퀴즈', '티어', '테스트', '미스릴', '방법론', '모의고사'],
+      inputSchema: [{ name: 'nickname', label: '응시자 닉네임', required: false }],
+      inputHint: '25문항 · 약 5분. 닉네임 없이도 응시할 수 있어요. 전적 조회 없이 고른 답만으로 채점합니다.',
+      dialogue: { quote: '운영은 자신 있다고?\n…그럼 시험 쳐 봐.', aside: '답안지는 미스릴이 썼어. 나한테 따지지 마.' },
+    },
   ];
 
   const STORAGE_KEY = 'lumia.context.v1';
